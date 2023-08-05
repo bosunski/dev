@@ -1,0 +1,47 @@
+name: Garm
+type: Laravel
+php: 8.2
+
+up:
+    - composer:
+          packages:
+              - beyondcode/expose
+              - laravel/valet
+          auth:
+              - host: satis.spatie.be
+                type: basic
+                username: bosunski@gmail.com
+                password:
+              - host: nova.laravel.com
+                type: basic
+                username: bosunski@gmail.com
+                password:
+              - host: spark.laravel.com
+                type: basic
+                username: bosunski@gmail.com
+                password:
+    - herd:
+          sites:
+              - proxy: http://127.0.0.1:6001
+                host: echo.phpsandbox
+              - phpsandbox
+    - brew:
+          - socat
+          - redis
+          - mysql
+          - fnm
+          - watchman
+          - fd
+          - ripgrep
+    - custom:
+          name: Install composer dependencies
+          met?: composer install
+          meet: composer install
+    - custom:
+        name: Install yarn dependencies
+        met?: yarn
+        meet: yarn
+    - custom:
+        name: Build docker images
+        met?: yarn
+        meet: yarn
