@@ -4,8 +4,7 @@
         "app",
         "bootstrap",
         "config",
-        "vendor",
-        "bin"
+        "vendor"
     ],
     "files": [
         "composer.json"

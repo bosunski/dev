@@ -20,9 +20,9 @@ class Config
         return $this->config['type'] ?? '';
     }
 
-    public function getPhp(): float
+    public function getPhp(): string
     {
-        return (float) $this->config['php'] ?? PHP_VERSION;
+        return $this->config['php'] ?? PHP_VERSION;
     }
 
     public function up(): UpConfig

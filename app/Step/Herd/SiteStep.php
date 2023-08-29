@@ -24,8 +24,8 @@ class SiteStep implements StepInterface
     public function command(): ?string
     {
         return match ($this->site->type) {
-            'link' => "herd link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
-            'proxy' => "herd proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
+            'link' => "valet link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
+            'proxy' => "valet proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
             default => throw new Exception("Unknown site type: {$this->site->type}"),
         };
     }

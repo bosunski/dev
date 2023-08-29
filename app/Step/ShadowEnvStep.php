@@ -76,8 +76,10 @@ class ShadowEnvStep implements StepInterface
     private function defaultContent(): string
     {
         $binPath = Config::OP_PATH . '/bin';
+        $opPath = Config::OP_PATH;
         return <<<EOF
 (env/prepend-to-pathlist "PATH" "./$binPath")
+(env/set "PHP_INI_SCAN_DIR" "./$opPath/php.d")
 EOF;
     }
 

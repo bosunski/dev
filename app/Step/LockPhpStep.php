@@ -28,9 +28,8 @@ class LockPhpStep implements StepInterface
     public function run(Runner $runner): bool
     {
         $config = $runner->config();
-        $php = $config->getPhp() * 10;
-        $home = $_SERVER['HOME'];
-        $herdPhpPath = "$home/Library/Application\ Support/Herd/bin/php$php";
+        $herdPhpPath = "{$_SERVER['HOME']}/Library/Application\ Support/Herd/bin/php{$config->getPhp()}";
+        $herdPhpPath = "/opt/homebrew/Cellar/php/{$config->getPhp()}/bin/php";
         $binDir = "{$config->path()}/bin";
         $binPath = "{$config->path()}/bin/php";
 
