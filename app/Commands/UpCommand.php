@@ -4,14 +4,12 @@ namespace App\Commands;
 
 use App\Config\Config;
 use App\Execution\Runner;
+use App\Step\UpStep;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
-use Symfony\Component\Yaml\Yaml;
 
 class UpCommand extends Command
 {
-    private const FILE_NAME = "garm.yaml";
-
     /**
      * The signature of the command.
      *
@@ -31,9 +29,9 @@ class UpCommand extends Command
      */
     public function handle(): int
     {
-        $config = new Config(Yaml::parseFile(self::FILE_NAME));
+        $config = new Config(getcwd(), []);
         $runner = new Runner($config, $this);
 
-        return $runner->execute();
+        return $runner->execute([new UpStep($config->cwd())]);
     }
 }

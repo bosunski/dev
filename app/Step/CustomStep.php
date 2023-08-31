@@ -27,6 +27,10 @@ class CustomStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
+        if (! $this->command()) {
+            return false;
+        }
+
         return $runner->spawn($this->command());
     }
 

@@ -29,6 +29,10 @@ class ShadowEnvStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
+        if (!$runner->config()->isAGarmProject()) {
+            return true;
+        }
+
         if (!$this->init($runner->config())) {
             return false;
         }

@@ -3,6 +3,7 @@
 namespace App\Execution;
 
 use App\Config\Config;
+use App\Exceptions\UserException;
 use App\Step\StepInterface;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
@@ -21,43 +22,54 @@ class Runner
     }
 
     /**
+     * @param StepInterface[] $steps
      * @throws Exception
      */
-    public function execute(): int
+    public function execute(array $steps = []): int
     {
         try {
-            foreach ($this->config->up()->steps() as $step) {
-                $this->command->task($step->name(), fn () => $this->executeStep($step));
+            foreach ($steps as $step) {
+                $this->command->getOutput()->writeln("✨ {$step->name()}");
+                $this->executeStep($step);
             }
 
             return Cmd::SUCCESS;
-        } catch (ProcessFailedException) {
+        } catch (ProcessFailedException | UserException) {
             return Cmd::FAILURE;
         }
     }
 
+    /**
+     * @throws UserException
+     */
     private function executeStep(StepInterface $step): bool
     {
         if ($step->done($this)) {
             return true;
         }
 
-        return $step->run($this);
+        $done = $step->run($this);
+
+        if (! $done) {
+            throw new UserException("Failed to run step: {$step->name()}");
+        }
+
+        return true;
     }
 
     public function exec(string $command): bool
     {
-        return Process::run($command)->successful();
+        return Process::forever()->tty()->run($command, $this->handleOutput(...))->throw()->successful();
     }
 
     public function spawn(string $command): bool
     {
-        return Process::run($command, $this->handleOutput(...))->throw()->successful();
+        return Process::forever()->tty()->run($command, $this->handleOutput(...))->throw()->successful();
     }
 
     private function handleOutput(string $_, string $output): void
     {
-        echo $_, $output;
+        $this->io()->getOutput()->write($output);
     }
 
     public function io(): Command
