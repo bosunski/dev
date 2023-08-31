@@ -25,13 +25,13 @@ class InstallCommand extends Command
     public function handle(): int
     {
         $this->info("Building Garm...");
-        Process::run("php garm app:build", function (string $type, string $output) {
+        Process::forever()->tty()->run("php garm app:build --no-interaction", function (string $type, string $output) {
             echo $output;
         })->throw();
 
         $this->info("Installing Garm...");
 
-        Process::run("sudo cp ./builds/garm /usr/local/bin/garm", function (string $type, string $output) {
+        Process::forever()->tty()->run("sudo cp ./builds/garm /usr/local/bin/garm", function (string $type, string $output) {
             echo $output;
         })->throw();
 
