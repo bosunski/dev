@@ -1,5 +1,4 @@
 name: Garm
-type: Laravel
 php: 8.2.8
 
 up:

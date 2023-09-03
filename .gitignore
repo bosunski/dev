@@ -6,3 +6,4 @@
 .shadowenv.d
 .garm
 node_modules
+.env

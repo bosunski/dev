@@ -6,6 +6,7 @@ use Amp\Process\Process;
 use Amp\Process\ProcessException;
 use App\Exceptions\UserException;
 use App\Process\Pool;
+use Dotenv\Dotenv;
 use Illuminate\Support\Collection;
 
 class Project
@@ -51,13 +52,28 @@ class Project
             return;
         }
 
-        $command = "hivemind --root {$service->config->cwd()} {$service->config->cwd('Procfile')}";
-        $pool->add($service->config->serviceName(), Process::start($command));
+        $envContent = '';
+
+        foreach (getenv() as $key => $value) {
+            $envContent .= "$key='$value'\n";
+        }
+
+        if ($service->hasEnvFile()) {
+            $envContent .= @file_get_contents($service->config->cwd('.env')) ?? '';
+        }
+
+        $envs = collect(Dotenv::parse($envContent));
+        $pool->add($service->config->serviceName(), Process::start('/opt/homebrew/bin/hivemind', $service->config->cwd(), $envs->toArray()));
     }
 
     public function hasProcfile(): bool
     {
         return file_exists($this->config->cwd('Procfile'));
+    }
+
+    public function hasEnvFile(): bool
+    {
+        return file_exists($this->config->cwd('.env'));
     }
 
     public function hasGarmFile(): bool

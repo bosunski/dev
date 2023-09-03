@@ -1,1 +1,1 @@
-tail: tail -f Procfile
+tail: echo $PROCF && tail -f $PROCF
