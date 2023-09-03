@@ -43,7 +43,8 @@ class CloneStep implements StepInterface
         $runner->io()->info("Cloning {$this->cloneUrl()} to $clonePath");
 
         if (File::exists($clonePath)) {
-            $runner->io()->info("Repository already exists");
+            $runner->io()->info("Repository already exists... Pulling latest changes");
+            $runner->exec("cd $clonePath && git pull");
 
             return false;
         }

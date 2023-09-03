@@ -45,7 +45,7 @@ class AuthStep implements StepInterface
     {
         $this->ensureTokenOrPassword($runner);
 
-        return $runner->spawn($this->command());
+        return $runner->exec($this->command());
     }
 
     private function ensureTokenOrPassword(Runner $runner): void

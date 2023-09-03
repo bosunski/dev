@@ -12,6 +12,7 @@ use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
 use App\Step\UpStep;
 use Exception;
+use Illuminate\Support\Collection;
 
 class UpConfig implements ConfigInterface
 {
@@ -27,7 +28,7 @@ class UpConfig implements ConfigInterface
     {
         $steps = [];
 
-        foreach ($this->services() as $service) {
+        foreach ($this->servicesToSteps($this->services()) as $service) {
             $steps = [...$steps, ...$service];
         }
 
@@ -52,15 +53,22 @@ class UpConfig implements ConfigInterface
     /**
      * @throws Exception
      */
-    private function services(): array
+    private function services(): Collection
     {
         return collect($this->config->services())->map(function (string $service) {
             if ($service === $this->config->serviceName()) {
                 throw new UserException("You cannot reference the current service in its own config!");
             }
 
+            return $service;
+        })->unique();
+    }
+
+    private function servicesToSteps(Collection $services): Collection
+    {
+        return $services->map(function (string $service) {
             return [new CloneStep(...CloneStep::parseService($service)), new UpStep($this->config->sourcePath($service))];
-        })->toArray();
+        });
     }
 
     /**

@@ -28,7 +28,7 @@ class BrewStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
-        return $runner->spawn($this->command());
+        return $runner->exec($this->command());
     }
 
     public function done(Runner $runner): bool

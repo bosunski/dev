@@ -7,6 +7,8 @@ use App\Exceptions\UserException;
 use App\Step\StepInterface;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
+use Illuminate\Process\InvokedProcess;
+use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Command\Command as Cmd;
@@ -62,12 +64,17 @@ class Runner
         return Process::forever()->tty()->run($command, $this->handleOutput(...))->throw()->successful();
     }
 
-    public function spawn(string $command): bool
+    public function spawn(string $command): InvokedProcess
     {
-        return Process::forever()->tty()->run($command, $this->handleOutput(...))->throw()->successful();
+        return Process::forever()->tty()->start($command, $this->handleOutput(...));
     }
 
-    private function handleOutput(string $_, string $output): void
+    public function pool(callable $callback): ProcessPoolResults
+    {
+        return Process::pool($callback)->start($this->handleOutput(...))->wait();
+    }
+
+    private function handleOutput(string $_, string $output, string $key = null): void
     {
         $this->io()->getOutput()->write($output);
     }

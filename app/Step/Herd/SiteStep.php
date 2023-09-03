@@ -43,7 +43,7 @@ class SiteStep implements StepInterface
      */
     public function run(Runner $runner): bool
     {
-        return $runner->spawn($this->command());
+        return $runner->exec($this->command());
     }
 
     /**

@@ -31,7 +31,7 @@ class CustomStep implements StepInterface
             return false;
         }
 
-        return $runner->spawn($this->command());
+        return $runner->exec($this->command());
     }
 
     public function done(Runner $runner): bool

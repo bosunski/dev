@@ -2,7 +2,10 @@
 
 namespace App\Config;
 
+use App\Exceptions\UserException;
 use Illuminate\Support\Str;
+use Symfony\Component\Yaml\Exception\ParseException;
+use Symfony\Component\Yaml\Yaml;
 
 class Config
 {
@@ -12,7 +15,9 @@ class Config
 
     private const DEFAULT_SOURCE_HOST = "github.com";
 
-    public function __construct(protected string $path, protected readonly array $config)
+    public const FILE_NAME = "garm.yaml";
+
+    public function __construct(protected string $path, protected readonly array $config, public readonly bool $isRoot = false)
     {
     }
 
@@ -60,14 +65,14 @@ class Config
         return $this->path;
     }
 
-    public function home(): string
+    public static function home(): string
     {
         return getenv('HOME');
     }
 
-    public function sourcePath(?string $path = null): string
+    public static function sourcePath(?string $path = null): string
     {
-        $sourceDir = sprintf("%s/%s/%s", $this->home(), self::REPO_LOCATION, self::DEFAULT_SOURCE_HOST);
+        $sourceDir = sprintf("%s/%s/%s", self::home(), self::REPO_LOCATION, self::DEFAULT_SOURCE_HOST);
 
         if ($path) {
             return $sourceDir . '/' . ltrim($path, '/');
@@ -84,5 +89,34 @@ class Config
     public function isAGarmProject(): bool
     {
         return !empty($this->config);
+    }
+
+    /**
+     * @throws UserException
+     */
+    public static function read(string $path): Config
+    {
+        return new Config($path, self::parseYaml($path));
+    }
+
+    /**
+     * @throws UserException
+     */
+    private static function parseYaml(string $path): array
+    {
+        if (! file_exists(self::fullPath($path))) {
+            return [];
+        }
+
+        try {
+            return Yaml::parseFile(self::fullPath($path));
+        } catch (ParseException $e) {
+            throw new UserException($e->getMessage());
+        }
+    }
+
+    private static function fullPath(string $path): string
+    {
+        return $path . '/' . self::FILE_NAME;
     }
 }
