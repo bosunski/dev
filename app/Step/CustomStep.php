@@ -31,11 +31,11 @@ class CustomStep implements StepInterface
             return false;
         }
 
-        return $runner->exec($this->command());
+        return $runner->exec($this->command(), $runner->config()->cwd());
     }
 
     public function done(Runner $runner): bool
     {
-        return $runner->exec($this->checkCommand());
+        return $runner->exec($this->checkCommand(), $runner->config()->cwd());
     }
 }

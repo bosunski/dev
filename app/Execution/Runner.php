@@ -59,14 +59,18 @@ class Runner
         return true;
     }
 
-    public function exec(string $command): bool
+    public function exec(string $command, string $path = null): bool
     {
-        return Process::forever()->tty()->run($command, $this->handleOutput(...))->throw()->successful();
+        try {
+            return Process::forever()->tty()->path($path ?? getcwd())->run($command, $this->handleOutput(...))->throw()->successful();
+        } catch (ProcessFailedException) {
+            return false;
+        }
     }
 
-    public function spawn(string $command): InvokedProcess
+    public function spawn(string $command, string $path = null): InvokedProcess
     {
-        return Process::forever()->tty()->start($command, $this->handleOutput(...));
+        return Process::forever()->tty()->path($path ?? getcwd())->start($command, $this->handleOutput(...));
     }
 
     public function pool(callable $callback): ProcessPoolResults

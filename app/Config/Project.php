@@ -63,7 +63,7 @@ class Project
         }
 
         $envs = collect(Dotenv::parse($envContent));
-        $pool->add($service->config->serviceName(), Process::start('/opt/homebrew/bin/hivemind', $service->config->cwd(), $envs->toArray()));
+        $pool->add($service->config->serviceName(), Process::start('shadowenv exec -- /opt/homebrew/bin/hivemind', $service->config->cwd(), $envs->toArray()));
     }
 
     public function hasProcfile(): bool
