@@ -11,6 +11,9 @@ use function Amp\Future\await;
 
 class Pool
 {
+    /**
+     * @var array<string, Process>
+     */
     protected array $processes = [];
 
     public function add(string $key, Process $process): void
@@ -23,6 +26,16 @@ class Pool
 
     public function join(): void
     {
-        await(collect($this->processes)->map(fn (Process $process) => async(fn () => $process->join())));
+        await(collect($this->processes)->map(fn (Process $process) => async(fn () => $this->wait($process))));
+    }
+
+    public function wait(Process $process): void
+    {
+        $process->join();
+        foreach ($this->processes as $process) {
+            if ($process->isRunning()) {
+                $process->kill();
+            }
+        }
     }
 }

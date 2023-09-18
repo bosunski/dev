@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Config\Config;
 use App\Execution\Runner;
+use App\Step\CdStep;
 use App\Step\Git\CloneStep;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
@@ -35,6 +36,9 @@ class CloneCommand extends Command
         $config = new Config(getcwd(), []);
         $runner = new Runner($config, $this);
 
-        return $runner->execute([new CloneStep(...CloneStep::parseService($this->argument('repo')))]);
+        return $runner->execute([
+            new CloneStep(...CloneStep::parseService($repo = $this->argument('repo'))),
+            new CdStep($repo)
+        ]);
     }
 }

@@ -2,20 +2,14 @@
 
 namespace App\Commands;
 
-use Illuminate\Process\Exceptions\ProcessFailedException;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Str;
+use App\Config\Config;
+use App\Execution\Runner;
+use App\Step\CdStep;
+use Exception;
 use LaravelZero\Framework\Commands\Command;
 
 class CdCommand extends Command
 {
-    private const GIT_URL_REGEX = '/^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$/';
-
-    private const REPO_LOCATION = "src";
-
-    private const DEFAULT_SOURCE_HOST = "github.com";
-
     /**
      * The signature of the command.
      *
@@ -28,39 +22,19 @@ class CdCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Clones a GitHub repository';
+    protected $description = 'Change directory to a project repo';
 
     /**
      * Execute the console command.
      *
      * @return mixed
+     * @throws Exception
      */
     public function handle(): int
     {
-        chdir('app');
+        $config = new Config(getcwd(), []);
+        $runner = new Runner($config, $this);
 
-        return 0;
-    }
-
-    private function parseUrl(string $url): string
-    {
-        preg_match(self::GIT_URL_REGEX, $url, $matches);
-
-        return $matches[5];
-    }
-
-    private function parsePath(string $path): array
-    {
-        return explode('/', $path);
-    }
-
-    private function isUrl(): bool
-    {
-        return Str::startsWith($this->argument('repo'), ['http://', 'https://']);
-    }
-
-    private function isPath(): bool
-    {
-        return count(explode('/', $this->argument('repo'))) == 2;
+        return $runner->execute([new CdStep($this->argument('repo'))]);
     }
 }
