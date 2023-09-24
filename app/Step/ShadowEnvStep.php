@@ -5,6 +5,7 @@ namespace App\Step;
 use App\Config\Config;
 use App\Execution\Runner;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class ShadowEnvStep implements StepInterface
 {
@@ -93,5 +94,10 @@ EOF;
 /.*
 !/.gitignore
 EOF;
+    }
+
+    public function id(): string
+    {
+        return Str::random(10);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repository\StepRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(StepRepository::class, function () {
+            return new StepRepository();
+        });
     }
 }

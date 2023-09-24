@@ -54,4 +54,9 @@ class CdStep implements StepInterface
     {
         return false;
     }
+
+    public function id(): string
+    {
+        return "cd-$this->path";
+    }
 }

@@ -35,4 +35,14 @@ class BrewStep implements StepInterface
     {
         return $runner->exec($this->checkCommand());
     }
+
+    public function id(): string
+    {
+        return "brew.packages.{$this->formatPackages('_')}";
+    }
+
+    private function formatPackages(string $glue = " "): string
+    {
+        return collect($this->packages)->join($glue);
+    }
 }

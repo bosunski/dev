@@ -20,8 +20,10 @@
         "amphp/process": "^2.0",
         "laravel-zero/framework": "^10.0.2",
         "laravel/prompts": "^0.1.0",
-        "nunomaduro/termwind": "^1.15.1",
-        "symfony/yaml": "^6.3"
+        "nunomaduro/termwind": "^1.15",
+        "symfony/yaml": "^6.3",
+        "ext-pcntl": "*",
+        "ext-posix": "*"
     },
     "require-dev": {
         "laravel/pint": "^1.8",
@@ -48,7 +50,7 @@
             "pestphp/pest-plugin": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true,
     "bin": ["garm"]
 }

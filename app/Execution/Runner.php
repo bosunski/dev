@@ -62,7 +62,13 @@ class Runner
     public function exec(string $command, string $path = null): bool
     {
         try {
-            return Process::forever()->tty()->path($path ?? getcwd())->run($command, $this->handleOutput(...))->throw()->successful();
+            return Process::forever()
+                ->env(['SOURCE_ROOT' => Config::sourcePath()])
+                ->tty()
+                ->path($path ?? getcwd())
+                ->run($command, $this->handleOutput(...))
+                ->throw()
+                ->successful();
         } catch (ProcessFailedException) {
             return false;
         }
@@ -70,7 +76,11 @@ class Runner
 
     public function spawn(string $command, string $path = null): InvokedProcess
     {
-        return Process::forever()->tty()->path($path ?? getcwd())->start($command, $this->handleOutput(...));
+        return Process::forever()
+            ->env(['SOURCE_ROOT' => Config::sourcePath()])
+            ->tty()
+            ->path($path ?? getcwd())
+            ->start($command, $this->handleOutput(...));
     }
 
     public function pool(callable $callback): ProcessPoolResults

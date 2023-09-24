@@ -64,4 +64,9 @@ class AuthStep implements StepInterface
         $output = json_decode(`composer global config {$this->auth->getConfigName()}`, true);
         return $this->auth->validate($output ?? []);
     }
+
+    public function id(): string
+    {
+        return "composer.auth.{$this->auth->host}";
+    }
 }

@@ -22,9 +22,14 @@ class CloneStep implements StepInterface
     {
     }
 
+    public function id(): string
+    {
+        return "git-clone-$this->owner-$this->repo";
+    }
+
     public function name(): string
     {
-        return "Cloning $this->repo";
+        return "Cloning $this->owner/$this->repo";
     }
 
     public function command(): ?string

@@ -3,6 +3,7 @@
 namespace App\Step;
 
 use App\Execution\Runner;
+use Illuminate\Support\Str;
 
 class CustomStep implements StepInterface
 {
@@ -17,12 +18,22 @@ class CustomStep implements StepInterface
 
     public function command(): ?string
     {
-        return $this->config['meet'] ?? null;
+        $command = $this->config['meet'] ?? null;
+        if ($command && is_array($command)) {
+            return $command[0];
+        }
+
+        return $command;
     }
 
     public function checkCommand(): ?string
     {
-        return $this->config['met?'] ?? null;
+        $command = $this->config['met?'] ?? null;
+        if ($command && is_array($command)) {
+            return $command[0];
+        }
+
+        return $command;
     }
 
     public function run(Runner $runner): bool
@@ -37,5 +48,10 @@ class CustomStep implements StepInterface
     public function done(Runner $runner): bool
     {
         return $runner->exec($this->checkCommand(), $runner->config()->cwd());
+    }
+
+    public function id(): string
+    {
+        return Str::random(10);
     }
 }

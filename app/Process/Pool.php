@@ -32,6 +32,11 @@ class Pool
     public function wait(Process $process): void
     {
         $process->join();
+        $this->kill();
+    }
+
+    public function kill(): void
+    {
         foreach ($this->processes as $process) {
             if ($process->isRunning()) {
                 $process->kill();

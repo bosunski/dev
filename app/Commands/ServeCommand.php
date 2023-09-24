@@ -5,8 +5,7 @@ namespace App\Commands;
 use App\Config\Config;
 use App\Execution\Runner;
 use App\Step\ServeStep;
-use App\Step\UpStep;
-use Illuminate\Console\Scheduling\Schedule;
+use Exception;
 use LaravelZero\Framework\Commands\Command;
 
 class ServeCommand extends Command
@@ -29,23 +28,13 @@ class ServeCommand extends Command
      * Execute the console command.
      *
      * @return mixed
+     * @throws Exception
      */
-    public function handle()
+    public function handle(): int
     {
         $config = new Config(getcwd(), []);
         $runner = new Runner($config, $this);
 
         return $runner->execute([new ServeStep($config->cwd())]);
-    }
-
-    /**
-     * Define the command's schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
-     */
-    public function schedule(Schedule $schedule): void
-    {
-        // $schedule->command(static::class)->everyMinute();
     }
 }

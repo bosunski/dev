@@ -8,6 +8,7 @@ use App\Execution\Runner;
 use Exception;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
+use Throwable;
 
 class UpStep implements StepInterface
 {
@@ -15,6 +16,11 @@ class UpStep implements StepInterface
 
     public function __construct(private readonly string $path)
     {
+    }
+
+    public function id(): string
+    {
+        return "up-$this->path";
     }
 
     public function name(): string

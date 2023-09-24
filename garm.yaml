@@ -1,7 +1,32 @@
-name: Garm
+name: garm
 php: 8.2.8
 
+services:
+    - crazywhalecc/static-php-cli
+
 up:
+    - composer:
+          packages:
+              - humbug/box
     - custom:
           name: Install composer dependencies
           met?: composer install
+    - custom:
+          name: Setup Static PHP
+          met?: |
+            PHP_PATH=$HOME/src/github.com/crazywhalecc/static-php-cli/buildroot/bin/php && test -f $PHP_PATH \
+            && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
+          meet: ./scripts/build-static-cli
+commands:
+    build-phar:
+        desc: Build Garm binary
+        run: box compile
+    build-bin:
+        desc: Build Garm binary
+        run: |
+          box compile && \
+          cd $SOURCE_ROOT/crazywhalecc/static-php-cli && \
+          php -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/garm/build/garm.phar -O $SOURCE_ROOT/bosunski/garm/build/garm.bin
+sites:
+    _default_: https://www.facebook.com
+    google: https://www.google.com

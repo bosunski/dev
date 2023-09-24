@@ -3,11 +3,19 @@
 namespace App\Step;
 
 use App\Execution\Runner;
+use Illuminate\Support\Str;
 
 class LockPhpStep implements StepInterface
 {
+    public readonly string $id;
     public function __construct()
     {
+        $this->id = Str::random(10);
+    }
+
+    public function id(): string
+    {
+        return $this->id;
     }
 
     public function name(): string

@@ -53,4 +53,9 @@ class SiteStep implements StepInterface
     {
         return $runner->exec($this->checkCommand());
     }
+
+    public function id(): string
+    {
+        return "herd.site.{$this->site->host}";
+    }
 }

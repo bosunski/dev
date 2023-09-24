@@ -3,16 +3,14 @@
 namespace App\Config;
 
 use App\Contracts\ConfigInterface;
-use App\Exceptions\UserException;
 use App\Step\CustomStep;
 use App\Step\BrewStep;
-use App\Step\Git\CloneStep;
+use App\Step\Env\EnvCopyStep;
+use App\Step\Env\EnvSubstituteStep;
 use App\Step\LockPhpStep;
 use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
-use App\Step\UpStep;
 use Exception;
-use Illuminate\Support\Collection;
 
 class UpConfig implements ConfigInterface
 {
@@ -26,13 +24,13 @@ class UpConfig implements ConfigInterface
      */
     public function steps(): array
     {
-        $steps = [];
+        $steps = [new LockPhpStep(), new ShadowEnvStep()];
 
-        foreach ($this->servicesToSteps($this->services()) as $service) {
-            $steps = [...$steps, ...$service];
+        if ($this->shouldCopyEnv()) {
+            $steps[] = new EnvCopyStep($this->config);
+        } else {
+            $steps[] = new EnvSubstituteStep($this->config);
         }
-
-        $steps = [...$steps, new LockPhpStep(), new ShadowEnvStep()];
 
         foreach ($this->config->steps() as $step) {
             foreach ($step as $name => $args) {
@@ -50,25 +48,10 @@ class UpConfig implements ConfigInterface
         return $steps;
     }
 
-    /**
-     * @throws Exception
-     */
-    private function services(): Collection
+    private function shouldCopyEnv(): bool
     {
-        return collect($this->config->services())->map(function (string $service) {
-            if ($service === $this->config->serviceName()) {
-                throw new UserException("You cannot reference the current service in its own config!");
-            }
-
-            return $service;
-        })->unique();
-    }
-
-    private function servicesToSteps(Collection $services): Collection
-    {
-        return $services->map(function (string $service) {
-            return [new CloneStep(...CloneStep::parseService($service)), new UpStep($this->config->sourcePath($service))];
-        });
+        return ! is_file($this->config->cwd('.env'))
+                && is_file($this->config->cwd('.env.example'));
     }
 
     /**

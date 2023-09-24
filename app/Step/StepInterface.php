@@ -14,11 +14,9 @@ interface StepInterface
 
     public function name(): string;
 
-    public function command(): ?string;
-
-    public function checkCommand(): ?string;
-
     public function run(Runner $runner): bool;
 
     public function done(Runner $runner): bool;
+
+    public function id(): string;
 }

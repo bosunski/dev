@@ -3,6 +3,7 @@
 namespace App\Config;
 
 use App\Exceptions\UserException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -26,9 +27,30 @@ class Config
         return $this->config['name'] ?? '';
     }
 
-    public function services(): array
+    public function services(): Collection
     {
-        return $this->config['services'] ?? [];
+        return collect($this->config['services'] ?? [])->map(function (string $service) {
+            if ($service === $this->serviceName()) {
+                throw new UserException("You cannot reference the current service in its own config!");
+            }
+
+            return $service;
+        })->unique();
+    }
+
+    public function sites(): Collection
+    {
+        return collect($this->config['sites'] ?? []);
+    }
+
+    public function commands(): Collection
+    {
+        return collect($this->config['commands'] ?? []);
+    }
+
+    public function service(): Service
+    {
+        return new Service($this);
     }
 
     public function getType(): string
@@ -51,9 +73,9 @@ class Config
         return $this->config['up'] ?? [];
     }
 
-    public function path(): string
+    public function path(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH);
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR));
     }
 
     public function cwd(?string $path = null): string
@@ -97,6 +119,22 @@ class Config
     public static function read(string $path): Config
     {
         return new Config($path, self::parseYaml($path));
+    }
+
+    /**
+     * @throws UserException
+     */
+    public static function fromPath(string $path): Config
+    {
+        return static::read($path);
+    }
+
+    /**
+     * @throws UserException
+     */
+    public static function fromServiceName(string $path): Config
+    {
+        return static::read(static::sourcePath($path));
     }
 
     /**

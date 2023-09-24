@@ -2,7 +2,6 @@
 
 namespace App\Step;
 
-use Amp\Process\Process;
 use App\Config\Config;
 use App\Config\Project;
 use App\Exceptions\UserException;
@@ -10,6 +9,7 @@ use App\Execution\Runner;
 use App\Process\Pool;
 use Exception;
 use Illuminate\Support\Facades\File;
+use Revolt\EventLoop;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -50,7 +50,14 @@ class ServeStep implements StepInterface
 
         $project->servicePool($pool);
 
+        EventLoop::onSignal(SIGTERM, fn() => $pool->kill());
+        EventLoop::onSignal(SIGINT, fn() => $pool->kill());
+        File::put($runner->config()->path('garm.pid'), getmypid());
         $pool->join();
+
+        if (File::exists($runner->config()->path('garm.pid'))) {
+            File::delete($runner->config()->path('garm.pid'));
+        }
 
         return true;
     }
@@ -79,5 +86,10 @@ class ServeStep implements StepInterface
     public function done(Runner $runner): bool
     {
         return false;
+    }
+
+    public function id(): string
+    {
+        return "serve";
     }
 }

@@ -12,6 +12,11 @@ class PackagesStep implements StepInterface
     {
     }
 
+    public function id(): string
+    {
+        return "composer.packages.{$this->formatPackages('_')}";
+    }
+
     public function name(): string
     {
         return "Install global composer packages: {$this->formatPackages(', ')}";
