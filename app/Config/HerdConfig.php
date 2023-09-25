@@ -4,6 +4,7 @@ namespace App\Config;
 
 use App\Config\Herd\Sites;
 use App\Contracts\ConfigInterface;
+use App\Step\LockPhpStep;
 use App\Step\StepInterface;
 use Exception;
 
@@ -11,11 +12,6 @@ class HerdConfig implements ConfigInterface
 {
     public function __construct(protected readonly array $config)
     {
-    }
-
-    public function getGlobalPackages(): array
-    {
-        return $this->config['global'] ?? [];
     }
 
     /**
@@ -41,10 +37,11 @@ class HerdConfig implements ConfigInterface
     /**
      * @throws Exception
      */
-    private function makeStep(string $name, array $config): StepInterface|ConfigInterface
+    private function makeStep(string $name, mixed $config): StepInterface|ConfigInterface
     {
         return match ($name) {
             'sites' => new Sites($config),
+            'php' => new LockPhpStep($config),
             default => throw new Exception("Unknown step: $name"),
         };
     }

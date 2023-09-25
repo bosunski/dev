@@ -58,9 +58,9 @@ class Config
         return $this->config['type'] ?? '';
     }
 
-    public function getPhp(): string
+    public function getPhp(): ?string
     {
-        return $this->config['php'] ?? PHP_VERSION;
+        return $this->config['php'] ?? null;
     }
 
     public function up(): UpConfig

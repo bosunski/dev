@@ -24,10 +24,15 @@ class SiteStep implements StepInterface
     public function command(): ?string
     {
         return match ($this->site->type) {
-            'link' => "valet link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
-            'proxy' => "valet proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
+            'link' => "{$this->herBinary()} link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
+            'proxy' => "{$this->herBinary()} proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
             default => throw new Exception("Unknown site type: {$this->site->type}"),
         };
+    }
+
+    private function herBinary(): string
+    {
+        return  escapeshellarg("{$_SERVER['HOME']}/Library/Application Support/Herd/bin/herd");
     }
 
     /**

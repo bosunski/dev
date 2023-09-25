@@ -65,7 +65,7 @@ class Runner
             return Process::forever()
                 ->env(['SOURCE_ROOT' => Config::sourcePath()])
                 ->tty()
-                ->path($path ?? getcwd())
+                ->path($path ?? $this->config->cwd())
                 ->run($command, $this->handleOutput(...))
                 ->throw()
                 ->successful();
@@ -79,7 +79,7 @@ class Runner
         return Process::forever()
             ->env(['SOURCE_ROOT' => Config::sourcePath()])
             ->tty()
-            ->path($path ?? getcwd())
+            ->path($path ?? $this->config->cwd())
             ->start($command, $this->handleOutput(...));
     }
 

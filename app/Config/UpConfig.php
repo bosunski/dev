@@ -24,7 +24,12 @@ class UpConfig implements ConfigInterface
      */
     public function steps(): array
     {
-        $steps = [new LockPhpStep(), new ShadowEnvStep()];
+        $steps = [];
+//        if ($phpVersion = $this->config->getPhp()) {
+//            $steps[] = new LockPhpStep($phpVersion);
+//        }
+
+        $steps = [...$steps, new ShadowEnvStep()];
 
         if ($this->shouldCopyEnv()) {
             $steps[] = new EnvCopyStep($this->config);

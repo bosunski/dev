@@ -24,9 +24,11 @@ class SetupCommand extends Command
     public function handle(): int
     {
         $this->info("Installing required dependencies...");
-        Process::forever()->tty()->run("brew install hivemind shadowenv", function (string $type, string $output) {
-            echo $output;
-        })->throw();
+        Process::forever()
+            ->tty()
+            ->run("brew install hivemind shadowenv php", function (string $type, string $output) {
+                echo $output;
+            })->throw();
 
         return 0;
     }

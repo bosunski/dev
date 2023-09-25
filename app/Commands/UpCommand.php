@@ -61,7 +61,12 @@ class UpCommand extends Command
             }
 
             $this->info("🚀 Running steps for $serviceName...");
-            $this->runner->execute($steps);
+            $config = Config::fromServiceName($serviceName);
+            $runner = new Runner($config, $this);
+            if($runner->execute($steps) !== 0) {
+                $this->error("⛔️ Failed to run steps for $serviceName");
+                return self::FAILURE;
+            }
         }
 
         return self::SUCCESS;
