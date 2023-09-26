@@ -55,16 +55,16 @@ class UpCommand extends Command
         $this->stepRepository->addService($this->config->service());
 
         $services = $this->stepRepository->getServices();
-        foreach ($services as $serviceName => $steps) {
-            if (count($steps) === 0) {
+
+        foreach ($services as $service) {
+            if ($service->steps->count() === 0) {
                 continue;
             }
 
-            $this->info("🚀 Running steps for $serviceName...");
-            $config = Config::fromServiceName($serviceName);
-            $runner = new Runner($config, $this);
-            if($runner->execute($steps) !== 0) {
-                $this->error("⛔️ Failed to run steps for $serviceName");
+            $this->info("🚀 Running steps for $service->id...");
+            $runner = new Runner($service->config, $this);
+            if($runner->execute($service->steps->toArray()) !== 0) {
+                $this->error("⛔️ Failed to run steps for $service->id");
                 return self::FAILURE;
             }
         }
@@ -76,7 +76,7 @@ class UpCommand extends Command
      * @throws UserException
      * @throws Exception
      */
-    private function resolveService(string $serviceName): array
+    private function resolveService(string $serviceName): Service
     {
         /**
          * First we check if the service is already in the repository.
@@ -103,6 +103,6 @@ class UpCommand extends Command
 
         $this->stepRepository->addService($service = new Service(Config::fromServiceName($serviceName)));
 
-        return $service->steps();
+        return $service;
     }
 }

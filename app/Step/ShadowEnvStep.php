@@ -84,7 +84,7 @@ class ShadowEnvStep implements StepInterface
         $opPath = Config::OP_PATH;
         return <<<EOF
 (env/prepend-to-pathlist "PATH" "./$binPath")
-(env/set "PHP_INI_SCAN_DIR" "./$opPath/php.d")
+(env/set "PHP_INI_SCAN_DIR" "./$opPath/php.d:\$PHP_INI_SCAN_DIR")
 EOF;
     }
 

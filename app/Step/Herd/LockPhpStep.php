@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Step;
+namespace App\Step\Herd;
 
 use App\Execution\Runner;
-use Illuminate\Support\Facades\File;
+use App\Step\StepInterface;
 use Illuminate\Support\Str;
 
 class LockPhpStep implements StepInterface

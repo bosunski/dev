@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Config;
+namespace App\Config\Herd;
 
-use App\Config\Herd\Sites;
+use App\Config\Php\ExtensionConfig;
 use App\Contracts\ConfigInterface;
-use App\Step\LockPhpStep;
+use App\Step\Herd\LockPhpStep;
 use App\Step\StepInterface;
 use Exception;
 
-class HerdConfig implements ConfigInterface
+class PhpConfig implements ConfigInterface
 {
     public function __construct(protected readonly array $config)
     {
@@ -40,8 +40,8 @@ class HerdConfig implements ConfigInterface
     private function makeStep(string $name, mixed $config): StepInterface|ConfigInterface
     {
         return match ($name) {
-            'sites' => new Sites($config),
-            'php' => new LockPhpStep($config),
+            'version' => new LockPhpStep($config),
+            'extensions' => new ExtensionConfig($config, []),
             default => throw new Exception("Unknown step: $name"),
         };
     }

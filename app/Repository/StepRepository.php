@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Config\Config;
 use App\Config\Service;
+use App\Exceptions\UserException;
 use App\Step\CanBeDeferred;
 use App\Step\DeferredStep;
 use App\Step\StepInterface;
@@ -11,10 +13,22 @@ use Exception;
 class StepRepository
 {
     /**
-     * @var array<string, array<string, StepInterface>> $services
+     * @var array<string, Service> $services
      */
-    protected array $services = ['deferred' => []];
+    protected array $services;
 
+    /**
+     * @throws UserException
+     * @throws Exception
+     */
+    public function __construct()
+    {
+        $this->services = ['deferred' => new Service(Config::fromServiceName('deferred'))];
+    }
+
+    /**
+     * @throws UserException
+     */
     public function add(string $service, StepInterface $step): StepInterface
     {
         /**
@@ -32,19 +46,24 @@ class StepRepository
             $step = new DeferredStep($this, $step);
         }
 
-        $this->services[$service][$step->id()] = $step;
+        if (! $this->services[$service] ?? false) {
+            throw new UserException("Service $service does not exist!");
+        }
+
+        $this->services[$service]->add($step);
 
         return $step;
     }
 
+    /**
+     * @throws UserException
+     */
     public function addDeferred(DeferredStep $deferred): StepInterface
     {
         /**
          * ToDo: Use self::add() here instead of duplicating the code
          */
-        if (! $this->services['deferred'][$deferred->id()] ?? false) {
-            $this->services['deferred'][$deferred->id()] = $deferred->step();
-        }
+        $this->add('deferred', $deferred->step());
 
         return $deferred;
     }
@@ -52,7 +71,7 @@ class StepRepository
     public function hasStep(string $id): bool
     {
         return collect($this->services)
-            ->map(fn (array $steps) => collect($steps)->has($id))
+            ->map(fn (Service $service) => $service->hasStep($id))
             ->contains(true);
     }
 
@@ -61,11 +80,12 @@ class StepRepository
      */
     public function addService(Service $service): void
     {
-        $this->services[$service->id] = [];
-
-        foreach ($service->steps() as $step) {
-            $this->add($service->id, $step);
-        }
+        $this->services[$service->id] = $service;
+        /**
+         * We are adding the steps through this repository to ensure there is
+         * no duplicate across services.
+         */
+        $service->addSteps($this->add(...));
     }
 
     public function hasService(string $id): bool
@@ -73,7 +93,7 @@ class StepRepository
         return collect($this->services)->has($id);
     }
 
-    public function getService(string $id): ?array
+    public function getService(string $id): ?Service
     {
         return $this->services[$id] ?? null;
     }

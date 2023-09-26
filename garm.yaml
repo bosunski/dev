@@ -5,12 +5,13 @@ services:
     - crazywhalecc/static-php-cli
 
 up:
-  - herd:
-      php: 8.2.10
+  - valet:
+      php:
+        version: 8.2
       sites:
         - garm
   - brew:
-    - php@8.2
+    - php
   - composer:
         packages:
             - humbug/box
@@ -21,6 +22,7 @@ up:
         name: Setup Static PHP
         met?: |
           PHP_PATH=$SOURCE_ROOT/crazywhalecc/static-php-cli/buildroot/bin/php && test -f $PHP_PATH \
+          && PHP_INI_SCAN_DIR="" \
           && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
         meet: ./scripts/build-static-cli
 commands:
@@ -32,7 +34,7 @@ commands:
         run: |
           box compile && \
           cd $SOURCE_ROOT/crazywhalecc/static-php-cli && \
-          php -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/garm/build/garm.phar -O $SOURCE_ROOT/bosunski/garm/build/garm.bin
+          $PHP_BIN -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/garm/build/garm.phar -O $SOURCE_ROOT/bosunski/garm/build/garm.bin
 sites:
     _default_: google
     google: https://www.google.com

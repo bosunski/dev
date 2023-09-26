@@ -18,8 +18,11 @@ class Config
 
     public const FILE_NAME = "garm.yaml";
 
+    public readonly Collection $environment;
+
     public function __construct(protected string $path, protected readonly array $config, public readonly bool $isRoot = false)
     {
+        $this->environment = collect($this->config['environment'] ?? []);
     }
 
     public function getName(): string
@@ -71,6 +74,11 @@ class Config
     public function steps(): array
     {
         return $this->config['up'] ?? [];
+    }
+
+    public function valet(): array
+    {
+        return $this->steps()['valet'] ?? [];
     }
 
     public function path(?string $path = null): string

@@ -44,10 +44,10 @@ class Runner
     /**
      * @throws UserException
      */
-    private function executeStep(StepInterface $step): bool
+    private function executeStep(StepInterface $step): void
     {
         if ($step->done($this)) {
-            return true;
+            return;
         }
 
         $done = $step->run($this);
@@ -55,15 +55,13 @@ class Runner
         if (! $done) {
             throw new UserException("Failed to run step: {$step->name()}");
         }
-
-        return true;
     }
 
-    public function exec(string $command, string $path = null): bool
+    public function exec(string $command, string $path = null, array $env = []): bool
     {
         try {
             return Process::forever()
-                ->env(['SOURCE_ROOT' => Config::sourcePath()])
+                ->env($this->environment($env))
                 ->tty()
                 ->path($path ?? $this->config->cwd())
                 ->run($command, $this->handleOutput(...))
@@ -74,13 +72,18 @@ class Runner
         }
     }
 
-    public function spawn(string $command, string $path = null): InvokedProcess
+    public function spawn(string $command, string $path = null, array $env = []): InvokedProcess
     {
         return Process::forever()
-            ->env(['SOURCE_ROOT' => Config::sourcePath()])
+            ->env($this->environment($env))
             ->tty()
             ->path($path ?? $this->config->cwd())
             ->start($command, $this->handleOutput(...));
+    }
+
+    private function environment(array $env = []): array
+    {
+        return $this->config->environment->merge($env)->merge(['SOURCE_ROOT' => Config::sourcePath()])->all();
     }
 
     public function pool(callable $callback): ProcessPoolResults

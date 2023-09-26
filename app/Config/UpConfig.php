@@ -2,12 +2,13 @@
 
 namespace App\Config;
 
+use App\Config\Herd\HerdConfig;
+use App\Config\Valet\ValetConfig;
 use App\Contracts\ConfigInterface;
-use App\Step\CustomStep;
 use App\Step\BrewStep;
+use App\Step\CustomStep;
 use App\Step\Env\EnvCopyStep;
 use App\Step\Env\EnvSubstituteStep;
-use App\Step\LockPhpStep;
 use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
 use Exception;
@@ -24,13 +25,7 @@ class UpConfig implements ConfigInterface
      */
     public function steps(): array
     {
-        $steps = [];
-//        if ($phpVersion = $this->config->getPhp()) {
-//            $steps[] = new LockPhpStep($phpVersion);
-//        }
-
-        $steps = [...$steps, new ShadowEnvStep()];
-
+        $steps = [new ShadowEnvStep()];
         if ($this->shouldCopyEnv()) {
             $steps[] = new EnvCopyStep($this->config);
         } else {
@@ -50,7 +45,9 @@ class UpConfig implements ConfigInterface
             }
         }
 
-        return $steps;
+        return collect($steps)
+            ->sortBy(fn ($step) => $step instanceof BrewStep ? StepInterface::PRIORITY_HIGH : StepInterface::PRIORITY_NORMAL)
+            ->toArray();
     }
 
     private function shouldCopyEnv(): bool
@@ -68,6 +65,7 @@ class UpConfig implements ConfigInterface
             'composer' => new ComposerConfig($config),
             'brew' => new BrewStep($config),
             'herd' => new HerdConfig($config),
+            'valet' => new ValetConfig($config, $this->config),
             'custom' => new CustomStep($config),
             default => throw new Exception("Unknown step: $name"),
         };
