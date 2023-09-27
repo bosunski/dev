@@ -26,7 +26,7 @@ class SetupCommand extends Command
         $this->info("Installing required dependencies...");
         Process::forever()
             ->tty()
-            ->run("brew install hivemind shadowenv php", function (string $type, string $output) {
+            ->run("brew install hivemind shadowenv php orbstack", function (string $type, string $output) {
                 echo $output;
             })->throw();
 

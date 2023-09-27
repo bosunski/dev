@@ -16,7 +16,7 @@ class RunCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'run {name?} {subcommand?}';
+    protected $signature = 'run {name?} {subcommand?} {--service=}';
 
     /**
      * The description of the command.
@@ -25,7 +25,7 @@ class RunCommand extends Command
      */
     protected $description = 'Run a custom command defined in garm.yaml';
 
-    protected readonly Config $config;
+    protected Config $config;
 
     protected readonly Runner $runner;
 
@@ -45,6 +45,14 @@ class RunCommand extends Command
      */
     public function handle(): int
     {
+        if ($service = $this->option('service')) {
+           if ($this->config->services()->contains($service)) {
+                $this->config = Config::fromServiceName($service);
+              } else {
+                throw new UserException("Service $service not found in this project. Are you sure it is registered?");
+           }
+        }
+
         $commands = $this->config->commands();
 
         if ($commands->isEmpty()) {
@@ -77,7 +85,13 @@ class RunCommand extends Command
             throw new UserException("Command $name is not configured correctly");
         }
 
-        $this->runner->spawn($command->get('run'), $this->config->cwd())->wait()->throw();
+        if ($this->option('service')) {
+            $this->info("🚀 Running command $name for service {$this->config->getName()}...");
+        } else {
+            $this->info("🚀 Running command $name...");
+        }
+
+        (new Runner($this->config, $this))->spawn($command->get('run'), $this->config->cwd())->wait()->throw();
 
         return self::SUCCESS;
     }

@@ -29,7 +29,7 @@ class EnvSubstituteStep implements StepInterface
 
         // ToDo: Handle errors when parsing .env files
         $sampleEnvs = Dotenv::parse($sampleEnvContent);
-        $currentEnvs = Dotenv::parse($sampleEnvContent);
+        $currentEnvs = Dotenv::parse($envContent);
 
         if (count($sampleEnvs) > 0) {
             $runner->io()->info('Substituting variables in .env file with discovered .env.example');
@@ -46,6 +46,7 @@ class EnvSubstituteStep implements StepInterface
             $insert = "$key=\"$value\"";
             if (! $hasValue && ! in_array($value, ["", "null", "NULL"])) {
                 $envContent = preg_replace("/$key=(.*)/m", $insert, $envContent);
+                $envWasAdded = true;
                 continue;
             }
 

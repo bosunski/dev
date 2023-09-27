@@ -22,7 +22,7 @@ class Config
 
     public function __construct(protected string $path, protected readonly array $config, public readonly bool $isRoot = false)
     {
-        $this->environment = collect($this->config['environment'] ?? []);
+        $this->environment = collect($this->config['env'] ?? []);
     }
 
     public function getName(): string

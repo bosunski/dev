@@ -13,7 +13,7 @@ class KillCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'kill';
+    protected $signature = 'kill {--service=}';
 
     /**
      * The description of the command.
@@ -28,6 +28,14 @@ class KillCommand extends Command
     public function handle(): int
     {
         $config = Config::fromPath(getcwd());
+
+        if ($service = $this->option('service')) {
+            if ($config->services()->contains($service)) {
+                $config = Config::fromServiceName($service);
+            } else {
+                throw new UserException("Service $service not found in this project. Are you sure it is registered?");
+            }
+        }
 
         if (! file_exists($config->path('garm.pid'))) {
             $this->error('No running services found');
