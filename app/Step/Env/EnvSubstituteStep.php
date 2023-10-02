@@ -38,7 +38,7 @@ class EnvSubstituteStep implements StepInterface
 
         $envWasAdded = false;
         foreach ($sampleEnvs as $key => $value) {
-            $hasValue = ! in_array($currentEnvs[$key], ["", "null", "NULL"]);
+            $hasValue = ! in_array($currentEnvs[$key] ?? null, ["", "null", "NULL"]);
             if (str_contains($envContent, "$key=") &&  $hasValue) {
                 continue;
             }
