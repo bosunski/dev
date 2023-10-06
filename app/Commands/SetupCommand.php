@@ -30,6 +30,10 @@ class SetupCommand extends Command
                 echo $output;
             })->throw();
 
+        $this->info("Starting services...");
+
+        Process::run(['orb', 'start']);
+
         return 0;
     }
 }
