@@ -5,16 +5,6 @@ services:
     - crazywhalecc/static-php-cli
 
 up:
-  - valet:
-      php:
-        version: 8.2
-      sites:
-        - garm
-  - brew:
-    - php
-  - composer:
-        packages:
-            - humbug/box
   - custom:
         name: Install composer dependencies
         met?: composer install
