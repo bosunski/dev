@@ -8,6 +8,8 @@ use App\Step\Valet\LockPhpStep;
 use App\Step\StepInterface;
 use Exception;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Str;
 
 class ValetConfig implements ConfigInterface
 {
@@ -98,12 +100,42 @@ class ValetConfig implements ConfigInterface
         }
 
         $command = "find /opt/homebrew/Cellar/$source | grep \"$source/$version.*/bin/php$\"";
-        return trim(`$command` ?? "");
+
+        $output = Str::of(self::runCommand($command)->output());
+        $paths = $output->explode(PHP_EOL)->filter();
+
+        if ($paths->isEmpty()) {
+            return "";
+        }
+
+        $versions = collect();
+        foreach($paths->filter() as $path) {
+            preg_match("/$version\.\d+/", $path, $matches);
+            $versions[$matches[0]] = $path;
+        }
+
+        $latest = $versions->keys()->first();
+        $versions->each(function ($path, $version) use(&$latest): void {
+           if (version_compare($version, $latest, '>')) {
+               $latest = $version;
+           }
+        });
+
+        return $versions->get($latest);
     }
 
     private function currentPhpExtensionPath(?string $phpBin = null): string
     {
-        $phpBin ??= trim(`which php`);
-        return trim(`$phpBin -nr "echo ini_get('extension_dir');"`);
+        $phpBin ??= self::runCommand('which php')->output();
+
+       return self::runCommand("$phpBin -nr \"echo ini_get('extension_dir');\"")->output();
+    }
+
+    private static function runCommand(string $command)
+    {
+        return Process::timeout(3)
+            ->command($command)
+            ->run()
+            ->throw();
     }
 }

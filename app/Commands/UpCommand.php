@@ -18,7 +18,7 @@ class UpCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'up';
+    protected $signature = 'up {--self : Skip Services}';
 
     /**
      * The description of the command.
@@ -47,7 +47,7 @@ class UpCommand extends Command
      */
     public function handle(): int
     {
-        if ($this->config->services()->count() > 0) {
+        if (! $this->option('self') && $this->config->services()->count() > 0) {
             $this->info("🚀 Project contains {$this->config->services()->count()} services. Resolving all services...");
             $this->config->services()->each(fn ($service) => $this->resolveService($service));
         }
