@@ -85,12 +85,6 @@ class RunCommand extends Command
             throw new UserException("Command $name is not configured correctly");
         }
 
-        if ($this->option('service')) {
-            $this->info("🚀 Running command $name for service {$this->config->getName()}...");
-        } else {
-            $this->info("🚀 Running command $name...");
-        }
-
         (new Runner($this->config, $this))->spawn($command->get('run'), $this->config->cwd())->wait()->throw();
 
         return self::SUCCESS;
