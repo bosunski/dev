@@ -30,6 +30,7 @@ class EnvSubstituteStep implements StepInterface
         // ToDo: Handle errors when parsing .env files
         $sampleEnvs = Dotenv::parse($sampleEnvContent);
         $currentEnvs = Dotenv::parse($envContent);
+        dump($sampleEnvs, $currentEnvs);
 
         if (count($sampleEnvs) > 0) {
             $runner->io()->info('Substituting variables in .env file with discovered .env.example');
@@ -38,20 +39,37 @@ class EnvSubstituteStep implements StepInterface
 
         $envWasAdded = false;
         foreach ($sampleEnvs as $key => $value) {
-            $hasValue = ! in_array($currentEnvs[$key] ?? null, ["", "null", "NULL"]);
-            if (str_contains($envContent, "$key=") &&  $hasValue) {
-                continue;
-            }
-
+            $exists = in_array($key, array_keys($currentEnvs));
             $insert = "$key=\"$value\"";
-            if (! $hasValue && ! in_array($value, ["", "null", "NULL"])) {
-                $envContent = preg_replace("/$key=(.*)/m", $insert, $envContent);
+
+            /**
+             * If the key doesn't exist in the .env file, we want to add it.
+             */
+            if (!$exists) {
+                $envContent .= $insert . "\n";
                 $envWasAdded = true;
                 continue;
             }
 
-            $envContent .= $insert . "\n";
-            $envWasAdded = true;
+            $hasValue = ! in_array($currentEnvs[$key] ?? null, ["", "null", "NULL"]);
+            /**
+             * If the key already exists in the .env file, and has a value, we don't want to
+             * overwrite it. So, we skip it.
+             */
+            if (str_contains($envContent, "$key=") && $hasValue) {
+                continue;
+            }
+
+            $hasSampleValue = ! in_array($value, ["", "null", "NULL"]);
+
+            /**
+             * If the key already exists in the .env file, but doesn't have a value, we want to
+             * overwrite it if the sample env has a value for it.
+             */
+            if (! $hasValue && $hasSampleValue) {
+                $envContent = preg_replace("/$key=(.*)/m", $insert, $envContent);
+                $envWasAdded = true;
+            }
         }
 
         if ($envWasAdded) {
