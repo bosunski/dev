@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => 'Garm',
+    'name' => 'sek',
 
     /*
     |--------------------------------------------------------------------------
@@ -57,7 +57,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Autoloaded Service Providers
+    | Auto-loaded Service Providers
     |--------------------------------------------------------------------------
     |
     | The service providers listed here will be automatically loaded on the
