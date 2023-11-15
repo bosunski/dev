@@ -31,7 +31,11 @@ class Runner
     {
         try {
             foreach ($steps as $step) {
-                $this->command->getOutput()->writeln("✨ {$step->name()}");
+                $name = $step->name();
+                if ($name) {
+                    $this->command->getOutput()->writeln("✨ {$step->name()}");
+                }
+
                 $this->executeStep($step);
             }
 

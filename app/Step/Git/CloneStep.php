@@ -6,7 +6,6 @@ use App\Config\Config;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Step\StepInterface;
-use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -16,9 +15,7 @@ class CloneStep implements StepInterface
 
     private const REPO_LOCATION = "src";
 
-    private const DEFAULT_SOURCE_HOST = "github.com";
-
-    public function __construct(private readonly string $owner, private readonly string $repo)
+    public function __construct(private readonly string $owner, private readonly string $repo, private readonly string $host, private readonly array $args = [])
     {
     }
 
@@ -27,9 +24,9 @@ class CloneStep implements StepInterface
         return "git-clone-$this->owner-$this->repo";
     }
 
-    public function name(): string
+    public function name(): ?string
     {
-        return "Cloning $this->owner/$this->repo";
+        return null;
     }
 
     public function command(): ?string
@@ -45,23 +42,25 @@ class CloneStep implements StepInterface
     public function run(Runner $runner): bool
     {
         $clonePath = $this->clonePath($runner->config());
-        $runner->io()->info("Cloning {$this->cloneUrl()} to $clonePath");
+        if (File::isDirectory($clonePath)) {
+            $runner->io()->info("Repository already exists at $clonePath");
 
-        if (File::exists($clonePath)) {
-            $runner->io()->info("Repository already exists... Pulling latest changes");
-            $runner->exec("cd $clonePath && git pull");
-
-            return false;
+            return true;
         }
 
-        try {
-            File::makeDirectory($clonePath, recursive: true);
-            return $runner->exec("git clone {$this->cloneUrl()} $clonePath");
-        } catch (ProcessFailedException) {
+        File::makeDirectory($clonePath, recursive: true);
+        $gitArgs = "";
+        if (!empty($this->args)) {
+            $gitArgs = " " . implode(' ', $this->args);
+        }
+
+        $result = $runner->exec("git clone$gitArgs {$this->cloneUrl()} $clonePath");
+
+        if (!$result) {
             File::deleteDirectory($clonePath);
-
-            return false;
         }
+
+        return $result;
     }
 
     protected function clonePath(Config $config): string
@@ -76,15 +75,16 @@ class CloneStep implements StepInterface
 
     protected function cloneUrl(): string
     {
-        return "https://" . self::DEFAULT_SOURCE_HOST . "/{$this->ownerRepo()}.git";
+        return "https://" . $this->host . "/{$this->ownerRepo()}.git";
     }
 
     public function done(Runner $runner): bool
     {
-        return is_dir($this->clonePath($runner->config()));
+        return false;
     }
 
     /**
+     * @return array{owner: string, repo: string}
      * @throws UserException
      */
     public static function parseService(string $service): array

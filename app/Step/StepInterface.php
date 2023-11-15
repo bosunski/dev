@@ -12,7 +12,7 @@ interface StepInterface
 
     public const PRIORITY_LOW = 3;
 
-    public function name(): string;
+    public function name(): ?string;
 
     public function run(Runner $runner): bool;
 

@@ -17,9 +17,9 @@ class CdStep implements StepInterface
         $this->path = Config::sourcePath($repo);
     }
 
-    public function name(): string
+    public function name(): ?string
     {
-        return "Changing directory to $this->path";
+        return null;
     }
 
     public function command(): ?string
@@ -38,6 +38,10 @@ class CdStep implements StepInterface
             $runner->io()->error("Directory does not exists.");
 
             return false;
+        }
+
+        if (getcwd() === $this->path) {
+            return true;
         }
 
         $shell = self::DEFAULT_SHELL;

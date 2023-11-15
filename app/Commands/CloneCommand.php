@@ -11,12 +11,18 @@ use LaravelZero\Framework\Commands\Command;
 
 class CloneCommand extends Command
 {
+    private const KNOWN_SOURCES = [
+        'github' => 'github.com',
+        'gitlab' => 'gitlab.com',
+        'bitbucket' => 'bitbucket.org',
+    ];
+
     /**
      * The signature of the command.
      *
      * @var string
      */
-    protected $signature = 'clone {repo}';
+    protected $signature = 'clone {repo} {args?*} {--source=}';
 
     /**
      * The description of the command.
@@ -33,12 +39,19 @@ class CloneCommand extends Command
      */
     public function handle(): int
     {
+        $source = $this->option('source');
+        if ($source && !in_array($source, self::KNOWN_SOURCES)) {
+            $this->line("Unknown source $source, please use one of: " . implode(', ', array_keys(self::KNOWN_SOURCES)));
+            return 1;
+        }
+
         $config = new Config(getcwd(), []);
         $runner = new Runner($config, $this);
 
+        [$owner, $repo] = CloneStep::parseService($this->argument('repo'));
         return $runner->execute([
-            new CloneStep(...CloneStep::parseService($repo = $this->argument('repo'))),
-            new CdStep($repo)
+            new CloneStep($owner, $repo, self::KNOWN_SOURCES[$source] ?? "github.com", $this->argument('args')),
+            new CdStep($this->argument('repo')),
         ]);
     }
 }
