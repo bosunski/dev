@@ -50,8 +50,8 @@ class CloneCommand extends Command
 
         [$owner, $repo] = CloneStep::parseService($this->argument('repo'));
         return $runner->execute([
-            new CloneStep($owner, $repo, self::KNOWN_SOURCES[$source] ?? "github.com", $this->argument('args')),
-            new CdStep($this->argument('repo')),
+            new CloneStep($owner, $repo, $source = self::KNOWN_SOURCES[$source] ?? "github.com", $this->argument('args')),
+            new CdStep($this->argument('repo'), $source),
         ]);
     }
 }

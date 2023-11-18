@@ -5,6 +5,7 @@ namespace App\Step;
 use App\Config\Config;
 use App\Execution\Runner;
 use Illuminate\Support\Facades\Process;
+use Symfony\Component\Finder\Finder;
 
 class CdStep implements StepInterface
 {
@@ -12,9 +13,9 @@ class CdStep implements StepInterface
 
     protected string $path;
 
-    public function __construct(string $repo)
+    public function __construct(private readonly string $repo, private readonly string $source)
     {
-        $this->path = Config::sourcePath($repo);
+        $this->path = Config::sourcePath($repo, $this->source);
     }
 
     public function name(): ?string
@@ -34,6 +35,28 @@ class CdStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
+        if ($this->isSinglePath()) {
+            $in = Config::sourcePath(source: $this->source);
+            $finder = Finder::create()
+                ->in($in)
+                ->ignoreVCS(true)
+                ->ignoreDotFiles(true)
+                ->ignoreUnreadableDirs()
+                ->depth(1)
+                ->directories()
+                ->name(["*{$this->repo}*", "*{$this->repo}", "{$this->repo}*"]);
+
+            foreach ($finder as $directory) {
+                $this->path = $directory->getPathname();
+
+                return $this->cd();
+            }
+
+            $runner->io()->error("Unable to find a project matching $this->repo.");
+
+            return false;
+        }
+
         if (!is_dir($this->path)) {
             $runner->io()->error("Directory does not exists.");
 
@@ -44,14 +67,24 @@ class CdStep implements StepInterface
             return true;
         }
 
+        return $this->cd();
+    }
+
+    private function cd(): bool
+    {
         $shell = self::DEFAULT_SHELL;
         if ($defaultShell = getenv('SHELL')) {
             $shell = $defaultShell;
         }
 
-        Process::tty()->forever()->path($this->path)->run([$shell]);
+        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($this->path)->run([$shell]);
 
         return true;
+    }
+
+    private function isSinglePath(): bool
+    {
+        return str($this->repo)->explode('/')->filter()->containsOneItem();
     }
 
     public function done(Runner $runner): bool

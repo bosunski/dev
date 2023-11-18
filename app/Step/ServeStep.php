@@ -21,9 +21,9 @@ class ServeStep implements StepInterface
     {
     }
 
-    public function name(): string
+    public function name(): ?string
     {
-        return "Starting up $this->path";
+        return null;
     }
 
     public function command(): ?string
@@ -52,6 +52,10 @@ class ServeStep implements StepInterface
 
         EventLoop::onSignal(SIGTERM, fn() => $pool->kill());
         EventLoop::onSignal(SIGINT, fn() => $pool->kill());
+        if (! File::isDirectory($runner->config()->path())) {
+            File::makeDirectory($runner->config()->path(), recursive: true);
+        }
+
         File::put($runner->config()->path('garm.pid'), getmypid());
         $pool->join();
 

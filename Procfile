@@ -1,1 +1,2 @@
-tail: echo $PROCF && tail -f $PROCF
+tail: tail -f test.txt
+write: php test.php

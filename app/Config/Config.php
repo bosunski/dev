@@ -16,7 +16,7 @@ class Config
 
     private const DEFAULT_SOURCE_HOST = "github.com";
 
-    public const FILE_NAME = "garm.yaml";
+    public const FILE_NAME = "dev.yml";
 
     public readonly Collection $environment;
 
@@ -100,9 +100,9 @@ class Config
         return getenv('HOME');
     }
 
-    public static function sourcePath(?string $path = null): string
+    public static function sourcePath(?string $path = null, ?string $source = null): string
     {
-        $sourceDir = sprintf("%s/%s/%s", self::home(), self::REPO_LOCATION, self::DEFAULT_SOURCE_HOST);
+        $sourceDir = sprintf("%s/%s/%s", self::home(), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
 
         if ($path) {
             return $sourceDir . '/' . ltrim($path, '/');
