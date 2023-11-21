@@ -18,7 +18,7 @@ class CustomStep implements StepInterface
 
     public function command(): ?string
     {
-        $command = $this->config['meet'] ?? null;
+        $command = $this->config['meet'] ?? $this->config['run'] ?? null;
         if ($command && is_array($command)) {
             return $command[0];
         }
@@ -36,9 +36,14 @@ class CustomStep implements StepInterface
         return $command;
     }
 
+    private function hasCheckCommand(): bool
+    {
+        return $this->checkCommand() !== null;
+    }
+
     public function run(Runner $runner): bool
     {
-        if (! $this->command()) {
+        if ($this->hasCheckCommand() && ! $this->command()) {
             return false;
         }
 
@@ -47,6 +52,10 @@ class CustomStep implements StepInterface
 
     public function done(Runner $runner): bool
     {
+        if (! $this->hasCheckCommand()) {
+            return false;
+        }
+
         return $runner->exec($this->checkCommand(), $runner->config()->cwd());
     }
 

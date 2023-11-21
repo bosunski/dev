@@ -37,12 +37,12 @@ class KillCommand extends Command
             }
         }
 
-        if (! file_exists($config->path('garm.pid'))) {
+        if (! file_exists($config->path('dev.pid'))) {
             $this->error('No running services found');
             return self::FAILURE;
         }
 
-        $pid = file_get_contents($config->path('garm.pid'));
+        $pid = file_get_contents($config->path('dev.pid'));
 
         if (! posix_kill($pid, SIGTERM)) {
             $this->error('Failed to kill services');

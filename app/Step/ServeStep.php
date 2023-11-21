@@ -4,19 +4,14 @@ namespace App\Step;
 
 use App\Config\Config;
 use App\Config\Project;
-use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Process\Pool;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Revolt\EventLoop;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Symfony\Component\Yaml\Yaml;
 
 class ServeStep implements StepInterface
 {
-    public const FILE_NAME = "garm.yaml";
-
     public function __construct(private readonly string $path)
     {
     }
@@ -41,7 +36,7 @@ class ServeStep implements StepInterface
      */
     public function run(Runner $runner): bool
     {
-        $config = new Config($this->path, $this->parseYaml(), true);
+        $config = Config::fromPath($this->path)->root();
         $project = new Project($config);
 
         $config->services();
@@ -64,27 +59,6 @@ class ServeStep implements StepInterface
         }
 
         return true;
-    }
-
-    /**
-     * @throws UserException
-     */
-    private function parseYaml(): array
-    {
-        if (! file_exists($this->fullPath())) {
-            return [];
-        }
-
-        try {
-            return Yaml::parseFile($this->fullPath());
-        } catch (ParseException $e) {
-            throw new UserException($e->getMessage());
-        }
-    }
-
-    private function fullPath(): string
-    {
-        return $this->path . '/' . self::FILE_NAME;
     }
 
     public function done(Runner $runner): bool

@@ -23,7 +23,7 @@ class RunCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Run a custom command defined in garm.yaml';
+    protected $description = 'Run a custom command defined in dev.yml';
 
     protected Config $config;
 

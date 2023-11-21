@@ -7,3 +7,4 @@
 .garm
 node_modules
 .env
+output.txt

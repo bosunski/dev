@@ -75,9 +75,4 @@ class Project
     {
         return file_exists($this->config->cwd('.env'));
     }
-
-    public function hasGarmFile(): bool
-    {
-        return file_exists($this->config->cwd('.garm.yaml'));
-    }
 }

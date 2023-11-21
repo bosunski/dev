@@ -1,30 +1,33 @@
-name: garm
+name: dev
 php: 8.2.10
 
 services:
     - crazywhalecc/static-php-cli
 
 up:
-  - custom:
+  - script:
         name: Install composer dependencies
-        met?: composer install
-  - custom:
+        run: composer install
+  - script:
         name: Setup Static PHP
         met?: |
           PHP_PATH=$SOURCE_ROOT/crazywhalecc/static-php-cli/buildroot/bin/php && test -f $PHP_PATH \
           && PHP_INI_SCAN_DIR="" \
           && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
-        meet: ./scripts/build-static-cli
+        run: ./scripts/build-static-cli
+  - script:
+      name: Create output.txt
+      met?: test -f output.txt
+      run: echo "Hello World $(date)\n" > output.txt
 commands:
     build-phar:
-        desc: Build Garm binary
+        desc: Build Dev binary
         run: box compile
     build-bin:
-        desc: Build Garm binary
+        desc: Build Dev binary
         run: |
           box compile && \
           cd $SOURCE_ROOT/crazywhalecc/static-php-cli && \
-          $PHP_BIN -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/garm/build/garm.phar -O $SOURCE_ROOT/bosunski/garm/build/garm.bin
+          $PHP_BIN -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/dev/build/garm.phar -O $SOURCE_ROOT/bosunski/dev/build/garm.bin
 sites:
-    _default_: google
     google: https://www.google.com

@@ -20,9 +20,16 @@ class Config
 
     public readonly Collection $environment;
 
-    public function __construct(protected string $path, protected readonly array $config, public readonly bool $isRoot = false)
+    public function __construct(protected string $path, protected readonly array $config, public bool $isRoot = false)
     {
         $this->environment = collect($this->config['env'] ?? []);
+    }
+
+    public function root(bool $isRoot = true): Config
+    {
+        $this->isRoot = $isRoot;
+
+        return $this;
     }
 
     public function getName(): string

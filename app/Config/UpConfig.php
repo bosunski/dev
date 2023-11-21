@@ -66,7 +66,7 @@ class UpConfig implements ConfigInterface
             'brew' => new BrewStep($config),
             'herd' => new HerdConfig($config),
             'valet' => new ValetConfig($config, $this->config),
-            'custom' => new CustomStep($config),
+            'custom', 'script' => new CustomStep($config),
             default => throw new Exception("Unknown step: $name"),
         };
     }
