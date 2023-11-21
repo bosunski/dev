@@ -13,7 +13,7 @@ class CustomStep implements StepInterface
 
     public function name(): string
     {
-        return $this->config['name'] ?? '';
+        return $this->config['desc'] ?? $this->config['name'] ?? '';
     }
 
     public function command(): ?string

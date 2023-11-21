@@ -49,7 +49,7 @@ class UpCommand extends Command
     {
         if (! $this->option('self') && $this->config->services()->count() > 0) {
             $this->info("🚀 Project contains {$this->config->services()->count()} services. Resolving all services...");
-            $this->config->services()->each(fn ($service) => $this->resolveService($service));
+            $this->config->services()->each(fn ($service) => $this->resolveService($service, $this->config->path()));
         }
 
         $this->stepRepository->addService($this->config->service());
@@ -76,7 +76,7 @@ class UpCommand extends Command
      * @throws UserException
      * @throws Exception
      */
-    private function resolveService(string $serviceName): Service
+    private function resolveService(string $serviceName, string $root): Service
     {
         /**
          * First we check if the service is already in the repository.
@@ -93,13 +93,13 @@ class UpCommand extends Command
          * ToDo: Handle error if the service does not exist or not clonable
          */
         [$owner, $repo] = CloneStep::parseService($serviceName);
-        if ($this->runner->execute([new CloneStep($owner, $repo, 'github.com')]) !== 0) {
+        if ($this->runner->execute([new CloneStep($owner, $repo, 'github.com', ['--depth=1'], $root)]) !== 0) {
             throw new UserException("Failed to clone $serviceName");
         }
 
-        $config = Config::fromServiceName($serviceName);
+        $config = Config::fromServiceName($serviceName, $root);
         if ($config->services()->isNotEmpty()) {
-            $config->services()->each(fn ($service) => $this->resolveService($service));
+            $config->services()->each(fn ($service) => $this->resolveService($service, $root));
         }
 
         $this->stepRepository->addService($service = new Service(Config::fromServiceName($serviceName)));

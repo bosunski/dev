@@ -10,7 +10,7 @@ use Symfony\Component\Yaml\Yaml;
 
 class Config
 {
-    public const OP_PATH = '.garm';
+    public const OP_PATH = '.dev';
 
     private const REPO_LOCATION = "src";
 
@@ -20,9 +20,29 @@ class Config
 
     public readonly Collection $environment;
 
+    public array $settings = [];
+
     public function __construct(protected string $path, protected readonly array $config, public bool $isRoot = false)
     {
         $this->environment = collect($this->config['env'] ?? []);
+        $this->readSettings();
+    }
+
+    private function readSettings(): void
+    {
+        $jsonConfig = ['disabled' => []];
+        $jsonPath = $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . 'config.json');
+        if (file_exists($jsonPath)) {
+            $jsonConfig = array_merge($jsonConfig, json_decode(file_get_contents($jsonPath), true));
+        }
+
+        $this->settings = $jsonConfig;
+    }
+
+    public function writeSettings(): void
+    {
+        $jsonPath = $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . 'config.json');
+        file_put_contents($jsonPath, json_encode($this->settings, JSON_PRETTY_PRINT));
     }
 
     public function root(bool $isRoot = true): Config
@@ -37,9 +57,9 @@ class Config
         return $this->config['name'] ?? '';
     }
 
-    public function services(): Collection
+    public function services(bool $all = false): Collection
     {
-        return collect($this->config['services'] ?? [])->map(function (string $service) {
+        return collect($this->config['services'] ?? [])->filter(fn ($service) => $all || !in_array($service, $this->settings['disabled']))->map(function (string $service) {
             if ($service === $this->serviceName()) {
                 throw new UserException("You cannot reference the current service in its own config!");
             }
@@ -93,6 +113,11 @@ class Config
         return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR));
     }
 
+    public function servicePath(?string $path = null): string
+    {
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . self::REPO_LOCATION . DIRECTORY_SEPARATOR . self::DEFAULT_SOURCE_HOST . DIRECTORY_SEPARATOR . trim($path ?? "", DIRECTORY_SEPARATOR));
+    }
+
     public function cwd(?string $path = null): string
     {
         if ($path) {
@@ -107,9 +132,9 @@ class Config
         return getenv('HOME');
     }
 
-    public static function sourcePath(?string $path = null, ?string $source = null): string
+    public static function sourcePath(?string $path = null, ?string $source = null, ?string $root = null): string
     {
-        $sourceDir = sprintf("%s/%s/%s", self::home(), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
+        $sourceDir = sprintf("%s/%s/%s", rtrim($root ?? self::home(), DIRECTORY_SEPARATOR), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
 
         if ($path) {
             return $sourceDir . '/' . ltrim($path, '/');
@@ -147,9 +172,10 @@ class Config
     /**
      * @throws UserException
      */
-    public static function fromServiceName(string $path): Config
+    public static function fromServiceName(string $path, ?string $root = null): Config
     {
-        return static::read(static::sourcePath($path));
+        $root = $root ?? sprintf("%s/%s", getcwd(), self::OP_PATH);
+        return static::read(static::sourcePath($path, root: $root));
     }
 
     /**

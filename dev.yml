@@ -5,18 +5,20 @@ services:
     - crazywhalecc/static-php-cli
 
 up:
+  - valet:
+      php: 8.2
   - script:
-        name: Install composer dependencies
+        desc: Install composer dependencies
         run: composer install
   - script:
-        name: Setup Static PHP
+        desc: Setup Static PHP
         met?: |
-          PHP_PATH=$SOURCE_ROOT/crazywhalecc/static-php-cli/buildroot/bin/php && test -f $PHP_PATH \
+          PHP_PATH=$SERVICE_ROOT/crazywhalecc/static-php-cli/buildroot/bin/php && test -f $PHP_PATH \
           && PHP_INI_SCAN_DIR="" \
           && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
         run: ./scripts/build-static-cli
   - script:
-      name: Create output.txt
+      desc: Create output.txt
       met?: test -f output.txt
       run: echo "Hello World $(date)\n" > output.txt
 commands:
@@ -27,7 +29,13 @@ commands:
         desc: Build Dev binary
         run: |
           box compile && \
-          cd $SOURCE_ROOT/crazywhalecc/static-php-cli && \
-          $PHP_BIN -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/dev/build/garm.phar -O $SOURCE_ROOT/bosunski/dev/build/garm.bin
+          mv dev.phar builds/dev.phar && \
+          cd $SERVICE_ROOT/crazywhalecc/static-php-cli && \
+          php -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/dev/builds/dev.phar -O $SOURCE_ROOT/bosunski/dev/builds/dev && \
+          chmod +x $SOURCE_ROOT/bosunski/dev/builds/dev && \
+          rm $SOURCE_ROOT/bosunski/dev/builds/dev.phar
+    install-bin:
+        desc: Install
+        run: sudo cp builds/dev /usr/local/bin/dev
 sites:
     google: https://www.google.com

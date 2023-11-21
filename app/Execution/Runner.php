@@ -87,7 +87,13 @@ class Runner
 
     private function environment(array $env = []): array
     {
-        return $this->config->environment->merge($env)->merge(['SOURCE_ROOT' => Config::sourcePath()])->all();
+        return $this->config
+            ->environment
+            ->merge($env)
+            ->merge([
+                'SOURCE_ROOT' => Config::sourcePath(),
+                'SERVICE_ROOT' => $this->config->servicePath(),
+            ])->all();
     }
 
     public function pool(callable $callback): ProcessPoolResults

@@ -15,7 +15,13 @@ class CloneStep implements StepInterface
 
     private const REPO_LOCATION = "src";
 
-    public function __construct(private readonly string $owner, private readonly string $repo, private readonly string $host, private readonly array $args = [])
+    public function __construct(
+        private readonly string $owner,
+        private readonly string $repo,
+        private readonly string $host,
+        private readonly array $args = [],
+        private readonly ?string $root = null,
+    )
     {
     }
 
@@ -65,7 +71,7 @@ class CloneStep implements StepInterface
 
     protected function clonePath(Config $config): string
     {
-        return $config->sourcePath($this->ownerRepo());
+        return $config->sourcePath($this->ownerRepo(), root: $this->root);
     }
 
     protected function ownerRepo(): string

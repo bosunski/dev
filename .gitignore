@@ -5,6 +5,7 @@
 .phpunit.result.cache
 .shadowenv.d
 .garm
+.dev
 node_modules
 .env
 output.txt
