@@ -6,6 +6,7 @@ use App\Config\Config;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use LaravelZero\Framework\Commands\Command;
+use function Laravel\Prompts\select;
 
 class EnableCommand extends Command
 {
@@ -70,7 +71,7 @@ class EnableCommand extends Command
      */
     private function askForService(array $services): string
     {
-        $service = $this->choice('Which service do you want to disable?', $services);
+        $service = select('Which service do you want to enable?', $services);
 
         if (! $service) {
             throw new UserException('No service selected');
