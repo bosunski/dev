@@ -25,7 +25,7 @@ commands:
     build-phar:
         desc: Build Dev binary
         run: box compile
-    build-bin:
+    compile:
         desc: Build Dev binary
         run: |
           box compile && \

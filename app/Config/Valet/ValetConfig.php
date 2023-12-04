@@ -7,6 +7,8 @@ use App\Contracts\ConfigInterface;
 use App\Step\Valet\LockPhpStep;
 use App\Step\StepInterface;
 use Exception;
+use Illuminate\Contracts\Process\ProcessResult;
+use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -14,9 +16,11 @@ use Illuminate\Support\Str;
 class ValetConfig implements ConfigInterface
 {
     private const PHP_VERSION_MAP = [
+        '8.3' => 'php',
+        '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',
         '8.0' => 'php@8.0',
-        '8.2' => 'php',
+        '7.4' => 'php@7.4',
     ];
 
     protected readonly array $config;
@@ -100,7 +104,6 @@ class ValetConfig implements ConfigInterface
         }
 
         $command = "find /opt/homebrew/Cellar/$source | grep \"$source/$version.*/bin/php$\"";
-
         $output = Str::of(self::runCommand($command)->output());
         $paths = $output->explode(PHP_EOL)->filter();
 
@@ -128,10 +131,17 @@ class ValetConfig implements ConfigInterface
     {
         $phpBin ??= self::runCommand('which php')->output();
 
-       return self::runCommand("$phpBin -nr \"echo ini_get('extension_dir');\"")->output();
+        try {
+            return self::runCommand("$phpBin -nr \"echo ini_get('extension_dir');\"")->output();
+        } catch (ProcessFailedException $exception) {
+            // TODO: Handle this better
+            echo $exception->getMessage();
+
+            throw $exception;
+        }
     }
 
-    private static function runCommand(string $command)
+    private static function runCommand(string $command): ProcessResult
     {
         return Process::timeout(3)
             ->command($command)

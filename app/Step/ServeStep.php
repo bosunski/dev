@@ -39,11 +39,7 @@ class ServeStep implements StepInterface
         $config = Config::fromPath($this->path)->root();
         $project = new Project($config);
 
-        $config->services();
-
-        $pool = new Pool();
-
-        $project->servicePool($pool);
+        $project->servicePool($pool = new Pool());
 
         EventLoop::onSignal(SIGTERM, fn() => $pool->kill());
         EventLoop::onSignal(SIGINT, fn() => $pool->kill());
@@ -51,11 +47,11 @@ class ServeStep implements StepInterface
             File::makeDirectory($runner->config()->path(), recursive: true);
         }
 
-        File::put($runner->config()->path('garm.pid'), getmypid());
+        File::put($runner->config()->path($name = config('app.name')), getmypid());
         $pool->join();
 
-        if (File::exists($runner->config()->path('garm.pid'))) {
-            File::delete($runner->config()->path('garm.pid'));
+        if (File::exists($runner->config()->path($name))) {
+            File::delete($runner->config()->path($name));
         }
 
         return true;
