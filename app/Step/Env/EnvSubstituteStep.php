@@ -20,6 +20,10 @@ class EnvSubstituteStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
+        if ($this->shouldCopyEnv()) {
+            return copy($runner->config()->cwd('.env.example'), $runner->config()->cwd('.env'));
+        }
+
         if (! $this->hasSampleEnvFile($runner->config()) || ! $this->hasEnvFile($runner->config())) {
             return true;
         }
@@ -76,6 +80,12 @@ class EnvSubstituteStep implements StepInterface
         }
 
         return true;
+    }
+
+    private function shouldCopyEnv(): bool
+    {
+        return ! is_file($this->config->cwd('.env'))
+            && is_file($this->config->cwd('.env.example'));
     }
 
     public function done(Runner $runner): bool

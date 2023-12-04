@@ -36,6 +36,6 @@ commands:
           rm $SOURCE_ROOT/bosunski/dev/builds/dev.phar
     install-bin:
         desc: Install
-        run: sudo cp builds/dev /usr/local/bin/dev
+        run: sudo install builds/dev /usr/local/bin/dev
 sites:
     google: https://www.google.com

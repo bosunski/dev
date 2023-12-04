@@ -93,6 +93,7 @@ class Runner
             ->merge([
                 'SOURCE_ROOT' => Config::sourcePath(),
                 'SERVICE_ROOT' => $this->config->servicePath(),
+                'DEV_PATH' => $this->config->devPath(),
             ])->all();
     }
 

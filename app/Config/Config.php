@@ -118,6 +118,11 @@ class Config
         return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . self::REPO_LOCATION . DIRECTORY_SEPARATOR . self::DEFAULT_SOURCE_HOST . DIRECTORY_SEPARATOR . trim($path ?? "", DIRECTORY_SEPARATOR));
     }
 
+    public function devPath(?string $path = null): string
+    {
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . trim($path ?? "", DIRECTORY_SEPARATOR));
+    }
+
     public function cwd(?string $path = null): string
     {
         if ($path) {

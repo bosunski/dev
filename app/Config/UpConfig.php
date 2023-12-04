@@ -7,7 +7,6 @@ use App\Config\Valet\ValetConfig;
 use App\Contracts\ConfigInterface;
 use App\Step\BrewStep;
 use App\Step\CustomStep;
-use App\Step\Env\EnvCopyStep;
 use App\Step\Env\EnvSubstituteStep;
 use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
@@ -25,13 +24,7 @@ class UpConfig implements ConfigInterface
      */
     public function steps(): array
     {
-        $steps = [new ShadowEnvStep()];
-        if ($this->shouldCopyEnv()) {
-            $steps[] = new EnvCopyStep($this->config);
-        } else {
-            $steps[] = new EnvSubstituteStep($this->config);
-        }
-
+        $steps = [new ShadowEnvStep(), new EnvSubstituteStep($this->config)];
         foreach ($this->config->steps() as $step) {
             foreach ($step as $name => $args) {
                 $configOrStep = $this->makeStep($name, $args);
@@ -48,12 +41,6 @@ class UpConfig implements ConfigInterface
         return collect($steps)
             ->sortBy(fn ($step) => $step instanceof BrewStep ? StepInterface::PRIORITY_HIGH : StepInterface::PRIORITY_NORMAL)
             ->toArray();
-    }
-
-    private function shouldCopyEnv(): bool
-    {
-        return ! is_file($this->config->cwd('.env'))
-                && is_file($this->config->cwd('.env.example'));
     }
 
     /**
