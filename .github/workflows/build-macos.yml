@@ -95,7 +95,7 @@ jobs:
 
       - name: Setup Spc
         run: composer update --no-dev --classmap-authoritative
-        working-directory: buildroot
+        working-directory: spc
 
       # If there's no dependencies cache, fetch sources, with or without debug
       - if: steps.cache-download.outputs.cache-hit != 'true'
