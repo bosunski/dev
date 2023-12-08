@@ -1,0 +1,150 @@
+name: CI on x86_64 macOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: php version to compile
+        default: '8.2'
+        type: choice
+        options:
+          - '8.3'
+          - '8.2'
+          - '8.1'
+          - '8.0'
+          - '7.4'
+      build-cli:
+        description: build cli binary
+        default: true
+        type: boolean
+      build-micro:
+        description: build phpmicro binary
+        type: boolean
+      build-fpm:
+        description: build fpm binary
+        type: boolean
+      extensions:
+        description: extensions to compile (comma separated)
+        required: true
+        type: string
+      debug:
+        type: boolean
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    name: build ${{ inputs.version }} on macOS x86_64
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@master
+        with:
+          php-version: 8.2
+          extensions: mbstring, bcmath
+          tools: composer:v2
+
+      # Install macOS missing packages and mark os suffix
+      - run: |
+          brew tap box-project/box
+          brew install automake gzip box
+          echo "SPC_BUILD_OS=macos" >> $GITHUB_ENV
+          box -v
+
+      # Cache composer dependencies
+      - id: cache-composer-deps
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: composer-dependencies
+
+      # If there's no Composer cache, install dependencies
+      - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
+        run: composer install
+
+      # Cache downloaded source
+      - id: cache-download
+        uses: actions/cache@v3
+        with:
+          path: |
+            spc/downloads
+            spc/buildroot
+          key: php-${{ inputs.version }}-dependencies-${{ inputs.extensions }}
+
+      # With or without debug
+      - if: inputs.debug == true
+        run: echo "SPC_BUILD_DEBUG=--debug" >> $GITHUB_ENV
+
+      # With target select: cli, micro or both
+      - if: ${{ inputs.build-cli == true }}
+        run: echo "SPC_BUILD_CLI=--build-cli" >> $GITHUB_ENV
+      - if: ${{ inputs.build-micro == true }}
+        run: echo "SPC_BUILD_MICRO=--build-micro" >> $GITHUB_ENV
+      - if: ${{ inputs.build-fpm == true }}
+        run: echo "SPC_BUILD_FPM=--build-fpm" >> $GITHUB_ENV
+
+      - name: Checkout crazywhalecc/static-php-cli
+        uses: actions/checkout@v4
+        with:
+          repository: crazywhalecc/static-php-cli
+          path: spc
+
+      - name: Setup Spc
+        run: composer update --no-dev --classmap-authoritative
+        working-directory: buildroot
+
+      # If there's no dependencies cache, fetch sources, with or without debug
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        run: ./spc/bin/spc download --with-php=${{ inputs.version }} --for-extensions=${{ inputs.extensions }} ${{ env.SPC_BUILD_DEBUG }}
+
+      # Run build command
+      - run: ./spc/bin/spc build ${{ inputs.extensions }} ${{ env.SPC_BUILD_DEBUG }} ${{ env.SPC_BUILD_CLI }} ${{ env.SPC_BUILD_MICRO }} ${{ env.SPC_BUILD_FPM }}
+
+      - name: Build DEV binary
+        run: |
+            box compile
+            php -d memory_limit=-1 spc/bin/spc micro:combine dev.phar -O dev.bin
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dev-${{ env.SPC_BUILD_OS }}-bin
+          path: dev.bin
+
+      # Upload cli executable
+#      - if: ${{ inputs.build-cli == true }}
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: php-${{ inputs.version }}-${{ env.SPC_BUILD_OS }}
+#          path: spc/buildroot/bin/php
+
+      # Upload micro self-extracted executable
+#      - if: ${{ inputs.build-micro == true }}
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: micro-${{ inputs.version }}-${{ env.SPC_BUILD_OS }}
+#          path: spc/buildroot/bin/micro.sfx
+
+      # Upload fpm executable
+#      - if: ${{ inputs.build-fpm == true }}
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: php-fpm-${{ inputs.version }}-${{ env.SPC_BUILD_OS }}
+#          path: spc/buildroot/bin/php-fpm
+
+      # Upload extensions metadata
+      - uses: actions/upload-artifact@v3
+        with:
+          name: license-files
+          path: spc/buildroot/license/
+      - uses: actions/upload-artifact@v3
+        with:
+          name: build-meta
+          path: |
+            spc/buildroot/build-extensions.json
+            spc/buildroot/build-libraries.json
+
