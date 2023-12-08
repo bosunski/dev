@@ -113,7 +113,7 @@ jobs:
 
       - if: steps.cache-download.outputs.cache-hit != 'true'
         name: Cache downloaded source
-        uses: actions/cache/save@v2
+        uses: actions/cache/save@v3
         with:
           path: |
             spc/downloads
