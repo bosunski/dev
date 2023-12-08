@@ -100,9 +100,12 @@ jobs:
       # If there's no dependencies cache, fetch sources, with or without debug
       - if: steps.cache-download.outputs.cache-hit != 'true'
         run: ./spc/bin/spc download --with-php=${{ inputs.version }} --for-extensions=${{ inputs.extensions }} ${{ env.SPC_BUILD_DEBUG }}
+        working-directory: spc
 
       # Run build command
-      - run: ./spc/bin/spc build ${{ inputs.extensions }} ${{ env.SPC_BUILD_DEBUG }} ${{ env.SPC_BUILD_CLI }} ${{ env.SPC_BUILD_MICRO }} ${{ env.SPC_BUILD_FPM }}
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        run: ./spc/bin/spc build ${{ inputs.extensions }} ${{ env.SPC_BUILD_DEBUG }} ${{ env.SPC_BUILD_CLI }} ${{ env.SPC_BUILD_MICRO }} ${{ env.SPC_BUILD_FPM }}
+        working-directory: spc
 
       - name: Build DEV binary
         run: |
