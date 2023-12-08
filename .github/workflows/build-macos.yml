@@ -48,6 +48,12 @@ jobs:
           extensions: mbstring, bcmath
           tools: composer:v2
 
+      - name: Checkout crazywhalecc/static-php-cli
+        uses: actions/checkout@v4
+        with:
+          repository: crazywhalecc/static-php-cli
+          path: spc
+
       # Install macOS missing packages and mark os suffix
       - run: |
           brew tap box-project/box
@@ -66,14 +72,18 @@ jobs:
       - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
         run: composer install
 
+      - name: Convert extensions to SHA256
+        run: |
+          echo "SPC_EXTENSIONS_SHA256=$(echo -n ${{ inputs.extensions }} | shasum -a 256 | awk '{print $1}')" >> $GITHUB_ENV
+
       # Cache downloaded source
       - id: cache-download
-        uses: actions/cache@v3
+        uses: actions/cache/restore@v3
         with:
           path: |
             spc/downloads
             spc/buildroot
-          key: php-${{ inputs.version }}-dependencies-${{ inputs.extensions }}
+          key: php-${{ inputs.version }}-dependencies-${{ env.SPC_EXTENSIONS_SHA256 }}
 
       # With or without debug
       - if: inputs.debug == true
@@ -86,12 +96,6 @@ jobs:
         run: echo "SPC_BUILD_MICRO=--build-micro" >> $GITHUB_ENV
       - if: ${{ inputs.build-fpm == true }}
         run: echo "SPC_BUILD_FPM=--build-fpm" >> $GITHUB_ENV
-
-      - name: Checkout crazywhalecc/static-php-cli
-        uses: actions/checkout@v4
-        with:
-          repository: crazywhalecc/static-php-cli
-          path: spc
 
       - name: Setup Spc
         run: composer update --no-dev --classmap-authoritative
@@ -106,6 +110,15 @@ jobs:
       - if: steps.cache-download.outputs.cache-hit != 'true'
         run: ./bin/spc build ${{ inputs.extensions }} ${{ env.SPC_BUILD_DEBUG }} ${{ env.SPC_BUILD_CLI }} ${{ env.SPC_BUILD_MICRO }} ${{ env.SPC_BUILD_FPM }}
         working-directory: spc
+
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        name: Cache downloaded source
+        uses: actions/cache/save@v2
+        with:
+          path: |
+            spc/downloads
+            spc/buildroot
+          key: php-${{ inputs.version }}-dependencies-${{ env.SPC_EXTENSIONS_SHA256 }}
 
       - name: Build DEV binary
         run: |
