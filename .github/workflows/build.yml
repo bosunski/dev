@@ -11,4 +11,11 @@ env:
 jobs:
   build:
     uses: ./.github/workflows/build-macos.yml
+    with:
+      version: '8.2'
+      build-cli: true
+      build-micro: true
+      build-fpm: false
+      extensions: "bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium"
+      debug: false
 
