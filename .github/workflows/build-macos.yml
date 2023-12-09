@@ -121,7 +121,9 @@ jobs:
           key: php-${{ inputs.version }}-dependencies-${{ env.SPC_EXTENSIONS_SHA256 }}
 
       - name: Build PHAR
-        run: box compile
+        run: |
+          box compile
+          mv dev.phar dist/dev.phar
 
       - name: Build DEV binary for macOS
         working-directory: spc
