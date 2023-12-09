@@ -1,6 +1,9 @@
 name: CI on x86_64 macOS
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
@@ -16,17 +19,19 @@ on:
           - '7.4'
       build-cli:
         description: build cli binary
-        default: true
         type: boolean
+        default: true
       build-micro:
         description: build phpmicro binary
         type: boolean
+        default: true
       build-fpm:
         description: build fpm binary
         type: boolean
       extensions:
         description: extensions to compile (comma separated)
         required: true
+        default: bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium
         type: string
       debug:
         type: boolean
@@ -148,7 +153,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: dev-${{ runner.os }}-${{ runner.arch }}
+          name: dev-macos-aarch64
           path: dist/dev
 
       # Upload cli executable
