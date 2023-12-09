@@ -29,13 +29,14 @@ jobs:
           workflow: build.yml
           name: "dev-macos-aarch64"
 
-      - name: Generate checksum file inside checksum.txt
-        run: shasum -a 256 dev > CHECKSUMS
-
       - name: "Archive Executable"
         run: |
           tar -czf dev-macos-aarch64.tar.gz dev
           echo "filename=dev-macos-aarch64.tar.gz" >> $GITHUB_ENV
+
+      - name: "Create Checksums"
+        run: |
+          sha256sum ${{ env.filename }} > CHECKSUMS
 
       - name: upload binaries to release
         uses: softprops/action-gh-release@v1
