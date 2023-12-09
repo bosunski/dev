@@ -126,13 +126,28 @@ jobs:
       - name: Build DEV binary for macOS
         working-directory: spc
         run: |
-            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/dev.phar -O $GITHUB_WORKSPACE/dev.bin
+            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/dist/dev.phar -O $GITHUB_WORKSPACE/dist/dev
+
+#      - name: Convert OS Name
+#        id: os-type
+#        run: |
+#          OS=""
+#          if [ "${{ matrix.operating-system }}" = "ubuntu-latest" ]; then
+#              OS="linux-x86_64"
+#          elif [ "${{ matrix.operating-system }}" = "macos-latest" ]; then
+#              OS="macos-x86_64"
+#          elif [ "${{ matrix.operating-system }}" = "debian-arm64-self-hosted" ]; then
+#              OS="linux-aarch64"
+#          elif [ "${{ matrix.operating-system }}" = "macos-arm64-self-hosted" ]; then
+#              OS="macos-aarch64"
+#          fi
+#          echo "OS=$OS" >> $GITHUB_ENV
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: dev-${{ env.SPC_BUILD_OS }}-bin
-          path: dev.bin
+          name: dev-${{ env.RUNNER_OS }}-${{ env.RUNNER_ARCH }}
+          path: dist/dev
 
       # Upload cli executable
 #      - if: ${{ inputs.build-cli == true }}
