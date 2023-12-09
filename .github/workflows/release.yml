@@ -1,4 +1,4 @@
-name: Upload SPC Binary (Release)
+name: Upload DEV Binary (Release Artifacts)
 
 on:
   release:
@@ -8,14 +8,11 @@ on:
 
 jobs:
   build-release-artifacts:
-    name: "Upload SPC Binary (Release)"
+    name: "Upload DEV Binary (Release Artifacts)"
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        operating-system:
-#          - "linux-x86_64"
-#          - "macos-x86_64"
-#          - "linux-aarch64"
+        os:
           - "macos-aarch64"
     steps:
       - name: "Checkout"
@@ -27,16 +24,16 @@ jobs:
           repo: bosunski/dev
           branch: main
           workflow: build.yml
-          name: "dev-macos-aarch64"
+          name: "dev-${{ matrix.os }}"
+
+      - name: "Generate Archive name"
+        run: echo "filename=dev-${{ github.ref_name }}-${{ matrix.os }}.tar.gz" >> $GITHUB_ENV
 
       - name: "Archive Executable"
-        run: |
-          tar -czf dev-macos-aarch64.tar.gz dev
-          echo "filename=dev-macos-aarch64.tar.gz" >> $GITHUB_ENV
+        run: tar -czf ${{ env.filename }} dev
 
       - name: "Create Checksums"
-        run: |
-          sha256sum ${{ env.filename }} > CHECKSUMS
+        run: sha256sum ${{ env.filename }} > CHECKSUMS
 
       - name: upload binaries to release
         uses: softprops/action-gh-release@v1
@@ -45,9 +42,3 @@ jobs:
           files: |
             ${{ env.filename }}
             CHECKSUMS
-
-      - name: "Upload Artifact"
-        uses: actions/upload-artifact@v3
-        with:
-          path: dev
-          name: dev-macos-aarch64
