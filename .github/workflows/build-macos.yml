@@ -112,7 +112,7 @@ jobs:
         working-directory: spc
 
       - if: steps.cache-download.outputs.cache-hit != 'true'
-        name: Cache downloaded source
+        name: Save builds to cache
         uses: actions/cache/save@v3
         with:
           path: |
@@ -120,10 +120,13 @@ jobs:
             spc/buildroot
           key: php-${{ inputs.version }}-dependencies-${{ env.SPC_EXTENSIONS_SHA256 }}
 
-      - name: Build DEV binary
+      - name: Build PHAR
+        run: box compile
+
+      - name: Build DEV binary for macOS
+        working-directory: spc
         run: |
-            box compile
-            php -d memory_limit=-1 spc/bin/spc micro:combine dev.phar -O dev.bin
+            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/dev.phar -O $GITHUB_WORKSPACE/dev.bin
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
