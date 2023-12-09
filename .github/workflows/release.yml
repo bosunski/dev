@@ -29,6 +29,17 @@ jobs:
           workflow: build.yml
           name: "dev-macos-aarch64"
 
+#      - name: Generate checksum file inside checksum.txt
+#        run: |
+#          shasum -a 256 dev > checksum.txt
+#          echo "filename=checksum.txt" >> $GITHUB_ENV
+
+      - name: List content
+        run: |
+          ls -alh
+          ls -alh dev
+
+
       - name: "Archive Executable"
         run: |
           tar -czf dev-macos-aarch64.tar.gz dev
