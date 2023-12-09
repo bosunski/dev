@@ -29,16 +29,8 @@ jobs:
           workflow: build.yml
           name: "dev-macos-aarch64"
 
-#      - name: Generate checksum file inside checksum.txt
-#        run: |
-#          shasum -a 256 dev > checksum.txt
-#          echo "filename=checksum.txt" >> $GITHUB_ENV
-
-      - name: List content
-        run: |
-          ls -alh
-          ls -alh dev
-
+      - name: Generate checksum file inside checksum.txt
+        run: shasum -a 256 dev > CHECKSUMS
 
       - name: "Archive Executable"
         run: |
@@ -49,7 +41,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: ${{startsWith(github.ref, 'refs/tags/') }}
         with:
-          files: ${{ env.filename }}
+          files: |
+            ${{ env.filename }}
+            CHECKSUMS
 
       - name: "Upload Artifact"
         uses: actions/upload-artifact@v3
