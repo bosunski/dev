@@ -1,0 +1,14 @@
+name: CI on x86_64 macOS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-macos.yml
+
