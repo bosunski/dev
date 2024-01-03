@@ -30,7 +30,7 @@ class ShadowEnvStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
-        if (!$runner->config()->isAGarmProject()) {
+        if (!$runner->config()->isDevProject()) {
             return true;
         }
 
@@ -56,7 +56,7 @@ class ShadowEnvStep implements StepInterface
 
     private function createDefaultLispFile(Config $config): bool
     {
-        return File::put($config->cwd($this->path('000_default.lisp')), $this->defaultContent());
+        return File::put($config->cwd($this->path('000_default.lisp')), $this->defaultContent($config));
     }
 
     private function createGitIgnoreFile(Config $config): bool
@@ -78,13 +78,13 @@ class ShadowEnvStep implements StepInterface
         return '.shadowenv.d';
     }
 
-    private function defaultContent(): string
+    private function defaultContent(Config $config): string
     {
-        $binPath = Config::OP_PATH . '/bin';
-        $opPath = Config::OP_PATH;
+        $binPath = $config->devPath('bin');
+        $opPath = $config->devPath('php.d');
         return <<<EOF
-(env/prepend-to-pathlist "PATH" "./$binPath")
-(env/set "PHP_INI_SCAN_DIR" "./$opPath/php.d:\$PHP_INI_SCAN_DIR")
+(env/prepend-to-pathlist "PATH" "$binPath")
+(env/set "PHP_INI_SCAN_DIR" "$opPath:\$PHP_INI_SCAN_DIR")
 EOF;
     }
 

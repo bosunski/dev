@@ -17,6 +17,8 @@ class ServeCommand extends Command
      */
     protected $signature = 'serve';
 
+    protected $aliases = ['s'];
+
     /**
      * The description of the command.
      *

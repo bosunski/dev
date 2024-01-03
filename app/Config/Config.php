@@ -3,6 +3,7 @@
 namespace App\Config;
 
 use App\Exceptions\UserException;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -78,6 +79,9 @@ class Config
         return collect($this->config['commands'] ?? []);
     }
 
+    /**
+     * @throws Exception
+     */
     public function service(): Service
     {
         return new Service($this);
@@ -86,11 +90,6 @@ class Config
     public function getType(): string
     {
         return $this->config['type'] ?? '';
-    }
-
-    public function getPhp(): ?string
-    {
-        return $this->config['php'] ?? null;
     }
 
     public function up(): UpConfig
@@ -126,7 +125,7 @@ class Config
     public function cwd(?string $path = null): string
     {
         if ($path) {
-            return $this->path . '/' . $path;
+            return $this->path . DIRECTORY_SEPARATOR . trim($path, DIRECTORY_SEPARATOR);
         }
 
         return $this->path;
@@ -142,7 +141,7 @@ class Config
         $sourceDir = sprintf("%s/%s/%s", rtrim($root ?? self::home(), DIRECTORY_SEPARATOR), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
 
         if ($path) {
-            return $sourceDir . '/' . ltrim($path, '/');
+            return $sourceDir . DIRECTORY_SEPARATOR . ltrim($path, '/');
         }
 
         return $sourceDir;
@@ -153,7 +152,7 @@ class Config
         return Str::of($this->cwd())->after($this->sourcePath())->trim('/')->toString();
     }
 
-    public function isAGarmProject(): bool
+    public function isDevProject(): bool
     {
         return !empty($this->config);
     }
@@ -201,6 +200,6 @@ class Config
 
     private static function fullPath(string $path): string
     {
-        return $path . '/' . self::FILE_NAME;
+        return $path . DIRECTORY_SEPARATOR . self::FILE_NAME;
     }
 }

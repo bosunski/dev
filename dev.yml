@@ -1,19 +1,31 @@
 name: dev
-php: 8.2.10
-
-services:
-    - crazywhalecc/static-php-cli
 
 up:
+  - brew:
+      - gh
+      - php@8.2
   - valet:
       php: 8.2
   - script:
         desc: Install composer dependencies
         run: composer install
   - script:
+      desc: Setup SPC Binary
+      met?: test -f $DEV_PATH/bin/spc
+      run: |
+        export FILENAME=spc-macos-aarch64.tar.gz
+        gh release --repo crazywhalecc/static-php-cli download -p $FILENAME
+        tar -xvf $FILENAME
+        mv spc $DEV_PATH/bin/spc
+        chmod +x $DEV_PATH/bin/spc
+        rm $FILENAME
+  - script:
+        desc: Print INI_DIR
+        run: echo $PHP_INI_SCAN_DIR
+  - script:
         desc: Setup Static PHP
         met?: |
-          PHP_PATH=$SERVICE_ROOT/crazywhalecc/static-php-cli/buildroot/bin/php && test -f $PHP_PATH \
+          PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
           && PHP_INI_SCAN_DIR="" \
           && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
         run: ./scripts/build-static-cli
@@ -23,19 +35,17 @@ up:
       run: echo "Hello World $(date)\n" > output.txt
 commands:
     build-phar:
-        desc: Build Dev binary
-        run: box compile
+        desc: Build Dev PHAR
+        run: php dev app:build dev.phar
     compile:
         desc: Build Dev binary
         run: |
-          box compile && \
-          mv dev.phar builds/dev.phar && \
-          cd $SERVICE_ROOT/crazywhalecc/static-php-cli && \
-          php -d memory_limit=-1 bin/spc micro:combine $SOURCE_ROOT/bosunski/dev/builds/dev.phar -O $SOURCE_ROOT/bosunski/dev/builds/dev && \
-          chmod +x $SOURCE_ROOT/bosunski/dev/builds/dev && \
-          rm $SOURCE_ROOT/bosunski/dev/builds/dev.phar
+          php dev build-phar && \
+          spc micro:combine builds/dev.phar -O builds/dev && \
+          chmod +x builds/dev && \
+          rm builds/dev.phar
     install-bin:
         desc: Install
         run: sudo install builds/dev /usr/local/bin/dev
 sites:
-    google: https://www.google.com
+    github: https://github.com/bosunski/dev

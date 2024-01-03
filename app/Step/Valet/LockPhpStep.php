@@ -11,9 +11,11 @@ class LockPhpStep implements StepInterface
     public readonly string|float $id;
 
     private const PHP_VERSION_MAP = [
+        '8.3' => 'php',
+        '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',
         '8.0' => 'php@8.0',
-        '8.2' => 'php',
+        '7.4' => 'php@7.4',
     ];
 
     public function __construct(protected readonly string $version, protected readonly array $environment = [])
@@ -56,10 +58,11 @@ class LockPhpStep implements StepInterface
             return false;
         }
 
-        $binDir = "{$config->path()}/bin";
-        $binPath = "{$config->path()}/bin/php";
+        $binDir = $config->path('bin');
+        $binPath = $config->path('bin/php');
 
         $sourcePhpPath = escapeshellarg($sourcePhpPath);
+        echo "mkdir -p $binDir && ln -sf $sourcePhpPath $binPath";
         return $runner->exec("mkdir -p $binDir && ln -sf $sourcePhpPath $binPath");
     }
 

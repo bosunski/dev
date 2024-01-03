@@ -52,8 +52,8 @@ class LockPhpStep implements StepInterface
             return false;
         }
 
-        $binDir = "{$config->path()}/bin";
-        $binPath = "{$config->path()}/bin/php";
+        $binDir = $config->path('bin');
+        $binPath = $config->path('bin/php');
 
         $herdPhpPath = escapeshellarg($herdPhpPath);
         return $runner->exec("mkdir -p $binDir && ln -sf $herdPhpPath $binPath");

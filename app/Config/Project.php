@@ -22,7 +22,7 @@ class Project
                 throw new UserException("You cannot reference the current service in its own config!");
             }
 
-            return new Project(Config::read(Config::sourcePath($service)));
+            return new Project(Config::fromServiceName($service));
         });
     }
 

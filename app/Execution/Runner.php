@@ -12,6 +12,7 @@ use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Command\Command as Cmd;
+use Symfony\Component\Console\Helper\ProcessHelper;
 
 class Runner
 {
@@ -68,7 +69,7 @@ class Runner
                 ->env($this->environment($env))
                 ->tty()
                 ->path($path ?? $this->config->cwd())
-                ->run($command, $this->handleOutput(...))
+                ->run(["shadowenv", "exec", "--", "zsh", "-c", $command], $this->handleOutput(...))
                 ->throw()
                 ->successful();
         } catch (ProcessFailedException) {
@@ -82,13 +83,14 @@ class Runner
             ->env($this->environment($env))
             ->tty()
             ->path($path ?? $this->config->cwd())
-            ->start($command, $this->handleOutput(...));
+            ->start(["shadowenv", "exec", "--", "zsh", "-c", $command], $this->handleOutput(...));
     }
 
     private function environment(array $env = []): array
     {
         return $this->config
             ->environment
+            ->merge(getenv())
             ->merge($env)
             ->merge([
                 'SOURCE_ROOT' => Config::sourcePath(),
