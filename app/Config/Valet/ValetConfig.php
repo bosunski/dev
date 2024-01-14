@@ -143,9 +143,6 @@ class ValetConfig implements ConfigInterface
 
     private static function runCommand(string $command): ProcessResult
     {
-        return Process::timeout(3)
-            ->command($command)
-            ->run()
-            ->throw();
+        return Process::timeout(3)->command($command)->run()->throw();
     }
 }

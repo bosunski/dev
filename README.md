@@ -1,5 +1,5 @@
 >[!Important]
-> Although this is currently being used in personal projects, it is worth noting that it is not considered to be released yet and breaking changes might be frequent. The project is made public solely as a way to build this in public and collect feedback and not as an indication that it is fit for use in all scenarios.
+> Although this is currently being used in personal projects, it is worth noting that it is not considered to be released yet and breaking changes might be frequent. The project is made public solely as a way to build this more in public and collect feedback and not as an indication that it is fit for use in all scenarios.
 
 DEV is a tool for creating consistent and evolve-able development environment for projects. It is inspired by an internal Shopify tool, also named DEV that I used while at Shopify. It is designed to adjust a development environment to match a configuration defined inside a `dev.yml` file.
 
@@ -17,36 +17,62 @@ DEV is a tool for creating consistent and evolve-able development environment fo
 - Environment variable patching
 - Configuration tracking - `composer.json`, `composer.lock`, `package-lock.json`, etc.
 
-### Testing
-If you want to you can follow this process to install the binary:
-
-```bash
-# Download and install binary to /usr/local/bin
-sudo curl -L 
-```
-
-### Contributing
-Since, I'm building this in public, I would love to hear your feedback and suggestions. You can open an issue or a PR.
-
-### FAQ
-
-#### Is Dev stable for use?
-No, it's still in development.
-
-#### Can I contribute to DEV?
-Yes. You can contribute by giving your feedback or suggestion or by add to it via code.
-
-#### Does DEV replaces docker?
-No.
-
-#### Why is DEV written in PHP and not Rust?
-My Rust is rusty. Also, why not PHP?
-
 ### ToDo
 - [ ] Plugins
 - [ ] Presets
-- [ ] Tests
+- [ ] Automated Tests
 - [ ] Add PHPStan
 - [ ] Add Pint for code styling
 - [ ] Better CLI UI
 - [ ] Prioritization of steps
+- [ ] Extend functionality to other OSes
+- [ ] Documentation
+
+### Trying DEV
+At the moment, DEV works on MacOS as some aspect of the code assumes this. The future plan is to support other platforms too.
+To try DEV you can follow this process to install the pre-built MacOS binary using GitHub CLI:
+
+```bash
+gh release --repo bosunski/dev download -p dev-macos-aarch64.tar.gz
+tar -xvf dev-macos-aarch64.tar.gz
+sudo install dev /usr/local/bin/dev 
+```
+
+### Contributing
+### Requirements
+- PHP >=8.2
+- Composer
+
+#### Setting up the project
+
+1. Clone the project
+```shell
+git clone https://github.com/bosunski/dev
+```
+2. Install composer dependencies
+```shell
+composer install
+```
+3. Use DEV to set up the remaining aspects
+```shell
+php dev up
+```
+
+Alternatively, if you have DEV binary already installed, you can use it to set up the project like this:
+```shell
+dev clone bosunski/dev && dev up
+```
+
+### FAQ
+
+#### How can I contribute to DEV?
+- You can test and give feedback. Feel free to open an [issue](https://github.com/bosunski/dev/issues/new)!
+- You can suggest [features](https://github.com/bosunski/dev/issues/new)
+- You can also add features (see the ToDo)
+
+#### Is Dev stable for use?
+Although I use DEV as a daily driver at this point. I won't consider it stable for use since there are other things
+that affects this stability that are not yet in place.
+
+#### Does DEV replaces docker?
+No.
