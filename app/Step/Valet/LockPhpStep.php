@@ -28,6 +28,11 @@ class LockPhpStep implements StepInterface
         return $this->id;
     }
 
+    public function priority(): int
+    {
+        return StepInterface::PRIORITY_HIGH;
+    }
+
     public function name(): string
     {
         return 'Lock PHP version';

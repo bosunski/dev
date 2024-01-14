@@ -8,6 +8,7 @@ use App\Contracts\ConfigInterface;
 use App\Step\BrewStep;
 use App\Step\CustomStep;
 use App\Step\Env\EnvSubstituteStep;
+use App\Step\Priority;
 use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
 use Exception;
@@ -24,7 +25,7 @@ class UpConfig implements ConfigInterface
      */
     public function steps(): array
     {
-        $steps = [new ShadowEnvStep(), new EnvSubstituteStep($this->config)];
+        $steps = [];
         foreach ($this->config->steps() as $step) {
             foreach ($step as $name => $args) {
                 $configOrStep = $this->makeStep($name, $args);
@@ -39,8 +40,19 @@ class UpConfig implements ConfigInterface
         }
 
         return collect($steps)
-            ->sortBy(fn ($step) => $step instanceof BrewStep ? StepInterface::PRIORITY_HIGH : StepInterface::PRIORITY_NORMAL)
+            ->sortBy($this->stepSorter(...))
+            ->prepend(new EnvSubstituteStep($this->config))
+            ->prepend(new ShadowEnvStep())
             ->toArray();
+    }
+
+    private function stepSorter(StepInterface $step): Priority
+    {
+        if ($step instanceof ShadowEnvStep || $step instanceof EnvSubstituteStep) {
+            return Priority::HIGH;
+        }
+
+        return $step instanceof BrewStep ? Priority::HIGH : Priority::NORMAL;
     }
 
     /**

@@ -69,7 +69,7 @@ class Runner
                 ->env($this->environment($env))
                 ->tty()
                 ->path($path ?? $this->config->cwd())
-                ->run(["shadowenv", "exec", "--", "zsh", "-c", $command], $this->handleOutput(...))
+                ->run(["shadowenv", "exec", "--", "sh", "-c", $command], $this->handleOutput(...))
                 ->throw()
                 ->successful();
         } catch (ProcessFailedException) {
@@ -83,7 +83,7 @@ class Runner
             ->env($this->environment($env))
             ->tty()
             ->path($path ?? $this->config->cwd())
-            ->start(["shadowenv", "exec", "--", "zsh", "-c", $command], $this->handleOutput(...));
+            ->start(["shadowenv", "exec", "--", "sh", "-c", $command], $this->handleOutput(...));
     }
 
     private function environment(array $env = []): array

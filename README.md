@@ -49,3 +49,4 @@ My Rust is rusty. Also, why not PHP?
 - [ ] Add PHPStan
 - [ ] Add Pint for code styling
 - [ ] Better CLI UI
+- [ ] Prioritization of steps

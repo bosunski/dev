@@ -85,9 +85,10 @@ class RunCommand extends Command
             throw new UserException("Command $name is not configured correctly");
         }
 
-        (new Runner($this->config, $this))->spawn($command->get('run'), $this->config->cwd())->wait()->throw();
-
-        return self::SUCCESS;
+        return (new Runner($this->config, $this))
+            ->spawn($command->get('run'), $this->config->cwd())
+            ->wait()
+            ->exitCode();
     }
 
     private function registerAvailableCommands(): void

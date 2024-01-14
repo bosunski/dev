@@ -5,6 +5,7 @@ namespace App\Step;
 use App\Config\Config;
 use App\Execution\Runner;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
 class ShadowEnvStep implements StepInterface
@@ -39,7 +40,12 @@ class ShadowEnvStep implements StepInterface
         }
 
         if($this->createDefaultLispFile($runner->config()) && $this->createGitIgnoreFile($runner->config())) {
-            return $runner->exec("cd {$runner->config()->cwd()} && /opt/homebrew/bin/shadowenv trust");
+            /**
+             * We cannot use the Runner::exec() to run this because it uses `shadowenv exec` which
+             * can only be used after the path has been trusted. At this point, the path is not trusted
+             * so, we will run this directly.
+             */
+            return Process::path($runner->config()->cwd())->run(["/opt/homebrew/bin/shadowenv", "trust"])->successful();
         }
 
         return false;
@@ -91,8 +97,8 @@ EOF;
     private function gitIgnoreContent(): string
     {
         return <<<EOF
-/.*
-!/.gitignore
+.*
+!.gitignore
 EOF;
     }
 
