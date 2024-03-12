@@ -1,5 +1,7 @@
 <?php
 
+use LaravelZero\Framework\Components\Updater\SelfUpdateCommand;
+
 return [
 
     /*

@@ -7,38 +7,104 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-release-artifacts:
-    name: "Upload DEV Binary (Release Artifacts)"
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ github.ref_name }} on macOS x86_64
+    runs-on: macos-latest
     strategy:
       matrix:
         os:
           - "macos-aarch64"
     steps:
-      - name: "Checkout"
-        uses: "actions/checkout@v4"
+      - uses: actions/checkout@v4
 
-      - name: Reuse DEV artifacts
-        uses: dawidd6/action-download-artifact@v2
+      - name: Setup PHP
+        uses: shivammathur/setup-php@master
         with:
-          repo: bosunski/dev
-          branch: main
-          workflow: build.yml
-          name: "dev-${{ matrix.os }}"
+          php-version: 8.2
+          extensions: mbstring, bcmath
+          tools: composer:v2
 
-      - name: "Generate Archive name"
-        run: echo "filename=dev-${{ github.ref_name }}-${{ matrix.os }}.tar.gz" >> $GITHUB_ENV
+      - name: Checkout crazywhalecc/static-php-cli
+        uses: actions/checkout@v4
+        with:
+          repository: crazywhalecc/static-php-cli
+          path: spc
 
-      - name: "Archive Executable"
-        run: tar -czf ${{ env.filename }} dev
+      - run: |
+          brew tap box-project/box
+          brew install automake gzip box
+          echo "SPC_BUILD_OS=macos" >> $GITHUB_ENV
+          box -v
+
+      - id: cache-composer-deps
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: composer-dependencies
+
+      - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
+        run: composer install
+
+      - name: Resolve Variables
+        id: vars
+        run: |
+          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,sessions"
+          SPC_EXTENSIONS_SHA256=$(echo -n $SPC_EXTENSIONS | shasum -a 256 | awk '{print $1}')
+          PHP_VERSION=8.2
+
+          echo "SPC_EXTENSIONS=$SPC_EXTENSIONS" >> $GITHUB_OUTPUT
+          echo "SPC_EXTENSIONS_SHA256=$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
+          echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_OUTPUT
+          echo "CACHE_KEY=php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
+          echo "FILENAME=$GITHUB_WORKSPACE/dist/dev-${{ github.ref_name }}-${{ matrix.os }}" >> $GITHUB_OUTPUT
+          echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS" >> $GITHUB_OUTPUT
+
+      - id: cache-download
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            spc/downloads
+            spc/buildroot
+          key: ${{ steps.vars.outputs.CACHE_KEY }}
+
+      - name: Setup Spc
+        run: composer update --no-dev --classmap-authoritative
+        working-directory: spc
+
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        run: ./bin/spc download --with-php=8.2 --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        working-directory: spc
+
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
+        working-directory: spc
+
+      - if: steps.cache-download.outputs.cache-hit != 'true'
+        name: Save builds to cache
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            spc/downloads
+            spc/buildroot
+          key: ${{ steps.vars.outputs.CACHE_KEY }}
+
+      - name: Build PHAR
+        run: php dev app:build dev.phar --version=${{ github.ref_name }}
+
+      - name: Build DEV binary for macOS
+        working-directory: spc
+        run: |
+            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILENAME }}
 
       - name: "Create Checksums"
-        run: sha256sum ${{ env.filename }} > CHECKSUMS
+        run: sha256sum ${{ steps.vars.outputs.FILENAME }} > ${{ steps.vars.outputs.CHECKSUMS }}
 
-      - name: upload binaries to release
+      - name: Upload binaries to release
         uses: softprops/action-gh-release@v1
         if: ${{startsWith(github.ref, 'refs/tags/') }}
         with:
           files: |
-            ${{ env.filename }}
-            CHECKSUMS
+            ${{ steps.vars.outputs.FILENAME }}
+            ${{ steps.vars.outputs.CHECKSUMS }}
+            spc/buildroot/build-extensions.json
+            spc/buildroot/build-libraries.json

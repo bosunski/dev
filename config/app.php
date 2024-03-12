@@ -1,5 +1,7 @@
 <?php
 
+use App\Providers\UpdaterServiceProvider;
+
 return [
 
     /*
@@ -68,6 +70,7 @@ return [
 
     'providers' => [
         App\Providers\AppServiceProvider::class,
+        UpdaterServiceProvider::class,
     ],
 
 ];

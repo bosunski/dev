@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -e
-export EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole"
+export EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole"
 export SPC="$DEV_PATH"/bin/spc
 
 $SPC download --all --with-php=8.2 --for-extensions="$EXTENSIONS"
