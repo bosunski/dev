@@ -6,10 +6,17 @@ on:
       - published
   workflow_dispatch:
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+concurrency:
+  group: release-build-${{ github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build ${{ github.ref_name }} on macOS x86_64
-    runs-on: macos-latest
+    runs-on: macos-latest-xlarge
     strategy:
       matrix:
         os:
@@ -48,15 +55,17 @@ jobs:
       - name: Resolve Variables
         id: vars
         run: |
-          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,sessions"
+          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
           SPC_EXTENSIONS_SHA256=$(echo -n $SPC_EXTENSIONS | shasum -a 256 | awk '{print $1}')
           PHP_VERSION=8.2
+          FILENAME=dev-${{ github.ref_name }}-${{ matrix.os }}
 
           echo "SPC_EXTENSIONS=$SPC_EXTENSIONS" >> $GITHUB_OUTPUT
           echo "SPC_EXTENSIONS_SHA256=$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_OUTPUT
           echo "CACHE_KEY=php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
-          echo "FILENAME=$GITHUB_WORKSPACE/dist/dev-${{ github.ref_name }}-${{ matrix.os }}" >> $GITHUB_OUTPUT
+          echo "FILENAME=$FILENAME" >> $GITHUB_OUTPUT
+          echo "FILEPATH=$GITHUB_WORKSPACE/dist/$FILENAME" >> $GITHUB_OUTPUT
           echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS" >> $GITHUB_OUTPUT
 
       - id: cache-download
@@ -89,22 +98,25 @@ jobs:
           key: ${{ steps.vars.outputs.CACHE_KEY }}
 
       - name: Build PHAR
-        run: php dev app:build dev.phar --version=${{ github.ref_name }}
+        run: php dev app:build dev.phar --build-version=${{ github.ref_name }}
 
       - name: Build DEV binary for macOS
         working-directory: spc
         run: |
-            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILENAME }}
+            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILEPATH }}
+            chmod +x ${{ steps.vars.outputs.FILEPATH }}
 
       - name: "Create Checksums"
-        run: sha256sum ${{ steps.vars.outputs.FILENAME }} > ${{ steps.vars.outputs.CHECKSUMS }}
+        run: |
+          cd $GITHUB_WORKSPACE/dist
+          shasum -a 256 ${{ steps.vars.outputs.FILENAME }} > ${{ steps.vars.outputs.CHECKSUMS }}
 
       - name: Upload binaries to release
         uses: softprops/action-gh-release@v1
-        if: ${{startsWith(github.ref, 'refs/tags/') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           files: |
-            ${{ steps.vars.outputs.FILENAME }}
+            ${{ steps.vars.outputs.FILEPATH }}
             ${{ steps.vars.outputs.CHECKSUMS }}
             spc/buildroot/build-extensions.json
             spc/buildroot/build-libraries.json

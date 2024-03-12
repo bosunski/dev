@@ -43,7 +43,7 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
         $os = static::OS_TYPE_MAP[$os];
         $machine = static::MACHINE_TYPE_MAP[$machine];
         
-        return "dev-$version-$os-$machine.tar.gz";
+        return "dev-$version-$os-$machine";
     }
 
     protected function getLatestReleaseUrl(): string
