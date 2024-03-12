@@ -8,6 +8,7 @@ use App\Contracts\ConfigInterface;
 use App\Step\BrewStep;
 use App\Step\CustomStep;
 use App\Step\Env\EnvSubstituteStep;
+use App\Step\PHPStep;
 use App\Step\Priority;
 use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
@@ -66,6 +67,7 @@ class UpConfig implements ConfigInterface
             'herd' => new HerdConfig($config),
             'valet' => new ValetConfig($config, $this->config),
             'custom', 'script' => new CustomStep($config),
+            'php' => new PHPStep($config),
             default => throw new Exception("Unknown step: $name"),
         };
     }

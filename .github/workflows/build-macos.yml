@@ -28,7 +28,7 @@ on:
       extensions:
         description: Extensions to Compile (comma separated)
         required: true
-        default: "bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium"
+        default: "bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole"
         type: string
       debug:
         description: debug build
@@ -55,7 +55,7 @@ on:
       extensions:
         description: extensions to compile (comma separated)
         required: true
-        default: "bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium"
+        default: "bcmath,calendar,ctype,curl,dba,dom,exif,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole"
         type: string
       debug:
         type: boolean

@@ -21,6 +21,7 @@ class CloneStep implements StepInterface
         private readonly string $host,
         private readonly array $args = [],
         private readonly ?string $root = null,
+        private readonly bool $update = false,
     )
     {
     }
@@ -51,7 +52,7 @@ class CloneStep implements StepInterface
         if (File::isDirectory($clonePath)) {
             $runner->io()->info("Repository already exists at $clonePath");
 
-            return true;
+            return !$this->update || $this->pullChanges($runner, $clonePath);
         }
 
         File::makeDirectory($clonePath, recursive: true);
@@ -67,6 +68,11 @@ class CloneStep implements StepInterface
         }
 
         return $result;
+    }
+
+    public function pullChanges(Runner $runner, string $clonePath): bool
+    {
+        return $runner->exec("git reset --hard HEAD && git pull", $clonePath);
     }
 
     protected function clonePath(Config $config): string

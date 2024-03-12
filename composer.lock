@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8278287043a0b829685fab6ffe1cb59b",
+    "content-hash": "b6eb9ad9503b1117f0a82cffbc49a766",
     "packages": [
         {
             "name": "amphp/amp",
@@ -2046,6 +2046,67 @@
             "time": "2023-10-30T09:40:05+00:00"
         },
         {
+            "name": "laravel-zero/phar-updater",
+            "version": "v1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel-zero/phar-updater.git",
+                "reference": "700fafcde3b59e261f896b1bdb0f5657f5d46f99"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel-zero/phar-updater/zipball/700fafcde3b59e261f896b1bdb0f5657f5d46f99",
+                "reference": "700fafcde3b59e261f896b1bdb0f5657f5d46f99",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "conflict": {
+                "padraic/phar-updater": "*"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "laravel/pint": "^1.12",
+                "phpstan/phpstan": "^1.10.32",
+                "phpunit/phpunit": "^9.6.11"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Humbug\\SelfUpdate\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Padraic Brady",
+                    "email": "padraic.brady@gmail.com",
+                    "homepage": "http://blog.astrumfutura.com"
+                },
+                {
+                    "name": "Owen Voke",
+                    "email": "development@voke.dev",
+                    "homepage": "https://voke.dev"
+                }
+            ],
+            "description": "A thing to make PHAR self-updating easy and secure.",
+            "keywords": [
+                "humbug",
+                "phar",
+                "self-update",
+                "update"
+            ],
+            "support": {
+                "issues": "https://github.com/laravel-zero/phar-updater/issues",
+                "source": "https://github.com/laravel-zero/phar-updater/tree/v1.4.0"
+            },
+            "time": "2023-09-01T10:40:10+00:00"
+        },
+        {
             "name": "laravel/prompts",
             "version": "v0.1.14",
             "source": {
@@ -3370,6 +3431,38 @@
                 "source": "https://github.com/revoltphp/event-loop/tree/v1.0.6"
             },
             "time": "2023-11-30T05:34:44+00:00"
+        },
+        {
+            "name": "swoole/ide-helper",
+            "version": "5.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/swoole/ide-helper.git",
+                "reference": "69b374d982e7139fc904cc61757e7fede1d9c3d8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/swoole/ide-helper/zipball/69b374d982e7139fc904cc61757e7fede1d9c3d8",
+                "reference": "69b374d982e7139fc904cc61757e7fede1d9c3d8",
+                "shasum": ""
+            },
+            "type": "library",
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Team Swoole",
+                    "email": "team@swoole.com"
+                }
+            ],
+            "description": "IDE help files for Swoole.",
+            "support": {
+                "issues": "https://github.com/swoole/ide-helper/issues",
+                "source": "https://github.com/swoole/ide-helper/tree/5.1.1"
+            },
+            "time": "2023-12-08T17:56:23+00:00"
         },
         {
             "name": "symfony/console",

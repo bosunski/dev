@@ -93,7 +93,7 @@ class UpCommand extends Command
          * ToDo: Handle error if the service does not exist or not clonable
          */
         [$owner, $repo] = CloneStep::parseService($serviceName);
-        if ($this->runner->execute([new CloneStep($owner, $repo, 'github.com', ['--depth=1'], $root)]) !== 0) {
+        if ($this->runner->execute([new CloneStep($owner, $repo, 'github.com', ['--depth=1'], $root, true)]) !== 0) {
             throw new UserException("Failed to clone $serviceName");
         }
 

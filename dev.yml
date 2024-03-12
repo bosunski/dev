@@ -6,6 +6,12 @@ up:
       - php@8.2
   - valet:
       php: 8.2
+  # - php:
+  #     extensions:
+  #       - xdebug
+  #     ini:
+  #       - xdebug.mode=coverage
+
   - script:
         desc: Install composer dependencies
         run: composer install
