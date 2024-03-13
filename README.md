@@ -33,9 +33,7 @@ At the moment, DEV works on MacOS as some aspect of the code assumes this. The f
 To try DEV you can follow this process to install the pre-built MacOS binary using GitHub CLI:
 
 ```bash
-gh release --repo bosunski/dev download -p dev-macos-aarch64.tar.gz
-tar -xvf dev-macos-aarch64.tar.gz
-sudo install dev /usr/local/bin/dev 
+sudo gh release --repo phpsandbox/dev download --clobber -p "dev-*-macOS-arm64" -O /usr/local/bin/dev 
 ```
 
 ### Contributing

@@ -15,12 +15,16 @@ concurrency:
 
 jobs:
   build:
-    name: Build ${{ github.ref_name }} on macOS x86_64
-    runs-on: macos-latest-xlarge
+    name: Build ${{ github.ref_name }} on ${{ matrix.platform }}
     strategy:
       matrix:
-        os:
-          - "macos-aarch64"
+        os: 
+          - macos-latest-xlarge
+        include:
+          - os: macos-latest-xlarge
+            arch: arm64
+            platform: macOS
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,12 +64,12 @@ jobs:
           SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
           SPC_EXTENSIONS_SHA256=$(echo -n $SPC_EXTENSIONS | shasum -a 256 | awk '{print $1}')
           PHP_VERSION=8.2
-          FILENAME=dev-${{ github.ref_name }}-${{ matrix.os }}
+          FILENAME=dev-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.arch }}
 
           echo "SPC_EXTENSIONS=$SPC_EXTENSIONS" >> $GITHUB_OUTPUT
           echo "SPC_EXTENSIONS_SHA256=$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_OUTPUT
-          echo "CACHE_KEY=php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
+          echo "CACHE_KEY=${{ matrix.arch}}-${{ runner.os }}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "FILENAME=$FILENAME" >> $GITHUB_OUTPUT
           echo "FILEPATH=$GITHUB_WORKSPACE/dist/$FILENAME" >> $GITHUB_OUTPUT
           echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS" >> $GITHUB_OUTPUT

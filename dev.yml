@@ -39,19 +39,20 @@ up:
       desc: Create output.txt
       met?: test -f output.txt
       run: echo "Hello World $(date)\n" > output.txt
+
 commands:
-    build-phar:
-        desc: Build Dev PHAR
-        run: php dev app:build dev.phar
-    compile:
+    build:
         desc: Build Dev binary
         run: |
-          php dev build-phar && \
+          php dev app:build dev.phar && \
           spc micro:combine builds/dev.phar -O builds/dev && \
           chmod +x builds/dev && \
           rm builds/dev.phar
-    install-bin:
+    install:
         desc: Install
-        run: sudo install builds/dev /usr/local/bin/dev
+        run: |
+          php dev build && \
+          sudo install builds/dev /usr/local/bin/dev
+
 sites:
     github: https://github.com/bosunski/dev

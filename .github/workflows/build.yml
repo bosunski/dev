@@ -14,7 +14,17 @@ concurrency:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    name: Test for ${{ matrix.platform }}
+    strategy:
+      matrix:
+        os:
+          - macos-latest-xlarge
+        include:
+          - os: macos-latest-xlarge
+            arch: arm64
+            platform: macOS
+
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
