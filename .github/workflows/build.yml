@@ -20,12 +20,12 @@ jobs:
 
       - name: Cache Composer Packages
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          key: ${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-
+            ${{ github.repository }}-${{ runner.os }}-php-
 
       - name: Setup PHP
         uses: shivammathur/setup-php@master

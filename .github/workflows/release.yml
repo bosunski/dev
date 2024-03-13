@@ -47,7 +47,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: composer-dependencies
+          key: ${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ github.repository }}-${{ runner.os }}-php-
 
       - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
         run: composer install
