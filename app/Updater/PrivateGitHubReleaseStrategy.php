@@ -11,11 +11,11 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
     protected string $baseUrl = 'https://api.github.com/repos/phpsandbox/dev';
 
     protected const MACHINE_TYPE_MAP = [
-        'arm64' => 'aarch64',
+        'arm64' => 'arm64',
     ];
 
     protected const OS_TYPE_MAP = [
-        'Darwin' => 'macos',
+        'Darwin' => 'macOS',
     ];
 
     protected ?array $asset = null;
@@ -36,9 +36,9 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
         }
 
         $os = static::OS_TYPE_MAP[$os];
-        $machine = static::MACHINE_TYPE_MAP[$machine];
+        $arch = static::MACHINE_TYPE_MAP[$machine];
 
-        return "dev-$version-$os-$machine";
+        return "dev-$version-$os-$arch";
     }
 
     protected function getLatestReleaseUrl(): string

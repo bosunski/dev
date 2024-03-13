@@ -47,7 +47,8 @@ jobs:
           echo "SPC_BUILD_OS=macos" >> $GITHUB_ENV
           box -v
 
-      - id: cache-composer-deps
+      - name: Cache Composer Dependencies
+        id: cache-composer-deps
         uses: actions/cache@v4
         with:
           path: vendor
@@ -69,12 +70,13 @@ jobs:
           echo "SPC_EXTENSIONS=$SPC_EXTENSIONS" >> $GITHUB_OUTPUT
           echo "SPC_EXTENSIONS_SHA256=$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_OUTPUT
-          echo "CACHE_KEY=${{ matrix.arch}}-${{ runner.os }}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
+          echo "CACHE_KEY=${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "FILENAME=$FILENAME" >> $GITHUB_OUTPUT
           echo "FILEPATH=$GITHUB_WORKSPACE/dist/$FILENAME" >> $GITHUB_OUTPUT
           echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS" >> $GITHUB_OUTPUT
 
-      - id: cache-download
+      - name: Restore SPC builds from Cache
+        id: cache-download
         uses: actions/cache/restore@v4
         with:
           path: |
@@ -95,7 +97,7 @@ jobs:
         working-directory: spc
 
       - if: steps.cache-download.outputs.cache-hit != 'true'
-        name: Save builds to cache
+        name: Cache SPC builds
         uses: actions/cache/save@v4
         with:
           path: |

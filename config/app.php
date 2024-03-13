@@ -28,7 +28,7 @@ return [
     |
     */
 
-    'version' => sprintf('%s. PHP v%s (%s)', app('git.version'), PHP_VERSION, PHP_OS),
+    'version' => app('git.version'),
 
     /*
     |--------------------------------------------------------------------------

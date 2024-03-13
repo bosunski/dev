@@ -30,10 +30,18 @@ DEV is a tool for creating consistent and evolve-able development environment fo
 
 ### Trying DEV
 At the moment, DEV works on MacOS as some aspect of the code assumes this. The future plan is to support other platforms too.
-To try DEV you can follow this process to install the pre-built MacOS binary using GitHub CLI:
+
+To install DEV for the first time, you can follow this process to install the pre-built MacOS binary using [GitHub CLI](https://cli.github.com):
 
 ```bash
 sudo gh release --repo phpsandbox/dev download --clobber -p "dev-*-macOS-arm64" -O /usr/local/bin/dev 
+```
+
+### Updating Dev
+If you already have DEV installed, you can run this to update to the the existing binary to the latest available version:
+
+```
+sudo dev self-update
 ```
 
 ### Contributing
