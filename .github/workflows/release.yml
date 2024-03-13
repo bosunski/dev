@@ -76,7 +76,7 @@ jobs:
             spc/buildroot
           key: ${{ steps.vars.outputs.CACHE_KEY }}
 
-      - name: Setup Spc
+      - name: Setup SPC
         run: composer update --no-dev --classmap-authoritative
         working-directory: spc
 
@@ -112,7 +112,7 @@ jobs:
           shasum -a 256 ${{ steps.vars.outputs.FILENAME }} > ${{ steps.vars.outputs.CHECKSUMS }}
 
       - name: Upload binaries to release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         with:
           files: |
