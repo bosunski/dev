@@ -43,7 +43,7 @@ jobs:
           box -v
 
       - id: cache-composer-deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
           key: composer-dependencies
@@ -68,7 +68,7 @@ jobs:
           echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS" >> $GITHUB_OUTPUT
 
       - id: cache-download
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         with:
           path: |
             spc/downloads
@@ -89,7 +89,7 @@ jobs:
 
       - if: steps.cache-download.outputs.cache-hit != 'true'
         name: Save builds to cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         with:
           path: |
             spc/downloads
@@ -110,7 +110,7 @@ jobs:
           cd $GITHUB_WORKSPACE/dist
           shasum -a 256 ${{ steps.vars.outputs.FILENAME }} > ${{ steps.vars.outputs.CHECKSUMS }}
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: build-meta
           path: |

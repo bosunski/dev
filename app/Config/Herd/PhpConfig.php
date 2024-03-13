@@ -25,6 +25,7 @@ class PhpConfig implements ConfigInterface
 
             if ($configOrStep instanceof ConfigInterface) {
                 $steps = [...$steps, ...$configOrStep->steps()];
+
                 continue;
             }
 
@@ -40,9 +41,9 @@ class PhpConfig implements ConfigInterface
     private function makeStep(string $name, mixed $config): StepInterface|ConfigInterface
     {
         return match ($name) {
-            'version' => new LockPhpStep($config),
+            'version'    => new LockPhpStep($config),
             'extensions' => new ExtensionConfig($config, []),
-            default => throw new Exception("Unknown step: $name"),
+            default      => throw new Exception("Unknown step: $name"),
         };
     }
 }

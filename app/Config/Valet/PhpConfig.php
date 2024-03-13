@@ -4,8 +4,8 @@ namespace App\Config\Valet;
 
 use App\Config\Php\ExtensionConfig;
 use App\Contracts\ConfigInterface;
-use App\Step\Valet\LockPhpStep;
 use App\Step\StepInterface;
+use App\Step\Valet\LockPhpStep;
 use Exception;
 
 class PhpConfig implements ConfigInterface
@@ -25,6 +25,7 @@ class PhpConfig implements ConfigInterface
 
             if ($configOrStep instanceof ConfigInterface) {
                 $steps = [...$steps, ...$configOrStep->steps()];
+
                 continue;
             }
 
@@ -40,9 +41,9 @@ class PhpConfig implements ConfigInterface
     private function makeStep(string $name, mixed $config): StepInterface|ConfigInterface
     {
         return match ($name) {
-            'version' => new LockPhpStep($config, $this->environment),
+            'version'    => new LockPhpStep($config, $this->environment),
             'extensions' => new ExtensionConfig($config, $this->environment),
-            default => throw new Exception("Unknown step: $name"),
+            default      => throw new Exception("Unknown step: $name"),
         };
     }
 }

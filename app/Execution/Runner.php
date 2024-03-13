@@ -12,20 +12,16 @@ use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Command\Command as Cmd;
-use Symfony\Component\Console\Helper\ProcessHelper;
 
 class Runner
 {
-    /**
-     * @param Config $config
-     * @param Command $command
-     */
     public function __construct(private readonly Config $config, private readonly Command $command)
     {
     }
 
     /**
-     * @param StepInterface[] $steps
+     * @param  StepInterface[]  $steps
+     *
      * @throws Exception
      */
     public function execute(array $steps = []): int
@@ -41,7 +37,7 @@ class Runner
             }
 
             return Cmd::SUCCESS;
-        } catch (ProcessFailedException | UserException) {
+        } catch (ProcessFailedException|UserException) {
             return Cmd::FAILURE;
         }
     }
@@ -62,14 +58,14 @@ class Runner
         }
     }
 
-    public function exec(string $command, string $path = null, array $env = []): bool
+    public function exec(string $command, ?string $path = null, array $env = []): bool
     {
         try {
             return Process::forever()
                 ->env($this->environment($env))
                 ->tty()
                 ->path($path ?? $this->config->cwd())
-                ->run(["shadowenv", "exec", "--", "sh", "-c", $command], $this->handleOutput(...))
+                ->run(['shadowenv', 'exec', '--', 'sh', '-c', $command], $this->handleOutput(...))
                 ->throw()
                 ->successful();
         } catch (ProcessFailedException) {
@@ -77,13 +73,13 @@ class Runner
         }
     }
 
-    public function spawn(string $command, string $path = null, array $env = []): InvokedProcess
+    public function spawn(string $command, ?string $path = null, array $env = []): InvokedProcess
     {
         return Process::forever()
             ->env($this->environment($env))
             ->tty()
             ->path($path ?? $this->config->cwd())
-            ->start(["shadowenv", "exec", "--", "sh", "-c", $command], $this->handleOutput(...));
+            ->start(['shadowenv', 'exec', '--', 'sh', '-c', $command], $this->handleOutput(...));
     }
 
     private function environment(array $env = []): array
@@ -93,9 +89,9 @@ class Runner
             ->merge(getenv())
             ->merge($env)
             ->merge([
-                'SOURCE_ROOT' => Config::sourcePath(),
+                'SOURCE_ROOT'  => Config::sourcePath(),
                 'SERVICE_ROOT' => $this->config->servicePath(),
-                'DEV_PATH' => $this->config->devPath(),
+                'DEV_PATH'     => $this->config->devPath(),
             ])->all();
     }
 
@@ -104,7 +100,7 @@ class Runner
         return Process::pool($callback)->start($this->handleOutput(...))->wait();
     }
 
-    private function handleOutput(string $_, string $output, string $key = null): void
+    private function handleOutput(string $_, string $output, ?string $key = null): void
     {
         $this->io()->getOutput()->write($output);
     }

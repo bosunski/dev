@@ -13,8 +13,8 @@ class Browser
     {
         return match (PHP_OS) {
             'Darwin' => 'open',
-            'WINNT' => 'start',
-            default => 'xdg-open',
+            'WINNT'  => 'start',
+            default  => 'xdg-open',
         };
     }
 

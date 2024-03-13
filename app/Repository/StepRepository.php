@@ -13,7 +13,7 @@ use Exception;
 class StepRepository
 {
     /**
-     * @var array<string, Service> $services
+     * @var array<string, Service>
      */
     protected array $services;
 

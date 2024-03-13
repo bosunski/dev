@@ -26,10 +26,14 @@ class Updater
         $result = $this->updater->update();
 
         if ($result) {
-            $output->success(sprintf('Updated from version %s to %s.', $this->updater->getOldVersion(),
-                $this->updater->getNewVersion()));
+            $output->success(sprintf(
+                'Updated from version %s to %s.',
+                $this->updater->getOldVersion(),
+                $this->updater->getNewVersion()
+            ));
             exit(0);
-        } elseif (! $this->updater->getNewVersion()) {
+        }
+        if (! $this->updater->getNewVersion()) {
             $output->success('There are no stable versions available.');
         } else {
             $output->success('You have the latest version installed.');

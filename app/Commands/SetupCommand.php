@@ -23,14 +23,14 @@ class SetupCommand extends Command
 
     public function handle(): int
     {
-        $this->info("Installing required dependencies...");
+        $this->info('Installing required dependencies...');
         Process::forever()
             ->tty()
-            ->run("brew install hivemind shadowenv orbstack", function (string $type, string $output) {
+            ->run('brew install hivemind shadowenv orbstack', function (string $type, string $output): void {
                 echo $output;
             })->throw();
 
-        $this->info("Starting services...");
+        $this->info('Starting services...');
 
         Process::run(['orb', 'start']);
 

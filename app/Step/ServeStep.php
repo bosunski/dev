@@ -41,8 +41,8 @@ class ServeStep implements StepInterface
 
         $project->servicePool($pool = new Pool());
 
-        EventLoop::onSignal(SIGTERM, fn() => $pool->kill());
-        EventLoop::onSignal(SIGINT, fn() => $pool->kill());
+        EventLoop::onSignal(SIGTERM, fn () => $pool->kill());
+        EventLoop::onSignal(SIGINT, fn () => $pool->kill());
         if (! File::isDirectory($runner->config()->path())) {
             File::makeDirectory($runner->config()->path(), recursive: true);
         }
@@ -64,6 +64,6 @@ class ServeStep implements StepInterface
 
     public function id(): string
     {
-        return "serve";
+        return 'serve';
     }
 }

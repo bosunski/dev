@@ -3,7 +3,6 @@
 namespace App\Config;
 
 use App\Contracts\ConfigInterface;
-use App\Step\StepInterface;
 
 abstract class BaseConfig implements ConfigInterface
 {
@@ -16,6 +15,7 @@ abstract class BaseConfig implements ConfigInterface
 
                 if ($configOrStep instanceof ConfigInterface) {
                     $steps = [...$steps, ...$configOrStep->steps()];
+
                     continue;
                 }
 

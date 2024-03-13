@@ -12,8 +12,8 @@ use LaravelZero\Framework\Commands\Command;
 class CloneCommand extends Command
 {
     private const KNOWN_SOURCES = [
-        'github' => 'github.com',
-        'gitlab' => 'gitlab.com',
+        'github'    => 'github.com',
+        'gitlab'    => 'gitlab.com',
         'bitbucket' => 'bitbucket.org',
     ];
 
@@ -35,13 +35,15 @@ class CloneCommand extends Command
      * Execute the console command.
      *
      * @return mixed
+     *
      * @throws Exception
      */
     public function handle(): int
     {
         $source = $this->option('source');
-        if ($source && !in_array($source, self::KNOWN_SOURCES)) {
+        if ($source && ! in_array($source, self::KNOWN_SOURCES)) {
             $this->line("Unknown source $source, please use one of: " . implode(', ', array_keys(self::KNOWN_SOURCES)));
+
             return 1;
         }
 
@@ -49,8 +51,9 @@ class CloneCommand extends Command
         $runner = new Runner($config, $this);
 
         [$owner, $repo] = CloneStep::parseService($this->argument('repo'));
+
         return $runner->execute([
-            new CloneStep($owner, $repo, $source = self::KNOWN_SOURCES[$source] ?? "github.com", $this->argument('args')),
+            new CloneStep($owner, $repo, $source = self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('args')),
             new CdStep($this->argument('repo'), $source),
         ]);
     }

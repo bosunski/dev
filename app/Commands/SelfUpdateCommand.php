@@ -26,6 +26,7 @@ class SelfUpdateCommand extends Command
     {
         if (! Phar::running()) {
             $this->error('This command is only available in PHAR builds.');
+
             return 1;
         }
 
@@ -33,6 +34,7 @@ class SelfUpdateCommand extends Command
             $token = $this->ask('Cannot find GITHUB_TOKEN env. Please provide a GitHub token');
             if (! $token) {
                 $this->error('GitHub token is required to check for updates.');
+
                 return 1;
             }
 

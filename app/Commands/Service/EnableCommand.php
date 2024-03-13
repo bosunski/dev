@@ -6,6 +6,7 @@ use App\Config\Config;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use LaravelZero\Framework\Commands\Command;
+
 use function Laravel\Prompts\select;
 
 class EnableCommand extends Command

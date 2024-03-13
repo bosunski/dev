@@ -13,7 +13,7 @@ class CloneStep implements StepInterface
 {
     private const GIT_URL_REGEX = '/^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$/';
 
-    private const REPO_LOCATION = "src";
+    private const REPO_LOCATION = 'src';
 
     public function __construct(
         private readonly string $owner,
@@ -22,8 +22,7 @@ class CloneStep implements StepInterface
         private readonly array $args = [],
         private readonly ?string $root = null,
         private readonly bool $update = false,
-    )
-    {
+    ) {
     }
 
     public function id(): string
@@ -43,7 +42,7 @@ class CloneStep implements StepInterface
 
     public function checkCommand(): ?string
     {
-        return "cd " . self::REPO_LOCATION . " && git status";
+        return 'cd ' . self::REPO_LOCATION . ' && git status';
     }
 
     public function run(Runner $runner): bool
@@ -52,18 +51,18 @@ class CloneStep implements StepInterface
         if (File::isDirectory($clonePath)) {
             $runner->io()->info("Repository already exists at $clonePath");
 
-            return !$this->update || $this->pullChanges($runner, $clonePath);
+            return ! $this->update || $this->pullChanges($runner, $clonePath);
         }
 
         File::makeDirectory($clonePath, recursive: true);
-        $gitArgs = "";
-        if (!empty($this->args)) {
-            $gitArgs = " " . implode(' ', $this->args);
+        $gitArgs = '';
+        if (! empty($this->args)) {
+            $gitArgs = ' ' . implode(' ', $this->args);
         }
 
         $result = $runner->exec("git clone$gitArgs {$this->cloneUrl()} $clonePath");
 
-        if (!$result) {
+        if (! $result) {
             File::deleteDirectory($clonePath);
         }
 
@@ -72,7 +71,7 @@ class CloneStep implements StepInterface
 
     public function pullChanges(Runner $runner, string $clonePath): bool
     {
-        return $runner->exec("git reset --hard HEAD && git pull", $clonePath);
+        return $runner->exec('git reset --hard HEAD && git pull', $clonePath);
     }
 
     protected function clonePath(Config $config): string
@@ -87,7 +86,7 @@ class CloneStep implements StepInterface
 
     protected function cloneUrl(): string
     {
-        return "https://" . $this->host . "/{$this->ownerRepo()}.git";
+        return 'https://' . $this->host . "/{$this->ownerRepo()}.git";
     }
 
     public function done(Runner $runner): bool
@@ -97,6 +96,7 @@ class CloneStep implements StepInterface
 
     /**
      * @return array{owner: string, repo: string}
+     *
      * @throws UserException
      */
     public static function parseService(string $service): array
@@ -104,8 +104,8 @@ class CloneStep implements StepInterface
         if (self::isUrl($service)) {
             preg_match("/^(https?:\/\/)?(www\.)?github\.com\/(?<owner>[a-zA-Z0-9-]+)\/(?<repo>[a-zA-Z0-9-]+)(\.git)?$/", $service, $matches);
 
-            if (count($matches) == 0 || !isset($matches['owner']) || !isset($matches['repo'])) {
-                throw new UserException("Invalid GitHub repository URL");
+            if (count($matches) == 0 || ! isset($matches['owner']) || ! isset($matches['repo'])) {
+                throw new UserException('Invalid GitHub repository URL');
             }
 
             $details = [$matches['owner'], $matches['repo']];
@@ -118,7 +118,7 @@ class CloneStep implements StepInterface
         }
 
         if (empty($details)) {
-            throw new UserException("Invalid repository");
+            throw new UserException('Invalid repository');
         }
 
         return $details;

@@ -8,11 +8,10 @@ use App\Execution\Runner;
 use Exception;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
-use Throwable;
 
 class UpStep implements StepInterface
 {
-    public const FILE_NAME = "garm.yaml";
+    public const FILE_NAME = 'garm.yaml';
 
     public function __construct(private readonly string $path)
     {

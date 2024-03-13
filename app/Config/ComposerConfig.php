@@ -26,6 +26,7 @@ class ComposerConfig implements ConfigInterface
 
             if ($configOrStep instanceof ConfigInterface) {
                 $steps = [...$steps, ...$configOrStep->steps()];
+
                 continue;
             }
 
@@ -43,9 +44,9 @@ class ComposerConfig implements ConfigInterface
     private function makeStep(string $name, array $config): StepInterface|ConfigInterface
     {
         return match ($name) {
-            'auth' => new AuthConfig($config),
+            'auth'     => new AuthConfig($config),
             'packages' => new PackagesStep($config),
-            default => throw new Exception("Unknown step: $name"),
+            default    => throw new Exception("Unknown step: $name"),
         };
     }
 }

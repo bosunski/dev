@@ -46,11 +46,11 @@ class RunCommand extends Command
     public function handle(): int
     {
         if ($service = $this->option('service')) {
-           if ($this->config->services()->contains($service)) {
+            if ($this->config->services()->contains($service)) {
                 $this->config = Config::fromServiceName($service);
-              } else {
+            } else {
                 throw new UserException("Service $service not found in this project. Are you sure it is registered?");
-           }
+            }
         }
 
         $commands = $this->config->commands();

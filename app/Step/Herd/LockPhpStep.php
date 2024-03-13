@@ -49,6 +49,7 @@ class LockPhpStep implements StepInterface
 
         if (! is_file($herdPhpPath)) {
             $runner->io()->error("PHP $herdPhpPath is not installed");
+
             return false;
         }
 
@@ -56,6 +57,7 @@ class LockPhpStep implements StepInterface
         $binPath = $config->path('bin/php');
 
         $herdPhpPath = escapeshellarg($herdPhpPath);
+
         return $runner->exec("mkdir -p $binDir && ln -sf $herdPhpPath $binPath");
     }
 

@@ -44,18 +44,18 @@ class ExtensionInstallStep implements StepInterface
     private function getOptions(): string
     {
         if (empty($this->config) || empty($this->config['options'] ?? [])) {
-            return "";
+            return '';
         }
 
         return collect($this->config['options'])->map(function ($value, $key): string {
             preg_match_all('/`([^`]*)`/', $value, $matches);
 
             foreach ($matches[1] ?? [] as $match) {
-                $value = Str::replaceFirst("`$match`", trim(`$match` ?? ""), $value);
+                $value = Str::replaceFirst("`$match`", trim(`$match` ?? ''), $value);
             }
 
             return sprintf('%s="%s"', $key, $value);
-        })->join(" ");
+        })->join(' ');
     }
 
     private function enableExtension(Runner $runner): bool
@@ -65,12 +65,13 @@ class ExtensionInstallStep implements StepInterface
         }
 
         $name = Str::before($this->name, '-');
-        return  @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
+
+        return @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
     }
 
     private function ensureIniDirectoryExists(Runner $runner): void
     {
-        File::makeDirectory($runner->config()->cwd(".garm/php.d"), 0755, true, true);
+        File::makeDirectory($runner->config()->cwd('.garm/php.d'), 0755, true, true);
     }
 
     public function done(Runner $runner): bool
@@ -85,7 +86,7 @@ class ExtensionInstallStep implements StepInterface
 
     private function extensionPath(): string
     {
-        return $this->environment['extensionPath'] . DIRECTORY_SEPARATOR . Str::before($this->name, '-'). ".so";
+        return $this->environment['extensionPath'] . DIRECTORY_SEPARATOR . Str::before($this->name, '-') . '.so';
     }
 
     public function enabled(): bool

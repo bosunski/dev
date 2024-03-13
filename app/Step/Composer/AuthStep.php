@@ -6,6 +6,7 @@ use App\Config\Composer\Auth;
 use App\Execution\Runner;
 use App\Step\StepInterface;
 use Exception;
+
 use function Laravel\Prompts\password;
 
 class AuthStep implements StepInterface
@@ -51,7 +52,7 @@ class AuthStep implements StepInterface
     private function ensureTokenOrPassword(Runner $runner): void
     {
         if ($this->auth->isBasic() && ! $this->auth->hasPassword()) {
-            $runner->io()->getOutput()->writeln("");
+            $runner->io()->getOutput()->writeln('');
             $this->auth->password = password("Enter password for {$this->auth->host}:");
         }
     }
@@ -62,6 +63,7 @@ class AuthStep implements StepInterface
     public function done(Runner $runner): bool
     {
         $output = json_decode(`composer global config {$this->auth->getConfigName()}`, true);
+
         return $this->auth->validate($output ?? []);
     }
 

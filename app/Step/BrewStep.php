@@ -13,12 +13,13 @@ class BrewStep implements StepInterface
     public function name(): string
     {
         $packages = implode(', ', $this->packages);
+
         return "Install brew packages: $packages";
     }
 
     public function command(): ?string
     {
-        return "brew install " . implode(' ', $this->packages);
+        return 'brew install ' . implode(' ', $this->packages);
     }
 
     public function checkCommand(): ?string
@@ -41,7 +42,7 @@ class BrewStep implements StepInterface
         return "brew.packages.{$this->formatPackages('_')}";
     }
 
-    private function formatPackages(string $glue = " "): string
+    private function formatPackages(string $glue = ' '): string
     {
         return collect($this->packages)->join($glue);
     }

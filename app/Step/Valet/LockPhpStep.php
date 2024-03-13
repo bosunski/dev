@@ -53,13 +53,15 @@ class LockPhpStep implements StepInterface
         $config = $runner->config();
 
         if (! isset(self::PHP_VERSION_MAP[$this->version])) {
-            $runner->io()->error("Unknown PHP version: $this->version." . PHP_EOL . "Supported versions: " . implode(', ', array_keys(self::PHP_VERSION_MAP)));
+            $runner->io()->error("Unknown PHP version: $this->version." . PHP_EOL . 'Supported versions: ' . implode(', ', array_keys(self::PHP_VERSION_MAP)));
+
             return false;
         }
 
         $sourcePhpPath = $this->environment['bin'];
         if (! $sourcePhpPath || ! is_file($sourcePhpPath)) {
             $runner->io()->error("PHP $this->version is not installed");
+
             return false;
         }
 
@@ -68,6 +70,7 @@ class LockPhpStep implements StepInterface
 
         $sourcePhpPath = escapeshellarg($sourcePhpPath);
         echo "mkdir -p $binDir && ln -sf $sourcePhpPath $binPath";
+
         return $runner->exec("mkdir -p $binDir && ln -sf $sourcePhpPath $binPath");
     }
 

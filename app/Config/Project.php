@@ -19,7 +19,7 @@ class Project
     {
         return collect($this->config->services())->unique()->map(function (string $service) {
             if ($service === $this->config->serviceName()) {
-                throw new UserException("You cannot reference the current service in its own config!");
+                throw new UserException('You cannot reference the current service in its own config!');
             }
 
             return new Project(Config::fromServiceName($service));
@@ -31,7 +31,7 @@ class Project
      */
     public function servicePool(Pool $pool): Pool
     {
-        $this->services()->each(function (Project $service) use ($pool) {
+        $this->services()->each(function (Project $service) use ($pool): void {
             $service->servicePool($pool);
             $this->addStatProcesses($service, $pool);
         });

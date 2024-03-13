@@ -14,7 +14,6 @@ class Site
 
     public readonly bool $secure;
 
-
     public function __construct(array|string $site)
     {
         if (is_array($site)) {

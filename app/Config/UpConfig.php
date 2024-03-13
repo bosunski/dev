@@ -22,6 +22,7 @@ class UpConfig implements ConfigInterface
 
     /**
      * @return array<int, StepInterface>
+     *
      * @throws Exception
      */
     public function steps(): array
@@ -33,6 +34,7 @@ class UpConfig implements ConfigInterface
 
                 if ($configOrStep instanceof ConfigInterface) {
                     $steps = [...$steps, ...$configOrStep->steps()];
+
                     continue;
                 }
 
@@ -63,11 +65,11 @@ class UpConfig implements ConfigInterface
     {
         return match ($name) {
             'composer' => new ComposerConfig($config),
-            'brew' => new BrewStep($config),
-            'herd' => new HerdConfig($config),
-            'valet' => new ValetConfig($config, $this->config),
+            'brew'     => new BrewStep($config),
+            'herd'     => new HerdConfig($config),
+            'valet'    => new ValetConfig($config, $this->config),
             'custom', 'script' => new CustomStep($config),
-            'php' => new PHPStep($config),
+            'php'   => new PHPStep($config),
             default => throw new Exception("Unknown step: $name"),
         };
     }

@@ -13,11 +13,11 @@ class Config
 {
     public const OP_PATH = '.dev';
 
-    private const REPO_LOCATION = "src";
+    private const REPO_LOCATION = 'src';
 
-    private const DEFAULT_SOURCE_HOST = "github.com";
+    private const DEFAULT_SOURCE_HOST = 'github.com';
 
-    public const FILE_NAME = "dev.yml";
+    public const FILE_NAME = 'dev.yml';
 
     public readonly Collection $environment;
 
@@ -60,9 +60,9 @@ class Config
 
     public function services(bool $all = false): Collection
     {
-        return collect($this->config['services'] ?? [])->filter(fn ($service) => $all || !in_array($service, $this->settings['disabled']))->map(function (string $service) {
+        return collect($this->config['services'] ?? [])->filter(fn ($service) => $all || ! in_array($service, $this->settings['disabled']))->map(function (string $service) {
             if ($service === $this->serviceName()) {
-                throw new UserException("You cannot reference the current service in its own config!");
+                throw new UserException('You cannot reference the current service in its own config!');
             }
 
             return $service;
@@ -114,12 +114,12 @@ class Config
 
     public function servicePath(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . self::REPO_LOCATION . DIRECTORY_SEPARATOR . self::DEFAULT_SOURCE_HOST . DIRECTORY_SEPARATOR . trim($path ?? "", DIRECTORY_SEPARATOR));
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . self::REPO_LOCATION . DIRECTORY_SEPARATOR . self::DEFAULT_SOURCE_HOST . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
     public function devPath(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . trim($path ?? "", DIRECTORY_SEPARATOR));
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
     public function cwd(?string $path = null): string
@@ -138,7 +138,7 @@ class Config
 
     public static function sourcePath(?string $path = null, ?string $source = null, ?string $root = null): string
     {
-        $sourceDir = sprintf("%s/%s/%s", rtrim($root ?? self::home(), DIRECTORY_SEPARATOR), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
+        $sourceDir = sprintf('%s/%s/%s', rtrim($root ?? self::home(), DIRECTORY_SEPARATOR), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
 
         if ($path) {
             return $sourceDir . DIRECTORY_SEPARATOR . ltrim($path, '/');
@@ -154,7 +154,7 @@ class Config
 
     public function isDevProject(): bool
     {
-        return !empty($this->config);
+        return ! empty($this->config);
     }
 
     /**
@@ -178,7 +178,8 @@ class Config
      */
     public static function fromServiceName(string $path, ?string $root = null): Config
     {
-        $root = $root ?? sprintf("%s/%s", getcwd(), self::OP_PATH);
+        $root = $root ?? sprintf('%s/%s', getcwd(), self::OP_PATH);
+
         return static::read(static::sourcePath($path, root: $root));
     }
 

@@ -24,6 +24,7 @@ class HerdConfig implements ConfigInterface
 
             if ($configOrStep instanceof ConfigInterface) {
                 $steps = [...$steps, ...$configOrStep->steps()];
+
                 continue;
             }
 
@@ -40,7 +41,7 @@ class HerdConfig implements ConfigInterface
     {
         return match ($name) {
             'sites' => new Sites($config),
-            'php' => is_array($config) ? new PhpConfig($config) : new LockPhpStep($config),
+            'php'   => is_array($config) ? new PhpConfig($config) : new LockPhpStep($config),
             default => throw new Exception("Unknown step: $name"),
         };
     }

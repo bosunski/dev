@@ -5,7 +5,7 @@ namespace App\Config\Composer;
 class Auth
 {
     private const AUTH_TYPE_NAME = [
-        'basic' => 'http-basic'
+        'basic' => 'http-basic',
     ];
 
     public readonly string $username;

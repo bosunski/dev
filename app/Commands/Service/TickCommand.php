@@ -2,7 +2,6 @@
 
 namespace App\Commands\Service;
 
-use Illuminate\Console\Scheduling\Schedule;
 use LaravelZero\Framework\Commands\Command;
 use Phar;
 
@@ -30,7 +29,7 @@ class TickCommand extends Command
     public function handle()
     {
         var_dump(php_sapi_name(), Phar::running());
-        swoole_timer_tick(1000, function () {
+        swoole_timer_tick(1000, function (): void {
             $this->info('tick');
         });
     }

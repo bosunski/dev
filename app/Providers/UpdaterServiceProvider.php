@@ -9,8 +9,6 @@ use LaravelZero\Framework\Components\Updater\Strategy\GithubStrategy;
 use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use LaravelZero\Framework\Providers\Build\Build;
 
-use function class_exists;
-
 class UpdaterServiceProvider extends ServiceProvider
 {
     /**

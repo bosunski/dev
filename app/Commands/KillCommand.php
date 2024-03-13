@@ -39,6 +39,7 @@ class KillCommand extends Command
 
         if (! file_exists($config->path('dev.pid'))) {
             $this->error('No running services found');
+
             return self::FAILURE;
         }
 
@@ -46,6 +47,7 @@ class KillCommand extends Command
 
         if (! posix_kill($pid, SIGTERM)) {
             $this->error('Failed to kill services');
+
             return self::FAILURE;
         }
 

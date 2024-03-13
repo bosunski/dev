@@ -22,11 +22,6 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
 
     protected ?array $release = null;
 
-    public function __construct()
-    {
-        $this->getLatestReleaseDetailsFromGitHub();
-    }
-
     protected function buildAssetName(string $version): string
     {
         $machine = php_uname('m');
@@ -42,7 +37,7 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
 
         $os = static::OS_TYPE_MAP[$os];
         $machine = static::MACHINE_TYPE_MAP[$machine];
-        
+
         return "dev-$version-$os-$machine";
     }
 
@@ -63,7 +58,7 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
         }
 
         $this->release = Http::asJson()->withHeaders([
-            'Authorization' => "Bearer $token",
+            'Authorization'        => "Bearer $token",
             'X-GitHub-Api-Version' => '2022-11-28',
         ])->get($this->getLatestReleaseUrl())->throw()->json();
 
@@ -92,8 +87,8 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
         }
 
         Http::sink($path)->withHeaders([
-            'Accept' => 'application/octet-stream',
-            'Authorization' => "Bearer $token",
+            'Accept'               => 'application/octet-stream',
+            'Authorization'        => "Bearer $token",
             'X-GitHub-Api-Version' => '2022-11-28',
         ])->get($url)->throw();
 
@@ -102,8 +97,12 @@ class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStr
         }
     }
 
-    public function getCurrentRemoteVersion(Updater $updater)
+    public function getCurrentRemoteVersion(Updater $updater): string
     {
+        if (! $this->release) {
+            $this->getLatestReleaseDetailsFromGitHub();
+        }
+
         return $this->release['tag_name'];
     }
 

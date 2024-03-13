@@ -22,7 +22,7 @@ class PackagesStep implements StepInterface
         return "Install global composer packages: {$this->formatPackages(', ')}";
     }
 
-    private function formatPackages(string $glue = " "): string
+    private function formatPackages(string $glue = ' '): string
     {
         return collect($this->packages)
             ->map(function ($package) {

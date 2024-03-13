@@ -48,13 +48,14 @@ class EnvSubstituteStep implements StepInterface
             /**
              * If the key doesn't exist in the .env file, we want to add it.
              */
-            if (!$exists) {
+            if (! $exists) {
                 $envContent .= $insert . "\n";
                 $envWasAdded = true;
+
                 continue;
             }
 
-            $hasValue = ! in_array($currentEnvs[$key] ?? null, ["", "null", "NULL"]);
+            $hasValue = ! in_array($currentEnvs[$key] ?? null, ['', 'null', 'NULL']);
             /**
              * If the key already exists in the .env file, and has a value, we don't want to
              * overwrite it. So, we skip it.
@@ -63,7 +64,7 @@ class EnvSubstituteStep implements StepInterface
                 continue;
             }
 
-            $hasSampleValue = ! in_array($value, ["", "null", "NULL"]);
+            $hasSampleValue = ! in_array($value, ['', 'null', 'NULL']);
 
             /**
              * If the key already exists in the .env file, but doesn't have a value, we want to

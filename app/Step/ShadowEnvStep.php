@@ -31,21 +31,21 @@ class ShadowEnvStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
-        if (!$runner->config()->isDevProject()) {
+        if (! $runner->config()->isDevProject()) {
             return true;
         }
 
-        if (!$this->init($runner->config())) {
+        if (! $this->init($runner->config())) {
             return false;
         }
 
-        if($this->createDefaultLispFile($runner->config()) && $this->createGitIgnoreFile($runner->config())) {
+        if ($this->createDefaultLispFile($runner->config()) && $this->createGitIgnoreFile($runner->config())) {
             /**
              * We cannot use the Runner::exec() to run this because it uses `shadowenv exec` which
              * can only be used after the path has been trusted. At this point, the path is not trusted
              * so, we will run this directly.
              */
-            return Process::path($runner->config()->cwd())->run(["/opt/homebrew/bin/shadowenv", "trust"])->successful();
+            return Process::path($runner->config()->cwd())->run(['/opt/homebrew/bin/shadowenv', 'trust'])->successful();
         }
 
         return false;
@@ -88,6 +88,7 @@ class ShadowEnvStep implements StepInterface
     {
         $binPath = $config->devPath('bin');
         $opPath = $config->devPath('php.d');
+
         return <<<EOF
 (env/prepend-to-pathlist "PATH" "$binPath")
 (env/set "PHP_INI_SCAN_DIR" "$opPath:\$PHP_INI_SCAN_DIR")
@@ -96,7 +97,7 @@ EOF;
 
     private function gitIgnoreContent(): string
     {
-        return <<<EOF
+        return <<<'EOF'
 .*
 !.gitignore
 EOF;

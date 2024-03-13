@@ -4,8 +4,8 @@ namespace App\Config\Valet;
 
 use App\Config\Config;
 use App\Contracts\ConfigInterface;
-use App\Step\Valet\LockPhpStep;
 use App\Step\StepInterface;
+use App\Step\Valet\LockPhpStep;
 use Exception;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Process\Exceptions\ProcessFailedException;
@@ -46,6 +46,7 @@ class ValetConfig implements ConfigInterface
 
             if ($configOrStep instanceof ConfigInterface) {
                 $steps = [...$steps, ...$configOrStep->steps()];
+
                 continue;
             }
 
@@ -62,7 +63,7 @@ class ValetConfig implements ConfigInterface
     {
         return match ($name) {
             'sites' => new Sites($config),
-            'php' => is_array($config) ? new PhpConfig($config, $this->config['environment']['php']) : new LockPhpStep($config, $this->config['environment']['php']),
+            'php'   => is_array($config) ? new PhpConfig($config, $this->config['environment']['php']) : new LockPhpStep($config, $this->config['environment']['php']),
             default => throw new Exception("Unknown step: $name"),
         };
     }
@@ -70,10 +71,10 @@ class ValetConfig implements ConfigInterface
     private function resolveEnvironmentSettings(array $config): array
     {
         $environment = ['php' => []];
-        $configVersion = (string) Arr::get($config, 'php.version', Arr::get($config, 'php', ""));
+        $configVersion = (string) Arr::get($config, 'php.version', Arr::get($config, 'php', ''));
         $bin = self::phpPath($configVersion);
 
-        $environment['php']['bin'] = $bin ?: trim(`which php` ?? "");
+        $environment['php']['bin'] = $bin ?: trim(`which php` ?? '');
         $environment['php']['pecl'] = dirname($environment['php']['bin']) . '/pecl';
         $environment['php']['dir'] = dirname($environment['php']['bin'], 2);
         $environment['php']['extensionPath'] = $this->currentPhpExtensionPath($environment['php']['bin']);
@@ -100,7 +101,7 @@ class ValetConfig implements ConfigInterface
     {
         $source = self::PHP_VERSION_MAP[$version] ?? null;
         if (! $source) {
-            return "";
+            return '';
         }
 
         $command = "find /opt/homebrew/Cellar/$source | grep \"$source/$version.*/bin/php$\"";
@@ -108,20 +109,20 @@ class ValetConfig implements ConfigInterface
         $paths = $output->explode(PHP_EOL)->filter();
 
         if ($paths->isEmpty()) {
-            return "";
+            return '';
         }
 
         $versions = collect();
-        foreach($paths->filter() as $path) {
+        foreach ($paths->filter() as $path) {
             preg_match("/$version\.\d+/", $path, $matches);
             $versions[$matches[0]] = $path;
         }
 
         $latest = $versions->keys()->first();
-        $versions->each(function ($path, $version) use(&$latest): void {
-           if (version_compare($version, $latest, '>')) {
-               $latest = $version;
-           }
+        $versions->each(function ($path, $version) use (&$latest): void {
+            if (version_compare($version, $latest, '>')) {
+                $latest = $version;
+            }
         });
 
         return $versions->get($latest);

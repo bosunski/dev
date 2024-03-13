@@ -9,7 +9,7 @@ use App\Step\StepInterface;
 class Sites implements ConfigInterface
 {
     /**
-     * @param array<int,mixed> $sites
+     * @param  array<int,mixed>  $sites
      */
     public function __construct(private readonly array $sites)
     {

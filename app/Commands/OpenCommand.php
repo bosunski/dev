@@ -8,11 +8,13 @@ use App\Repository\StepRepository;
 use App\Utils\Browser;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
+
 use function Laravel\Prompts\select;
 
 class OpenCommand extends Command
 {
     private const DEFAULT_SITE = '_default_';
+
     /**
      * The signature of the command.
      *
@@ -43,6 +45,7 @@ class OpenCommand extends Command
      * Execute the console command.
      *
      * @return mixed
+     *
      * @throws UserException
      */
     public function handle(): int
@@ -86,6 +89,7 @@ class OpenCommand extends Command
     {
         $site = $site === self::DEFAULT_SITE ? 'Default' : $site;
         $site = Str::title($site);
+
         return "$site ($url)";
     }
 }

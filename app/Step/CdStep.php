@@ -57,8 +57,8 @@ class CdStep implements StepInterface
             return false;
         }
 
-        if (!is_dir($this->path)) {
-            $runner->io()->error("Directory does not exists.");
+        if (! is_dir($this->path)) {
+            $runner->io()->error('Directory does not exists.');
 
             return false;
         }
