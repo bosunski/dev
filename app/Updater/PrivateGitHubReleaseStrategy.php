@@ -2,11 +2,12 @@
 
 namespace App\Updater;
 
+use Humbug\SelfUpdate\Strategy\GithubStrategy;
 use Humbug\SelfUpdate\Updater;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
-class PrivateGitHubReleaseStrategy extends \Humbug\SelfUpdate\Strategy\GithubStrategy
+class PrivateGitHubReleaseStrategy extends GithubStrategy
 {
     protected string $baseUrl = 'https://api.github.com/repos/phpsandbox/dev';
 

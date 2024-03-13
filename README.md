@@ -41,8 +41,11 @@ sudo gh release --repo phpsandbox/dev download --clobber -p "dev-*-macOS-arm64" 
 If you already have DEV installed, you can run this to update to the the existing binary to the latest available version:
 
 ```
-sudo dev self-update
+export GITHUB_TOKEN=your_token_here
+sudo -E dev self-update
 ```
+
+For this, you will need your GITHUB_TOKEN since the repo is currently private.
 
 ### Contributing
 ### Requirements

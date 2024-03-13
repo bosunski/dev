@@ -30,7 +30,7 @@ class Runner
             foreach ($steps as $step) {
                 $name = $step->name();
                 if ($name) {
-                    $this->command->getOutput()->writeln("✨ {$step->name()}");
+                    $this->command->title("{$step->name()}");
                 }
 
                 $this->executeStep($step);
