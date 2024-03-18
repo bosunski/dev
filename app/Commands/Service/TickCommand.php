@@ -4,6 +4,7 @@ namespace App\Commands\Service;
 
 use LaravelZero\Framework\Commands\Command;
 use Phar;
+use Swoole\Timer;
 
 class TickCommand extends Command
 {
@@ -28,8 +29,9 @@ class TickCommand extends Command
      */
     public function handle()
     {
+        echo phpinfo();
         var_dump(php_sapi_name(), Phar::running());
-        swoole_timer_tick(1000, function (): void {
+        Timer::after(1000, function (): void {
             $this->info('tick');
         });
     }

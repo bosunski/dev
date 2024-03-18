@@ -24,20 +24,24 @@ class Runner
      *
      * @throws Exception
      */
-    public function execute(array $steps = []): int
+    public function execute(array $steps = [], bool $throw = false): int
     {
         try {
             foreach ($steps as $step) {
                 $name = $step->name();
                 if ($name) {
-                    $this->command->title("{$step->name()}");
+                    $this->command->outputComponents()->info($step->name());
                 }
 
                 $this->executeStep($step);
             }
 
             return Cmd::SUCCESS;
-        } catch (ProcessFailedException|UserException) {
+        } catch (ProcessFailedException|UserException $e) {
+            if ($throw) {
+                throw $e;
+            }
+
             return Cmd::FAILURE;
         }
     }

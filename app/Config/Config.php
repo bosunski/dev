@@ -203,4 +203,9 @@ class Config
     {
         return $path . DIRECTORY_SEPARATOR . self::FILE_NAME;
     }
+
+    public function getServe(): array
+    {
+        return $this->config['serve'] ?? [];
+    }
 }

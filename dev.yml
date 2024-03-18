@@ -13,8 +13,8 @@ up:
   #       - xdebug.mode=coverage
 
   - script:
-        desc: Install composer dependencies
-        run: composer install
+      desc: Install composer dependencies
+      run: composer install
   - script:
       desc: Setup SPC Binary
       met?: test -f $DEV_PATH/bin/spc
@@ -26,33 +26,38 @@ up:
         chmod +x $DEV_PATH/bin/spc
         rm $FILENAME
   - script:
-        desc: Print INI_DIR
-        run: echo $PHP_INI_SCAN_DIR
+      desc: Print INI_DIR
+      run: echo $PHP_INI_SCAN_DIR
   - script:
-        desc: Setup Static PHP
-        met?: |
-          PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
-          && PHP_INI_SCAN_DIR="" \
-          && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
-        run: ./scripts/build-static-cli
+      desc: Setup Static PHP
+      met?: |
+        PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
+        && PHP_INI_SCAN_DIR="" \
+        && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
+      run: ./scripts/build-static-cli
   - script:
       desc: Create output.txt
       met?: test -f output.txt
       run: echo "Hello World $(date)\n" > output.txt
 
 commands:
-    build:
-        desc: Build Dev binary
-        run: |
-          php dev app:build dev.phar && \
-          spc micro:combine builds/dev.phar -O builds/dev && \
-          chmod +x builds/dev && \
-          rm builds/dev.phar
-    install:
-        desc: Install
-        run: |
-          php dev build && \
-          sudo install builds/dev /usr/local/bin/dev
+  build:
+    desc: Build Dev binary
+    signature: "{name?} {subcommand?} {--service}"
+    run: |
+      php dev app:build dev.phar && \
+      spc micro:combine builds/dev.phar -N php.ini -O builds/dev && \
+      chmod +x builds/dev && \
+      rm builds/dev.phar
+  install:
+    desc: Install Dev binary
+    run: |
+      php dev build && \
+      sudo install builds/dev /usr/local/bin/dev
+
+serve:
+  tail: tail -f output.txt
+  write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done
 
 sites:
-    github: https://github.com/bosunski/dev
+  github: https://github.com/phpsandbox/dev

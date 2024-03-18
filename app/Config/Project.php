@@ -7,6 +7,7 @@ use Amp\Process\ProcessException;
 use App\Exceptions\UserException;
 use App\Process\Pool;
 use Dotenv\Dotenv;
+use Dotenv\Exception\InvalidFileException;
 use Illuminate\Support\Collection;
 
 class Project
@@ -43,6 +44,61 @@ class Project
         return $pool;
     }
 
+    public function getServe(?Collection $collector = null): Collection
+    {
+        if ($collector === null) {
+            $collector = collect();
+        }
+
+        $this->services()->each(function (Project $service) use ($collector): void {
+            $service->getServe($collector);
+        });
+
+        $serve = $this->config->getServe();
+
+        if (empty($serve)) {
+            return $collector;
+        }
+
+        $collector->put(
+            $this->config->getName(),
+            $this->processServe($serve)
+        );
+
+        return $collector;
+    }
+
+    protected function processServe(array $serve): array
+    {
+        $processesServe = [];
+        foreach ($serve as $name => $command) {
+            if (is_string($command)) {
+                $processesServe[] = [
+                    'name'    => $name,
+                    'project' => $this->config->getName(),
+                    'command' => $command,
+                    'env'     => array_merge($this->getEnv(), $this->config->environment->toArray()),
+                ];
+
+                continue;
+            }
+
+            $env = array_merge(
+                isset($command['env']) ? $this->getEnv($command['env']) : $this->getEnv(),
+                $this->config->environment->toArray()
+            );
+
+            $processesServe[] = [
+                'name'    => $name,
+                'project' => $this->config->getName(),
+                'command' => $command['run'] ?? [],
+                'env'     => $env,
+            ];
+        }
+
+        return $processesServe;
+    }
+
     /**
      * @throws ProcessException
      */
@@ -64,6 +120,30 @@ class Project
 
         $envs = collect(Dotenv::parse($envContent));
         $pool->add($service->config->serviceName(), Process::start('shadowenv exec -- /opt/homebrew/bin/hivemind', $service->config->cwd(), $envs->toArray()));
+    }
+
+    private function getEnv(string|false $file = '.env'): array
+    {
+        if ($file === false) {
+            return [];
+        }
+
+        $file = $file === '.env' ? '.env' : ".env.$file";
+        $shouldThrowError = $file !== '.env';
+
+        if (! file_exists($this->config->cwd($file))) {
+            if ($shouldThrowError) {
+                throw new UserException("File $file does not exist in {$this->config->cwd()}.");
+            }
+
+            return [];
+        }
+
+        try {
+            return Dotenv::parse(file_get_contents($this->config->cwd($file)));
+        } catch (InvalidFileException) {
+            throw new UserException("Failed to parse $file. Please check the file for syntax errors.");
+        }
     }
 
     public function hasProcfile(): bool
