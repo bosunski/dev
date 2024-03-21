@@ -7,6 +7,7 @@ use App\Execution\Runner;
 use App\Step\ServeStep;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
+use Throwable;
 
 class ServeCommand extends Command
 {
@@ -35,9 +36,16 @@ class ServeCommand extends Command
      */
     public function handle(): int
     {
-        $config = new Config(getcwd(), []);
-        $runner = new Runner($config, $this);
+        try {
+            $config = new Config(getcwd(), []);
+            $runner = new Runner($config, $this);
+            $serveStep = new ServeStep($config->cwd());
 
-        return $runner->execute([new ServeStep($config->cwd())]);
+            return $runner->execute([$serveStep], true);
+        } catch (Throwable $e) {
+            $this->components->error($e->getMessage());
+
+            return 1;
+        }
     }
 }

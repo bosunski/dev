@@ -55,7 +55,7 @@ class RunCommand extends Command
 
         $commands = $this->config->commands();
 
-        if ($commands->isEmpty()) {
+        if ($name = $this->argument('name') && $commands->isEmpty()) {
             throw new UserException('No commands found');
         }
 

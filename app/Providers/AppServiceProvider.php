@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Repository\StepRepository;
+use Illuminate\Console\Signals;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(StepRepository::class, function () {
             return new StepRepository();
+        });
+
+        Signals::resolveAvailabilityUsing(function () {
+            return $this->app->runningInConsole()
+                && ! $this->app->runningUnitTests()
+                && extension_loaded('pcntl');
         });
     }
 }

@@ -95,6 +95,8 @@ class ValetConfig implements ConfigInterface
         $this->garmConfig->environment->put('HERD_OR_VALET', 'valet');
         $this->garmConfig->environment->put('SITE_PATH', "$home/.config/valet/Nginx");
         $this->garmConfig->environment->put('VALET_OR_HERD_SITE_PATH', "$home/.config/valet/Nginx");
+
+        $this->garmConfig->paths->push(dirname($this->config['environment']['php']['bin']));
     }
 
     public static function phpPath(string $version): string

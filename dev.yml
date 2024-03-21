@@ -4,8 +4,26 @@ up:
   - brew:
       - gh
       - php@8.2
+      - c-ares
   - valet:
-      php: 8.2
+      php:
+        version: 8.2
+        extensions:
+          pcov:
+            before: |
+              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
+          swoole-5.1.1:
+            before: |
+              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
+            options:
+              enable-sockets: "yes"
+              enable-openssl: "yes --with-openssl-dir=`find /opt/homebrew/Cellar | grep \"openssl@3/3.*.*$\" | head -n 1`"
+              enable-http2: "yes"
+              enable-brotli: "yes"
+              enable-mysqlnd: "no"
+              enable-swoole-json: "no"
+              enable-swoole-curl: "yes"
+              enable-cares: "no"
   # - php:
   #     extensions:
   #       - xdebug
@@ -13,8 +31,8 @@ up:
   #       - xdebug.mode=coverage
 
   - script:
-        desc: Install composer dependencies
-        run: composer install
+      desc: Install composer dependencies
+      run: composer install
   - script:
       desc: Setup SPC Binary
       met?: test -f $DEV_PATH/bin/spc
@@ -26,33 +44,44 @@ up:
         chmod +x $DEV_PATH/bin/spc
         rm $FILENAME
   - script:
-        desc: Print INI_DIR
-        run: echo $PHP_INI_SCAN_DIR
+      desc: Print INI_DIR
+      run: echo $PHP_INI_SCAN_DIR
   - script:
-        desc: Setup Static PHP
-        met?: |
-          PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
-          && PHP_INI_SCAN_DIR="" \
-          && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
-        run: ./scripts/build-static-cli
+      desc: Setup Static PHP
+      met?: |
+        PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
+        && PHP_INI_SCAN_DIR="" \
+        && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
+      run: ./scripts/build-static-cli
   - script:
       desc: Create output.txt
       met?: test -f output.txt
       run: echo "Hello World $(date)\n" > output.txt
 
 commands:
-    build:
-        desc: Build Dev binary
-        run: |
-          php dev app:build dev.phar && \
-          spc micro:combine builds/dev.phar -O builds/dev && \
-          chmod +x builds/dev && \
-          rm builds/dev.phar
-    install:
-        desc: Install
-        run: |
-          php dev build && \
-          sudo install builds/dev /usr/local/bin/dev
+  build:
+    desc: Build Dev binary
+    signature: "{name?} {subcommand?} {--service}"
+    run: |
+      php dev app:build dev.phar && \
+      spc micro:combine builds/dev.phar -O builds/dev && \
+      chmod +x builds/dev && \
+      rm builds/dev.phar
+  install:
+    desc: Install Dev binary
+    run: |
+      php dev build && \
+      sudo install builds/dev /usr/local/bin/dev
+  php:
+    desc: PHP INI_DIR
+    run: echo $PHP_DIR
+  build-php:
+    desc: Build PHP
+    run: ./scripts/build-static-cli
+
+serve:
+  write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done
+  tail: tail -f output.txt
 
 sites:
-    github: https://github.com/bosunski/dev
+  github: https://github.com/phpsandbox/dev
