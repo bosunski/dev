@@ -4,8 +4,16 @@
 use Swoole\Event;
 
 define('LARAVEL_START', microtime(true));
-ini_set('display_errors', '1');
 
+/**
+ * We are enabling all hooks except for the file hook. This is because the file hook
+ * causes a zlib() error when Composer tries to autload the classes. It is not clear
+ * why this happens but, we can work around it by disabling the file hook.
+ * 
+ * Even though the file hook is disabled, we can still use the file functions like
+ * file_get_contents(), file_put_contents(), etc. in a coroutine context without any
+ * issues like blocking the event loop.
+ */
 \Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_ALL ^ SWOOLE_HOOK_FILE);
 
 /*
