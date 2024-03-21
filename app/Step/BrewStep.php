@@ -30,7 +30,7 @@ class BrewStep implements StepInterface
     public function run(Runner $runner): bool
     {
         return $runner->exec($this->command(), env: [
-            'HOMEBREW_NO_AUTO_UPDATE' => '1'
+            'HOMEBREW_NO_AUTO_UPDATE' => '1',
         ]);
     }
 
