@@ -4,8 +4,26 @@ up:
   - brew:
       - gh
       - php@8.2
+      - c-ares
   - valet:
-      php: 8.2
+      php:
+        version: 8.2
+        extensions:
+          pcov:
+            before: |
+              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
+          swoole-5.1.1:
+            before: |
+              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
+            options:
+              enable-sockets: "yes"
+              enable-openssl: "yes --with-openssl-dir=`find /opt/homebrew/Cellar | grep \"openssl@3/3.*.*$\" | head -n 1`"
+              enable-http2: "yes"
+              enable-brotli: "yes"
+              enable-mysqlnd: "no"
+              enable-swoole-json: "no"
+              enable-swoole-curl: "yes"
+              enable-cares: "no"
   # - php:
   #     extensions:
   #       - xdebug
@@ -46,7 +64,7 @@ commands:
     signature: "{name?} {subcommand?} {--service}"
     run: |
       php dev app:build dev.phar && \
-      spc micro:combine builds/dev.phar -N php.ini -O builds/dev && \
+      spc micro:combine builds/dev.phar -O builds/dev && \
       chmod +x builds/dev && \
       rm builds/dev.phar
   install:
@@ -54,10 +72,16 @@ commands:
     run: |
       php dev build && \
       sudo install builds/dev /usr/local/bin/dev
+  php:
+    desc: PHP INI_DIR
+    run: echo $PHP_DIR
+  build-php:
+    desc: Build PHP
+    run: ./scripts/build-static-cli
 
 serve:
-  tail: tail -f output.txt
   write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done
+  tail: tail -f output.txt
 
 sites:
   github: https://github.com/phpsandbox/dev

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class LockPhpStep implements StepInterface
 {
-    public readonly string|float $id;
+    public readonly string | float $id;
 
     private const PHP_VERSION_MAP = [
         '8.3' => 'php',
@@ -67,6 +67,12 @@ class LockPhpStep implements StepInterface
 
         $binDir = $config->path('bin');
         $binPath = $config->path('bin/php');
+
+        /**
+         * Add the current PHP path to the $PATH variable so that all the PHP
+         * related binaries are available.
+         */
+        $config->paths->push(dirname($sourcePhpPath));
 
         $sourcePhpPath = escapeshellarg($sourcePhpPath);
 

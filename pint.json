@@ -1,7 +1,9 @@
 {
     "preset": "psr12",
     "exclude": [
-        "source"
+        "source",
+        "downloads",
+        "buildroot"
     ],
     "rules": {
         "@PSR2": true,

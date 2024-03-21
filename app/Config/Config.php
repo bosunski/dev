@@ -21,12 +21,16 @@ class Config
 
     public readonly Collection $environment;
 
+    public readonly Collection $paths;
+
     public array $settings = [];
 
     public function __construct(protected string $path, protected readonly array $config, public bool $isRoot = false)
     {
         $this->environment = collect($this->config['env'] ?? []);
         $this->readSettings();
+
+        $this->paths = collect();
     }
 
     private function readSettings(): void

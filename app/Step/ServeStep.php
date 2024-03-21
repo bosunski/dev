@@ -67,28 +67,8 @@ class ServeStep implements StepInterface
 
             File::put($runner->config()->path($name = config('app.name')), getmypid());
 
-            $ps = $ps = $project->getServe();
+            $ps = $project->getServe();
             $shouldPrefixProjectName = $ps->count() > 1;
-            // $ps = $ps->map(function (array $commands, string $project) use ($runner) {
-            //     return [
-            //         // serve['foo'] => [name, run, envs]
-            //         // serve['bar'] => [name, run, envs]
-            //             'project' => $project,
-            //             'commands' => $commands[0],
-            //             'envs' => $commands[1],
-            //         ];
-            // })->values();
-
-            // $processes = $ps->map(function (array $serve) use($shouldPrefixProjectName) {
-            //     return collect($serve['commands'])->map(function (string $command, string $key) use ($serve, $shouldPrefixProjectName) {
-            //         $key = $shouldPrefixProjectName ? $serve['project'] . ':' . $key : $key;
-            //         return [
-            //             'key' => $key,
-            //             'command' => $command,
-            //             'env' => $serve['envs'],
-            //         ];
-            //     })->values();
-            // })->values()->flatMap(fn ($commands) => $commands)->map(function (array $process, int $index) use ($output) {
             $processes = $ps->values()->flatMap(fn ($commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
                 $name = $shouldPrefixProjectName ? $process['project'] . ':' . $process['name'] : $process['name'];
                 $color = $this->generateRandomColor($index);
@@ -106,7 +86,7 @@ class ServeStep implements StepInterface
             $processes->each(function (AppProcessProcess $process) use ($done, $wg): void {
                 $process->writeOutput("\033[1mRunning...\033[0m\n");
                 $wg->add();
-                go(function () use ($process, $wg, $done): void {
+                Coroutine::create(function () use ($process, $wg, $done): void {
                     defer(fn () => $wg->done());
                     defer(fn () => $done->push(true));
 
