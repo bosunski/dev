@@ -11,6 +11,8 @@
 |
 */
 
+use App\Kernel;
+
 $app = new LaravelZero\Framework\Application(
     dirname(__DIR__)
 );
@@ -28,7 +30,7 @@ $app = new LaravelZero\Framework\Application(
 
 $app->singleton(
     Illuminate\Contracts\Console\Kernel::class,
-    LaravelZero\Framework\Kernel::class
+    Kernel::class,
 );
 
 $app->singleton(

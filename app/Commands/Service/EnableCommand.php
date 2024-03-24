@@ -3,6 +3,7 @@
 namespace App\Commands\Service;
 
 use App\Config\Config;
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use LaravelZero\Framework\Commands\Command;
@@ -22,12 +23,12 @@ class EnableCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct()
+    public function __construct(Dev $dev)
     {
         parent::__construct();
 
-        $this->config = Config::fromPath(getcwd());
-        $this->runner = new Runner($this->config, $this);
+        $this->config = $dev->config;
+        $this->runner = $dev->runner;
     }
 
     /**

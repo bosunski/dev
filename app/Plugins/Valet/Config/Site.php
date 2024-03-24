@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Config\Valet;
+namespace App\Plugins\Valet\Config;
 
 use Illuminate\Support\Str;
 

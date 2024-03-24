@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Config\Valet;
+namespace App\Plugins\Valet\Config;
 
-use App\Contracts\ConfigInterface;
-use App\Step\StepInterface;
-use App\Step\Valet\SiteStep;
+use App\Plugin\Contracts\Config;
+use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Steps\SiteStep;
 
-class Sites implements ConfigInterface
+class Sites implements Config
 {
     /**
      * @param  array<int,mixed>  $sites
@@ -20,7 +20,7 @@ class Sites implements ConfigInterface
         return collect($this->sites)->map(fn ($site) => $this->makeStep($site))->toArray();
     }
 
-    private function makeStep(array|string $site): StepInterface
+    private function makeStep(array|string $site): Step
     {
         return new SiteStep(new Site($site));
     }

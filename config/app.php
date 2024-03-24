@@ -72,5 +72,4 @@ return [
         App\Providers\AppServiceProvider::class,
         UpdaterServiceProvider::class,
     ],
-
 ];

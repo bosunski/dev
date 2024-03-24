@@ -2,7 +2,7 @@
 
 namespace App\Config;
 
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
 use Exception;
 use Illuminate\Support\Collection;
 
@@ -39,7 +39,7 @@ class Service
         }
     }
 
-    public function add(StepInterface $step): void
+    public function add(Step $step): void
     {
         $this->steps->put($step->id(), $step);
 

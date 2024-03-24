@@ -57,7 +57,7 @@ class ServeStep implements StepInterface
     {
         $config = Config::fromPath($this->path)->root();
         $processes = collect($config->getServe());
-        $output = new ProcessOutput($runner->io());
+        $output = new ProcessOutput();
         $project = new Project($config);
 
         try {

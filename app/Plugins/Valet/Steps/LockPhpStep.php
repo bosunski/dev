@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Step\Valet;
+namespace App\Plugins\Valet\Steps;
 
 use App\Execution\Runner;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
 use Illuminate\Support\Str;
 
-class LockPhpStep implements StepInterface
+class LockPhpStep implements Step
 {
     public readonly string | float $id;
 
@@ -30,7 +30,7 @@ class LockPhpStep implements StepInterface
 
     public function priority(): int
     {
-        return StepInterface::PRIORITY_HIGH;
+        return Step::PRIORITY_HIGH;
     }
 
     public function name(): string

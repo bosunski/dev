@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Step\Valet;
+namespace App\Plugins\Valet\Steps;
 
-use App\Config\Valet\Site;
 use App\Execution\Runner;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Config\Site;
 use Exception;
 
-class SiteStep implements StepInterface
+class SiteStep implements Step
 {
     public function __construct(private readonly Site $site)
     {

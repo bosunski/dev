@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Commands;
+namespace App\Plugins\Git\Commands;
 
-use App\Config\Config;
-use App\Execution\Runner;
+use App\Dev;
 use App\Step\CdStep;
 use App\Step\Git\CloneStep;
 use Exception;
@@ -38,7 +37,7 @@ class CloneCommand extends Command
      *
      * @throws Exception
      */
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
         $source = $this->option('source');
         if ($source && ! in_array($source, self::KNOWN_SOURCES)) {
@@ -47,12 +46,9 @@ class CloneCommand extends Command
             return 1;
         }
 
-        $config = new Config(getcwd(), []);
-        $runner = new Runner($config, $this);
-
         [$owner, $repo] = CloneStep::parseService($this->argument('repo'));
 
-        return $runner->execute([
+        return $dev->runner->execute([
             new CloneStep($owner, $repo, $source = self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('args')),
             new CdStep($this->argument('repo'), $source),
         ]);

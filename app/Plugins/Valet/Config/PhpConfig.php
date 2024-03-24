@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Config\Valet;
+namespace App\Plugins\Valet\Config;
 
-use App\Config\Php\ExtensionConfig;
-use App\Contracts\ConfigInterface;
-use App\Step\StepInterface;
-use App\Step\Valet\LockPhpStep;
+use App\Plugin\Contracts\Config;
+use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Steps\LockPhpStep;
 use Exception;
 
-class PhpConfig implements ConfigInterface
+class PhpConfig implements Config
 {
     public function __construct(protected readonly array $config, protected array $environment = [])
     {
@@ -21,15 +20,7 @@ class PhpConfig implements ConfigInterface
     {
         $steps = [];
         foreach ($this->config as $name => $config) {
-            $configOrStep = $this->makeStep($name, $config);
-
-            if ($configOrStep instanceof ConfigInterface) {
-                $steps = [...$steps, ...$configOrStep->steps()];
-
-                continue;
-            }
-
-            $steps[] = $configOrStep;
+            $steps[] = $this->makeStep($name, $config);
         }
 
         return $steps;
@@ -38,7 +29,7 @@ class PhpConfig implements ConfigInterface
     /**
      * @throws Exception
      */
-    private function makeStep(string $name, mixed $config): StepInterface|ConfigInterface
+    private function makeStep(string $name, mixed $config): Step|Config
     {
         return match ($name) {
             'version'    => new LockPhpStep($config, $this->environment),

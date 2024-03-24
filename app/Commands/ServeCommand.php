@@ -2,8 +2,7 @@
 
 namespace App\Commands;
 
-use App\Config\Config;
-use App\Execution\Runner;
+use App\Dev;
 use App\Step\ServeStep;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
@@ -34,14 +33,12 @@ class ServeCommand extends Command
      *
      * @throws Exception
      */
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
         try {
-            $config = new Config(getcwd(), []);
-            $runner = new Runner($config, $this);
-            $serveStep = new ServeStep($config->cwd());
+            $serveStep = new ServeStep($dev->config->cwd());
 
-            return $runner->execute([$serveStep], true);
+            return $dev->runner->execute([$serveStep], true);
         } catch (Throwable $e) {
             $this->components->error($e->getMessage());
 

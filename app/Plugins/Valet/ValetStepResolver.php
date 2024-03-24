@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Config\Valet;
+namespace App\Plugins\Valet;
 
-use App\Config\Config;
-use App\Contracts\ConfigInterface;
-use App\Step\StepInterface;
-use App\Step\Valet\LockPhpStep;
-use Exception;
+use App\Dev;
+use App\Plugin\Contracts\Config;
+use App\Plugin\StepResolverInterface;
+use App\Plugins\Valet\Config\ValetConfig;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
-class ValetConfig implements ConfigInterface
+class ValetStepResolver implements StepResolverInterface
 {
-    private const PHP_VERSION_MAP = [
+    public const PHP_VERSION_MAP = [
         '8.3' => 'php',
         '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',
@@ -23,49 +22,27 @@ class ValetConfig implements ConfigInterface
         '7.4' => 'php@7.4',
     ];
 
-    protected readonly array $config;
+    protected array $config = [];
 
-    public function __construct(array $config, protected Config $garmConfig)
+    public function __construct(protected readonly Dev $dev)
     {
-        $this->config = $this->resolveEnvironmentSettings($config);
+    }
+
+    public function name(): string
+    {
+        return 'valet';
+    }
+
+    /**
+     * @param mixed $args
+     * @return Config|Step]
+     */
+    public function resolve(mixed $args): Config | array
+    {
+        $this->config = $this->resolveEnvironmentSettings($args);
         $this->injectEnvs();
-    }
 
-    /**
-     * @throws Exception
-     */
-    public function steps(): array
-    {
-        $steps = [];
-        foreach ($this->config as $name => $config) {
-            if ($name === 'environment') {
-                continue;
-            }
-
-            $configOrStep = $this->makeStep($name, $config);
-
-            if ($configOrStep instanceof ConfigInterface) {
-                $steps = [...$steps, ...$configOrStep->steps()];
-
-                continue;
-            }
-
-            $steps[] = $configOrStep;
-        }
-
-        return $steps;
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function makeStep(string $name, mixed $config): StepInterface|ConfigInterface
-    {
-        return match ($name) {
-            'sites' => new Sites($config),
-            'php'   => is_array($config) ? new PhpConfig($config, $this->config['environment']['php']) : new LockPhpStep($config, $this->config['environment']['php']),
-            default => throw new Exception("Unknown step: $name"),
-        };
+        return new ValetConfig($args, $this->config['environment']);
     }
 
     private function resolveEnvironmentSettings(array $config): array
@@ -79,7 +56,7 @@ class ValetConfig implements ConfigInterface
         $environment['php']['dir'] = dirname($environment['php']['bin'], 2);
         $environment['php']['extensionPath'] = $this->currentPhpExtensionPath($environment['php']['bin']);
         $environment['php']['version'] = self::PHP_VERSION_MAP[$configVersion] ?? $configVersion;
-        $environment['php']['cwd'] = $this->garmConfig->cwd();
+        $environment['php']['cwd'] = $this->dev->config->cwd();
 
         $config['environment'] = $environment;
 
@@ -88,15 +65,15 @@ class ValetConfig implements ConfigInterface
 
     private function injectEnvs(): void
     {
-        $this->garmConfig->environment->put('PHP_DIR', $this->config['environment']['php']['dir']);
-        $this->garmConfig->environment->put('PHP_BIN', $this->config['environment']['php']['bin']);
+        $this->dev->config->environment->put('PHP_DIR', $this->config['environment']['php']['dir']);
+        $this->dev->config->environment->put('PHP_BIN', $this->config['environment']['php']['bin']);
 
         $home = $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null;
-        $this->garmConfig->environment->put('HERD_OR_VALET', 'valet');
-        $this->garmConfig->environment->put('SITE_PATH', "$home/.config/valet/Nginx");
-        $this->garmConfig->environment->put('VALET_OR_HERD_SITE_PATH', "$home/.config/valet/Nginx");
+        $this->dev->config->environment->put('HERD_OR_VALET', 'valet');
+        $this->dev->config->environment->put('SITE_PATH', "$home/.config/valet/Nginx");
+        $this->dev->config->environment->put('VALET_OR_HERD_SITE_PATH', "$home/.config/valet/Nginx");
 
-        $this->garmConfig->paths->push(dirname($this->config['environment']['php']['bin']));
+        $this->dev->config->paths->push(dirname($this->config['environment']['php']['bin']));
     }
 
     public static function phpPath(string $version): string

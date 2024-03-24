@@ -4,19 +4,21 @@ namespace App\Execution;
 
 use App\Config\Config;
 use App\Exceptions\UserException;
-use App\Step\StepInterface;
+use App\IO\IOInterface;
+use App\Plugin\Contracts\Step;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
-use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Command\Command as Cmd;
 
 class Runner
 {
-    public function __construct(private readonly Config $config, private readonly Command $command)
-    {
+    public function __construct(
+        private readonly Config $config,
+        private readonly IOInterface $io
+    ) {
     }
 
     /**
@@ -30,7 +32,7 @@ class Runner
             foreach ($steps as $step) {
                 $name = $step->name();
                 if ($name) {
-                    $this->command->outputComponents()->info($step->name());
+                    $this->io->info($step->name());
                 }
 
                 $this->executeStep($step);
@@ -49,7 +51,7 @@ class Runner
     /**
      * @throws UserException
      */
-    private function executeStep(StepInterface $step): void
+    private function executeStep(Step $step): void
     {
         if ($step->done($this)) {
             return;
@@ -106,12 +108,12 @@ class Runner
 
     private function handleOutput(string $_, string $output, ?string $key = null): void
     {
-        $this->io()->getOutput()->write($output);
+        $this->io()->write($output);
     }
 
-    public function io(): Command
+    public function io(): IOInterface
     {
-        return $this->command;
+        return $this->io;
     }
 
     public function config(): Config

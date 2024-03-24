@@ -5,9 +5,9 @@ namespace App\Repository;
 use App\Config\Config;
 use App\Config\Service;
 use App\Exceptions\UserException;
+use App\Plugin\Contracts\Step;
 use App\Step\CanBeDeferred;
 use App\Step\DeferredStep;
-use App\Step\StepInterface;
 use Exception;
 
 class StepRepository
@@ -29,7 +29,7 @@ class StepRepository
     /**
      * @throws UserException
      */
-    public function add(string $service, StepInterface $step): StepInterface
+    public function add(string $service, Step $step): Step
     {
         /**
          * We don't want to add the same step twice. This can happen if the SAME step is
@@ -58,7 +58,7 @@ class StepRepository
     /**
      * @throws UserException
      */
-    public function addDeferred(DeferredStep $deferred): StepInterface
+    public function addDeferred(DeferredStep $deferred): Step
     {
         /**
          * ToDo: Use self::add() here instead of duplicating the code
