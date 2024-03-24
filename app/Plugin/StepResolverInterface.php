@@ -14,7 +14,7 @@ interface StepResolverInterface
 
     /**
      * @param mixed $args
-     * @return Config|Step[]
+     * @return Config|Step
      */
-    public function resolve(mixed $args): Config | array;
+    public function resolve(mixed $args): Config | Step;
 }

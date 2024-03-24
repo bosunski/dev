@@ -6,6 +6,8 @@ use App\Dev;
 use App\IO\IOInterface;
 use App\Plugin\Capability\Capabilities;
 use App\Plugin\Capability\Capability;
+use App\Plugins\Brew\BrewPlugin;
+use App\Plugins\Composer\ComposerPlugin;
 use App\Plugins\Git\GitPlugin;
 use App\Plugins\Valet\ValetPlugin;
 
@@ -22,6 +24,8 @@ class PluginManager
     protected const DEFAULT_PLUGINS = [
         GitPlugin::class,
         ValetPlugin::class,
+        BrewPlugin::class,
+        ComposerPlugin::class,
     ];
 
     public function __construct(protected readonly Dev $dev, protected readonly IOInterface $io)

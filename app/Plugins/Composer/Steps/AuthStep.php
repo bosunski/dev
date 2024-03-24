@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Step\Composer;
+namespace App\Plugins\Composer\Steps;
 
-use App\Config\Composer\Auth;
 use App\Execution\Runner;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
+use App\Plugins\Composer\Config\Auth;
 use Exception;
 
 use function Laravel\Prompts\password;
 
-class AuthStep implements StepInterface
+class AuthStep implements Step
 {
     public function __construct(private readonly Auth $auth)
     {

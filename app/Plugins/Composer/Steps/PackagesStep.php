@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Step\Composer;
+namespace App\Plugins\Composer\Steps;
 
 use App\Execution\Runner;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
 use Exception;
 
-class PackagesStep implements StepInterface
+class PackagesStep implements Step
 {
     public function __construct(private readonly array $packages)
     {

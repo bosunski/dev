@@ -7,7 +7,7 @@ use App\Config\Herd\HerdConfig;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
-use App\Step\BrewStep;
+use App\Plugins\Brew\Steps\BrewStep;
 use App\Step\CustomStep;
 use App\Step\Env\EnvSubstituteStep;
 use App\Step\PHPStep;
@@ -96,8 +96,6 @@ class UpConfig implements Config
     private function makeStep(string $name, mixed $config): Step|Config
     {
         return match ($name) {
-            'composer' => new ComposerConfig($config),
-            'brew'     => new BrewStep($config),
             'herd'     => new HerdConfig($config),
             'custom', 'script' => new CustomStep($config),
             'php'   => new PHPStep($config),

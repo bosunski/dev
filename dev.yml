@@ -30,33 +30,33 @@ up:
   #     ini:
   #       - xdebug.mode=coverage
 
-  # - script:
-  #     desc: Install composer dependencies
-  #     run: composer install
-  # - script:
-  #     desc: Setup SPC Binary
-  #     met?: test -f $DEV_PATH/bin/spc
-  #     run: |
-  #       export FILENAME=spc-macos-aarch64.tar.gz
-  #       gh release --repo crazywhalecc/static-php-cli download -p $FILENAME
-  #       tar -xvf $FILENAME
-  #       mv spc $DEV_PATH/bin/spc
-  #       chmod +x $DEV_PATH/bin/spc
-  #       rm $FILENAME
-  # - script:
-  #     desc: Print INI_DIR
-  #     run: echo $PHP_INI_SCAN_DIR
-  # - script:
-  #     desc: Setup Static PHP
-  #     met?: |
-  #       PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
-  #       && PHP_INI_SCAN_DIR="" \
-  #       && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
-  #     run: ./scripts/build-static-cli
-  # - script:
-  #     desc: Create output.txt
-  #     met?: test -f output.txt
-  #     run: echo "Hello World $(date)\n" > output.txt
+  - script:
+      desc: Install composer dependencies
+      run: composer install
+  - script:
+      desc: Setup SPC Binary
+      met?: test -f $DEV_PATH/bin/spc
+      run: |
+        export FILENAME=spc-macos-aarch64.tar.gz
+        gh release --repo crazywhalecc/static-php-cli download -p $FILENAME
+        tar -xvf $FILENAME
+        mv spc $DEV_PATH/bin/spc
+        chmod +x $DEV_PATH/bin/spc
+        rm $FILENAME
+  - script:
+      desc: Print INI_DIR
+      run: echo $PHP_INI_SCAN_DIR
+  - script:
+      desc: Setup Static PHP
+      met?: |
+        PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
+        && PHP_INI_SCAN_DIR="" \
+        && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
+      run: ./scripts/build-static-cli
+  - script:
+      desc: Create output.txt
+      met?: test -f output.txt
+      run: echo "Hello World $(date)\n" > output.txt
 
 commands:
   build:

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Config\Composer;
+namespace App\Plugins\Composer\Config;
 
 class Auth
 {

@@ -4,6 +4,7 @@ namespace App\Plugins\Valet;
 
 use App\Dev;
 use App\Plugin\Contracts\Config;
+use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
 use App\Plugins\Valet\Config\ValetConfig;
 use Illuminate\Contracts\Process\ProcessResult;
@@ -35,9 +36,9 @@ class ValetStepResolver implements StepResolverInterface
 
     /**
      * @param mixed $args
-     * @return Config|Step]
+     * @return Config|Step
      */
-    public function resolve(mixed $args): Config | array
+    public function resolve(mixed $args): Config | Step
     {
         $this->config = $this->resolveEnvironmentSettings($args);
         $this->injectEnvs();

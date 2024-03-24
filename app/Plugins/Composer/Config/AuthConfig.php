@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Config\Composer;
+namespace App\Plugins\Composer\Config;
 
-use App\Contracts\ConfigInterface;
-use App\Step\Composer\AuthStep;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Config;
+use App\Plugin\Contracts\Step;
+use App\Plugins\Composer\Steps\AuthStep;
 
-class AuthConfig implements ConfigInterface
+class AuthConfig implements Config
 {
     public function __construct(private readonly array $auth)
     {
@@ -17,7 +17,7 @@ class AuthConfig implements ConfigInterface
         return collect($this->auth)->map(fn ($site) => $this->makeStep($site))->toArray();
     }
 
-    private function makeStep(array $site): StepInterface
+    private function makeStep(array $site): Step
     {
         return new AuthStep(new Auth($site));
     }

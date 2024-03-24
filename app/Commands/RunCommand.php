@@ -2,7 +2,6 @@
 
 namespace App\Commands;
 
-use App\Cmd\ClosureCommand;
 use App\Config\Config;
 use App\Dev;
 use App\Exceptions\UserException;
@@ -62,8 +61,6 @@ class RunCommand extends Command
         }
 
         if (! $name = $this->argument('name')) {
-            // $this->registerAvailableCommands();
-
             return $this->call('list');
         }
 
@@ -87,35 +84,9 @@ class RunCommand extends Command
             throw new UserException("Command $name is not configured correctly");
         }
 
-        return (new Runner($this->config, $this))
+        return $this->runner
             ->spawn($command->get('run'), $this->config->cwd())
             ->wait()
             ->exitCode();
-    }
-
-    private function registerAvailableCommands(): void
-    {
-        $commands = $this->config->commands();
-
-        foreach ($commands as $name => $command) {
-            $signature = $command['signature'] ?? null;
-            if ($signature) {
-                $signature = "$name $signature";
-            }
-
-            $cmd = new ClosureCommand($signature, function (array $inputs) use ($name): void {
-                dump($inputs);
-            });
-
-            dump($signature);
-
-            // $cmd = new \Illuminate\Console\Command();
-            // $cmd->setName($name)
-            //     ->setDescription($command['desc'])
-            //     ->setAliases($command['aliases'] ?? [])
-            //     ->setLaravel($this->getLaravel());
-
-            $this->getApplication()->add($cmd);
-        }
     }
 }

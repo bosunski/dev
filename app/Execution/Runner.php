@@ -22,7 +22,7 @@ class Runner
     }
 
     /**
-     * @param  StepInterface[]  $steps
+     * @param  Step[]  $steps
      *
      * @throws Exception
      */

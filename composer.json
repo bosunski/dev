@@ -21,7 +21,6 @@
         "ext-posix": "*",
         "ext-session": "*",
         "amphp/process": "^2.0",
-        "composer/composer": "^2.7",
         "guzzlehttp/guzzle": "^7.5",
         "illuminate/http": "^10.0",
         "laravel-zero/framework": "^10.2.0",

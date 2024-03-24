@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Step;
+namespace App\Plugins\Brew\Steps;
 
 use App\Execution\Runner;
+use App\Plugin\Contracts\Step;
 
-class BrewStep implements StepInterface
+class BrewStep implements Step
 {
     public function __construct(private readonly array $packages)
     {

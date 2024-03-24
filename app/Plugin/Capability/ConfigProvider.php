@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Plugin\Capability;
 
-use App\Contracts\ConfigInterface;
 use App\Step\StepInterface;
 
 interface ConfigProvider extends Capability
@@ -20,7 +19,7 @@ interface ConfigProvider extends Capability
 
     /**
      * Retrieves an array of step resolvers
-     * @return array<string, ConfigInterface|StepInterface[]>
+     * @return array<string, Config|Step[]>
      */
     public function stepResolvers(): array;
 }
