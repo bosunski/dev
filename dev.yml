@@ -67,20 +67,6 @@ commands:
       spc micro:combine builds/dev.phar -O builds/dev && \
       chmod +x builds/dev && \
       rm builds/dev.phar
-  gun-foo:
-    desc: Gun Foo
-    signature: "{name} {--force}"
-    run: echo "Hello [$name]"
-  pest:
-    desc: Run Pest
-    signature: "{--coverage}"
-    run: |
-      if [ "[$coverage]" = "true" ]; then
-        echo "Running with coverage"
-        ./vendor/bin/pest --coverage
-      else
-        ./vendor/bin/pest
-      fi
   install:
     desc: Install Dev binary
     run: |
@@ -89,14 +75,9 @@ commands:
   php:
     desc: PHP INI_DIR
     run: echo $PHP_DIR
-
   build-php:
     desc: Build PHP
     run: ./scripts/build-static-cli
-
-  check:
-    desc: Check PHP version
-    run: php -v
 
 serve:
   write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done
