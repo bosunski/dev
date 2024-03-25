@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Plugins\Valet;
+namespace App\Plugins\Brew;
 
 use App\Dev;
 use App\Plugin\Capability\ConfigProvider;
 
-class ValetConfigProvider implements ConfigProvider
+class BrewConfigProvider implements ConfigProvider
 {
     public function __construct(protected Dev $dev)
     {
@@ -24,7 +24,7 @@ class ValetConfigProvider implements ConfigProvider
     public function stepResolvers(): array
     {
         return [
-            new ValetStepResolver($this->dev),
+            new BrewStepResolver($this->dev),
         ];
     }
 }

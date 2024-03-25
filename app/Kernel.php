@@ -5,6 +5,7 @@ namespace App;
 use App\Cmd\ConfigCommand;
 use App\IO\StdIO;
 use App\Plugin\Capability\Capabilities;
+use Illuminate\Console\Application as Artisan;
 use Illuminate\Support\Collection;
 use LaravelZero\Framework\Commands\Command;
 use LaravelZero\Framework\Kernel as LaravelZeroKernel;
@@ -41,13 +42,15 @@ class Kernel extends LaravelZeroKernel
     {
         $this->resolveDev();
 
-        $this->addPluginCommands();
-        $this->addConfigCommands();
+        Artisan::starting(function (Artisan $artisan): void {
+            $this->addPluginCommands($artisan);
+            $this->addConfigCommands($artisan);
+        });
 
         parent::commands();
     }
 
-    protected function addPluginCommands(): void
+    protected function addPluginCommands(Artisan $artisan): void
     {
         $manager = $this->dev->getPluginManager();
         $commands = [];
@@ -62,13 +65,10 @@ class Kernel extends LaravelZeroKernel
             $commands = array_merge($commands, $newCommands);
         }
 
-        $defaultCommands = config('commands.add');
-        $commands = array_merge($commands, $defaultCommands);
-
-        config(['commands.add' => $commands]);
+        $artisan->resolveCommands($commands);
     }
 
-    protected function addConfigCommands(): void
+    protected function addConfigCommands(Artisan $artisan): void
     {
         $manager = $this->dev->getPluginManager();
         $commands = collect();
@@ -79,20 +79,20 @@ class Kernel extends LaravelZeroKernel
             }
         }
 
-        $this->addConfigCommand($commands->merge($this->dev->config->commands()));
+        $this->addConfigCommand($commands->merge($this->dev->config->commands()), $artisan);
     }
 
-    protected function addConfigCommand(Collection $commands): void
+    protected function addConfigCommand(Collection $commands, Artisan $artisan): void
     {
         $commands = $commands->map(function (array $command, string $name) {
             $signature = $command['signature'] ?? null;
-            $signature = $signature ? "$name $signature" : $name;
+            $hasSignature = $signature !== null;
+            $signature = $hasSignature ? "$name $signature" : "$name {args?*}";
             $command['signature'] = $signature;
 
-            return new ConfigCommand($command, $this->dev);
+            return new ConfigCommand($command, $hasSignature, $this->dev);
         });
 
-        $existingCommands = config('commands.add');
-        config(['commands.add' => $commands->merge($existingCommands)->all()]);
+        $artisan->resolveCommands($commands->toArray());
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Step;
 
-use App\Config\Config;
 use App\Config\Project;
+use App\Dev;
 use App\Execution\Runner;
 use App\Process\Process as AppProcessProcess;
 use App\Process\ProcessOutput;
@@ -28,7 +28,7 @@ class ServeStep implements StepInterface
 
     protected array $trapIds = [];
 
-    public function __construct(private readonly string $path)
+    public function __construct(protected readonly Dev $dev)
     {
         $this->processes = collect();
         $this->done = new Channel();
@@ -55,10 +55,8 @@ class ServeStep implements StepInterface
      */
     public function run(Runner $runner): bool
     {
-        $config = Config::fromPath($this->path)->root();
-        $processes = collect($config->getServe());
         $output = new ProcessOutput();
-        $project = new Project($config);
+        $project = new Project($this->dev);
 
         try {
             if (! File::isDirectory($runner->config()->path())) {
@@ -72,12 +70,13 @@ class ServeStep implements StepInterface
             $processes = $ps->values()->flatMap(fn ($commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
                 $name = $shouldPrefixProjectName ? $process['project'] . ':' . $process['name'] : $process['name'];
                 $color = $this->generateRandomColor($index);
-                $p = new AppProcessProcess($name, $process['command'], $color, $process['env'], $output, $this);
-                $output->addProcess($p);
 
-                $this->processes->push($p);
+                $wrappedProcess = new AppProcessProcess($name, $color, $output, $process['instance']);
+                $output->addProcess($wrappedProcess);
 
-                return $p;
+                $this->processes->push($wrappedProcess);
+
+                return $wrappedProcess;
             });
 
             $wg = new WaitGroup();
@@ -94,7 +93,7 @@ class ServeStep implements StepInterface
                 });
             });
 
-            $this->trap();
+            $this->trapSignals();
 
             go(fn () => $this->waitForExit($done));
 
@@ -111,7 +110,7 @@ class ServeStep implements StepInterface
         }
     }
 
-    private function trap(): void
+    private function trapSignals(): void
     {
         $this->trapIds = [
             go(function (): void {

@@ -9,7 +9,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class ConfigCommand extends Command
 {
-    public function __construct(protected array $command, protected Dev $dev)
+    public function __construct(protected array $command, protected bool $hasSignature, protected Dev $dev)
     {
         $this->signature = $command['signature'];
         parent::__construct();
@@ -19,7 +19,7 @@ class ConfigCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $inputs = array_merge($input->getArguments(), $input->getOptions());
+        $inputs = $this->hasSignature ? array_merge($input->getArguments(), $input->getOptions()) : $input->getArgument('args');
 
         $command = $this->command['run'];
         foreach ($inputs as $key => $value) {

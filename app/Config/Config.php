@@ -4,7 +4,6 @@ namespace App\Config;
 
 use App\Exceptions\UserException;
 use App\Plugin\StepResolverInterface;
-use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -34,8 +33,6 @@ class Config
 
     public const FILE_NAME = 'dev.yml';
 
-    public readonly Collection $environment;
-
     public readonly Collection $paths;
 
     public array $settings = [];
@@ -44,7 +41,6 @@ class Config
 
     public function __construct(protected string $path, protected readonly array $config, public bool $isRoot = false)
     {
-        $this->environment = collect($this->config['env'] ?? []);
         $this->readSettings();
 
         $this->paths = collect();
@@ -104,14 +100,6 @@ class Config
     public function commands(): Collection
     {
         return collect($this->config['commands'] ?? []);
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function service(): Service
-    {
-        return new Service($this);
     }
 
     public function getType(): string
@@ -234,5 +222,10 @@ class Config
     public function getServe(): array
     {
         return $this->config['serve'] ?? [];
+    }
+
+    public function envs(): Collection
+    {
+        return collect($this->config['env'] ?? []);
     }
 }

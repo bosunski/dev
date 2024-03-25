@@ -9,10 +9,10 @@ use App\Plugin\PluginManager;
 
 class Factory
 {
-    public static function create(IOInterface $io): Dev
+    public static function create(IOInterface $io, ?Config $config = null): Dev
     {
         $factory = new static();
-        $config = Config::fromPath(getcwd());
+        $config = $config ?? Config::fromPath(getcwd());
         $runner = new Runner($config, $io);
         $dev = new Dev($config, $runner, $io);
 

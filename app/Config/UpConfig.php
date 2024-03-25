@@ -33,17 +33,17 @@ class UpConfig implements Config
     }
 
     /**
-     * @return array<int, StepInterface>
-     *
+     * @param array<non-empty-string, StepResolverInterface> $resolvers
+     * @return StepInterface[]
      * @throws Exception
      */
-    public function steps(): array
+    public function steps(array $resolvers = []): array
     {
         $steps = [];
         foreach ($this->config->steps() as $step) {
             foreach ($step as $name => $args) {
-                if (isset($this->stepResolvers[$name])) {
-                    $configOrStep = $this->stepResolvers[$name]->resolve($args);
+                if (isset($resolvers[$name])) {
+                    $configOrStep = $resolvers[$name]->resolve($args);
                 } else {
                     $configOrStep = $this->makeStep($name, $args);
                 }
@@ -61,8 +61,24 @@ class UpConfig implements Config
         return collect($steps)
             ->sortBy($this->stepSorter(...))
             ->prepend(new EnvSubstituteStep($this->config))
-            ->prepend(new ShadowEnvStep())
             ->toArray();
+    }
+
+    /**
+     * @param non-empty-string $key
+     * @return mixed
+     */
+    public function get(string $key): mixed
+    {
+        foreach($this->config->steps() as $step) {
+            foreach ($step as $name => $args) {
+                if ($name === $key) {
+                    return $args;
+                }
+            }
+        }
+
+        return null;
     }
 
     private function resolveStepFromConfig(Config $config): array

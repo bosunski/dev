@@ -7,6 +7,7 @@ use App\Config\Service;
 use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
+use App\Factory;
 use App\Repository\StepRepository;
 use App\Step\Git\CloneStep;
 use Exception;
@@ -53,7 +54,7 @@ class UpCommand extends Command
             $this->config->services()->each(fn ($service) => $this->resolveService($service, $this->config->path()));
         }
 
-        $this->stepRepository->addService($dev->config->service());
+        $this->stepRepository->addService(new Service($dev));
 
         $services = $this->stepRepository->getServices();
 
@@ -63,7 +64,7 @@ class UpCommand extends Command
             }
 
             $this->info("🚀 Running steps for $service->id...");
-            if ($dev->runner->execute($service->steps->toArray()) !== 0) {
+            if ($service->runSteps() !== 0) {
                 $this->error("⛔️ Failed to run steps for $service->id");
 
                 return self::FAILURE;
@@ -103,7 +104,9 @@ class UpCommand extends Command
             $config->services()->each(fn ($service) => $this->resolveService($service, $root));
         }
 
-        $this->stepRepository->addService($service = new Service(Config::fromServiceName($serviceName)));
+        $dev = Factory::create($this->runner->io(), Config::fromServiceName($serviceName));
+
+        $this->stepRepository->addService($service = new Service($dev));
 
         return $service;
     }

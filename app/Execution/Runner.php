@@ -3,22 +3,31 @@
 namespace App\Execution;
 
 use App\Config\Config;
+use App\Contracts\EnvResolver;
 use App\Exceptions\UserException;
 use App\IO\IOInterface;
 use App\Plugin\Contracts\Step;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
+use Illuminate\Process\PendingProcess;
 use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Console\Command\Command as Cmd;
 
 class Runner
 {
+    protected ?EnvResolver $envResolver = null;
+
     public function __construct(
         private readonly Config $config,
         private readonly IOInterface $io
     ) {
+    }
+
+    public function setEnvResolver(EnvResolver $envResolver): void
+    {
+        $this->envResolver = $envResolver;
     }
 
     /**
@@ -67,11 +76,9 @@ class Runner
     public function exec(string $command, ?string $path = null, array $env = []): bool
     {
         try {
-            return Process::forever()
-                ->env($this->environment($env))
+            return $this->process($command, $path, $env)
                 ->tty()
-                ->path($path ?? $this->config->cwd())
-                ->run(['shadowenv', 'exec', '--', 'sh', '-c', $command], $this->handleOutput(...))
+                ->run(output: $this->handleOutput(...))
                 ->throw()
                 ->successful();
         } catch (ProcessFailedException) {
@@ -81,24 +88,35 @@ class Runner
 
     public function spawn(string $command, ?string $path = null, array $env = []): InvokedProcess
     {
-        return Process::forever()
-            ->env($this->environment($env))
+        return $this->process($command, $path, $env)
             ->tty()
-            ->path($path ?? $this->config->cwd())
-            ->start(['shadowenv', 'exec', '--', 'sh', '-c', $command], $this->handleOutput(...));
+            ->start(output: $this->handleOutput(...));
     }
 
     private function environment(array $env = []): array
     {
         return $this->config
-            ->environment
+            ->envs()
             ->merge(getenv())
             ->merge($env)
+            ->merge($this->envResolver?->envs() ?? [])
             ->merge([
                 'SOURCE_ROOT'  => Config::sourcePath(),
                 'SERVICE_ROOT' => $this->config->servicePath(),
                 'DEV_PATH'     => $this->config->devPath(),
             ])->all();
+    }
+
+    public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess
+    {
+        $command = is_string($command)
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
+
+        return Process::forever()
+            ->path($path ?? $this->config->cwd())
+            ->command($command)
+            ->env($this->environment($env));
     }
 
     public function pool(callable $callback): ProcessPoolResults

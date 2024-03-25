@@ -2,8 +2,8 @@
 
 namespace App\Repository;
 
-use App\Config\Config;
 use App\Config\Service;
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Plugin\Contracts\Step;
 use App\Step\CanBeDeferred;
@@ -21,9 +21,11 @@ class StepRepository
      * @throws UserException
      * @throws Exception
      */
-    public function __construct()
+    public function __construct(Dev $dev)
     {
-        $this->services = ['deferred' => new Service(Config::fromServiceName('deferred'))];
+        $this->services = [
+            'deferred' => new Service($dev),
+        ];
     }
 
     /**
@@ -98,6 +100,9 @@ class StepRepository
         return $this->services[$id] ?? null;
     }
 
+    /**
+     * @return array<string, Service>
+     */
     public function getServices(): array
     {
         $deferred = array_shift($this->services);

@@ -36,7 +36,7 @@ class ServeCommand extends Command
     public function handle(Dev $dev): int
     {
         try {
-            $serveStep = new ServeStep($dev->config->cwd());
+            $serveStep = new ServeStep($dev);
 
             return $dev->runner->execute([$serveStep], true);
         } catch (Throwable $e) {

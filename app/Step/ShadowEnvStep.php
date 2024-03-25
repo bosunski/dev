@@ -3,6 +3,7 @@
 namespace App\Step;
 
 use App\Config\Config;
+use App\Dev;
 use App\Execution\Runner;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -10,7 +11,7 @@ use Illuminate\Support\Str;
 
 class ShadowEnvStep implements StepInterface
 {
-    public function __construct()
+    public function __construct(protected readonly Dev $dev)
     {
     }
 
@@ -90,7 +91,7 @@ class ShadowEnvStep implements StepInterface
         $opPath = $config->devPath('php.d');
 
         $paths = $config->paths->push($binPath);
-        $paths = $paths->map(function ($path): string {
+        $paths = $paths->merge($this->dev->paths())->map(function ($path): string {
             return <<<EOF
 (env/prepend-to-pathlist "PATH" "$path")
 EOF;

@@ -10,6 +10,7 @@ use App\Plugins\Brew\BrewPlugin;
 use App\Plugins\Composer\ComposerPlugin;
 use App\Plugins\Git\GitPlugin;
 use App\Plugins\Valet\ValetPlugin;
+use RuntimeException;
 
 class PluginManager
 {
@@ -65,6 +66,26 @@ class PluginManager
         return $capabilities;
     }
 
+    /**
+     * @template T of Capability
+     * @param class-string<T> $capabilityClassName
+     * @param array $ctorArgs
+     * @return T[]
+     * @throws RuntimeException
+     */
+    public function getCcs(string $capabilityClassName, array $ctorArgs = []): array
+    {
+        $capabilities = [];
+        foreach ($this->plugins as $plugin) {
+            $capability = $this->getPluginCapability($plugin, Capabilities::from($capabilityClassName), $ctorArgs);
+            if ($capability !== null) {
+                $capabilities[] = $capability;
+            }
+        }
+
+        return $capabilities;
+    }
+
     public function getPluginCapability(PluginInterface $plugin, Capabilities $capabilityClassName, array $ctorArgs = []): ?Capability
     {
         if ($capabilityClass = $this->getCapabilityImplementationClassName($plugin, $capabilityClassName)) {
@@ -73,7 +94,7 @@ class PluginManager
             }
 
             $ctorArgs['plugin'] = $plugin;
-            $capabilityObj = new $capabilityClass($ctorArgs);
+            $capabilityObj = app($capabilityClass, $ctorArgs);
 
             // FIXME these could use is_a and do the check *before* instantiating once drop support for php<5.3.9
             if (! $capabilityObj instanceof Capability || ! $capabilityObj instanceof $capabilityClassName->value) {

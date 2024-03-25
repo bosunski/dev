@@ -2,36 +2,29 @@
 
 namespace App\Process;
 
-use App\Step\ServeStep;
-use Symfony\Component\Process\Process as SymfonyProcess;
+use Illuminate\Contracts\Process\InvokedProcess;
+use Illuminate\Process\PendingProcess;
 use Throwable;
 
 class Process
 {
-    protected SymfonyProcess $process;
+    protected ?InvokedProcess $invokedProcess = null;
 
     public function __construct(
         public readonly string $name,
-        public readonly string|array $command,
         public readonly string $color,
-        public readonly array $env = [],
         protected readonly ProcessOutput $output,
-        protected readonly ServeStep $step,
+        protected readonly PendingProcess $pendingProcess
     ) {
-        $command = is_string($command)
-            ? ['shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
-            : ['shadowenv', 'exec', '--', ...$command];
-
-        $this->process = new SymfonyProcess($command, env: $env, timeout: 0);
-        $this->process->setPty(true);
     }
 
     public function start(): void
     {
         try {
-            $exitCode = $this->process->setPty(true)->run(function (string $type, string $buffer): void {
+            $this->invokedProcess = $this->pendingProcess->start(output: function (string $type, string $buffer): void {
                 $this->writeOutput($buffer);
             });
+            $exitCode = $this->invokedProcess->wait()->exitCode();
 
             if ($this->isInterrupted($exitCode)) {
                 $this->writeError('Signal: Interrupted');
@@ -56,11 +49,6 @@ class Process
         return $exit === 130;
     }
 
-    public function wait(): void
-    {
-        $this->process->wait();
-    }
-
     public function writeOutput(string $output): void
     {
         $this->output->writeOutput($this, $output);
@@ -74,7 +62,7 @@ class Process
     public function signal(int $signal): void
     {
         try {
-            $this->process->signal($signal);
+            $this->invokedProcess?->signal($signal);
         } catch (Throwable $e) {
             $this->writeError("(DEV) Signal Failed: {$e->getMessage()}");
         }
@@ -82,7 +70,7 @@ class Process
 
     public function interrupt(): void
     {
-        if (! $this->process->isRunning()) {
+        if (! $this->invokedProcess?->running()) {
             return;
         }
 
@@ -92,7 +80,7 @@ class Process
 
     public function kill(): void
     {
-        if (! $this->process->isRunning()) {
+        if (! $this->invokedProcess?->running()) {
             return;
         }
 

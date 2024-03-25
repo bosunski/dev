@@ -2,7 +2,10 @@
 
 namespace App\Config;
 
+use App\Dev;
+use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Contracts\Step;
+use App\Step\ShadowEnvStep;
 use Exception;
 use Illuminate\Support\Collection;
 
@@ -15,9 +18,9 @@ class Service
     /**
      * @throws Exception
      */
-    public function __construct(public readonly Config $config)
+    public function __construct(public readonly Dev $dev)
     {
-        $this->id = $config->serviceName();
+        $this->id = $dev->config->serviceName();
         $this->steps = collect();
     }
 
@@ -26,7 +29,16 @@ class Service
      */
     private function steps(): array
     {
-        return $this->config->up()->steps();
+        $manager = $this->dev->getPluginManager();
+        $resolvers = [];
+        foreach ($manager->getCcs(ConfigProvider::class, [$this->dev]) as $capability) {
+            $newResolvers = $capability->stepResolvers($this->dev);
+            foreach ($newResolvers as $resolver) {
+                $resolvers[$resolver->name()] = $resolver;
+            }
+        }
+
+        return [new ShadowEnvStep($this->dev), ...$this->dev->config->up()->steps($resolvers)];
     }
 
     /**
@@ -48,5 +60,10 @@ class Service
     public function hasStep(string $id): bool
     {
         return $this->steps->has($id);
+    }
+
+    public function runSteps(): int
+    {
+        return $this->dev->runner->execute($this->steps->toArray());
     }
 }
