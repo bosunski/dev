@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Config\Config;
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Repository\StepRepository;
@@ -32,12 +33,12 @@ class RunCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository)
+    public function __construct(protected readonly StepRepository $stepRepository, Dev $dev)
     {
         parent::__construct();
 
-        $this->config = Config::fromPath(getcwd());
-        $this->runner = new Runner($this->config, $this);
+        $this->config = $dev->config;
+        $this->runner = $dev->runner;
     }
 
     /**
@@ -60,8 +61,6 @@ class RunCommand extends Command
         }
 
         if (! $name = $this->argument('name')) {
-            $this->registerAvailableCommands();
-
             return $this->call('list');
         }
 
@@ -85,24 +84,9 @@ class RunCommand extends Command
             throw new UserException("Command $name is not configured correctly");
         }
 
-        return (new Runner($this->config, $this))
+        return $this->runner
             ->spawn($command->get('run'), $this->config->cwd())
             ->wait()
             ->exitCode();
-    }
-
-    private function registerAvailableCommands(): void
-    {
-        $commands = $this->config->commands();
-
-        foreach ($commands as $name => $command) {
-            $cmd = new \Illuminate\Console\Command();
-            $cmd->setName($name)
-                ->setDescription($command['desc'])
-                ->setAliases($command['aliases'] ?? [])
-                ->setLaravel($this->getLaravel());
-
-            $this->getApplication()->add($cmd);
-        }
     }
 }

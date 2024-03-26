@@ -27,7 +27,7 @@ jobs:
           extensions: mbstring, bcmath
           tools: composer:v2
           coverage: pcov
-      
+
       - name: Install Composer dependencies
         run: composer install --no-progress --no-suggest
         if: steps.composer-cache.outputs.cache-hit != 'true'

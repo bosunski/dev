@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => \App\Commands\RunCommand::class,
+    'default' => NunoMaduro\LaravelConsoleSummary\SummaryCommand::class,
 
     /*
     |--------------------------------------------------------------------------

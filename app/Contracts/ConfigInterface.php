@@ -2,12 +2,8 @@
 
 namespace App\Contracts;
 
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Config;
 
-interface ConfigInterface
+interface ConfigInterface extends Config
 {
-    /**
-     * @return array<int, StepInterface>
-     */
-    public function steps(): array;
 }

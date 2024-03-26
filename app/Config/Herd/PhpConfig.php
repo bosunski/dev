@@ -21,15 +21,7 @@ class PhpConfig implements ConfigInterface
     {
         $steps = [];
         foreach ($this->config as $name => $config) {
-            $configOrStep = $this->makeStep($name, $config);
-
-            if ($configOrStep instanceof ConfigInterface) {
-                $steps = [...$steps, ...$configOrStep->steps()];
-
-                continue;
-            }
-
-            $steps[] = $configOrStep;
+            $steps[] = $this->makeStep($name, $config);
         }
 
         return $steps;

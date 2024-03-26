@@ -2,15 +2,9 @@
 
 namespace App\Process;
 
-use Illuminate\Console\Command;
-
 class ProcessOutput
 {
     protected int $maxNameLength = 0;
-
-    public function __construct(protected Command $command)
-    {
-    }
 
     public function addProcess(Process $process): void
     {

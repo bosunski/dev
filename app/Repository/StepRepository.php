@@ -2,12 +2,12 @@
 
 namespace App\Repository;
 
-use App\Config\Config;
 use App\Config\Service;
+use App\Dev;
 use App\Exceptions\UserException;
+use App\Plugin\Contracts\Step;
 use App\Step\CanBeDeferred;
 use App\Step\DeferredStep;
-use App\Step\StepInterface;
 use Exception;
 
 class StepRepository
@@ -21,15 +21,17 @@ class StepRepository
      * @throws UserException
      * @throws Exception
      */
-    public function __construct()
+    public function __construct(Dev $dev)
     {
-        $this->services = ['deferred' => new Service(Config::fromServiceName('deferred'))];
+        $this->services = [
+            'deferred' => new Service($dev),
+        ];
     }
 
     /**
      * @throws UserException
      */
-    public function add(string $service, StepInterface $step): StepInterface
+    public function add(string $service, Step $step): Step
     {
         /**
          * We don't want to add the same step twice. This can happen if the SAME step is
@@ -58,7 +60,7 @@ class StepRepository
     /**
      * @throws UserException
      */
-    public function addDeferred(DeferredStep $deferred): StepInterface
+    public function addDeferred(DeferredStep $deferred): Step
     {
         /**
          * ToDo: Use self::add() here instead of duplicating the code
@@ -98,6 +100,9 @@ class StepRepository
         return $this->services[$id] ?? null;
     }
 
+    /**
+     * @return array<string, Service>
+     */
     public function getServices(): array
     {
         $deferred = array_shift($this->services);

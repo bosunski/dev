@@ -3,24 +3,36 @@
 namespace App\Execution;
 
 use App\Config\Config;
+use App\Contracts\EnvResolver;
 use App\Exceptions\UserException;
-use App\Step\StepInterface;
+use App\IO\IOInterface;
+use App\Plugin\Contracts\Step;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
+use Illuminate\Process\PendingProcess;
 use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
-use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Command\Command as Cmd;
+use Symfony\Component\Process\Process as SymfonyProcess;
 
 class Runner
 {
-    public function __construct(private readonly Config $config, private readonly Command $command)
+    protected ?EnvResolver $envResolver = null;
+
+    public function __construct(
+        private readonly Config $config,
+        private readonly IOInterface $io
+    ) {
+    }
+
+    public function setEnvResolver(EnvResolver $envResolver): void
     {
+        $this->envResolver = $envResolver;
     }
 
     /**
-     * @param  StepInterface[]  $steps
+     * @param  Step[]  $steps
      *
      * @throws Exception
      */
@@ -30,7 +42,7 @@ class Runner
             foreach ($steps as $step) {
                 $name = $step->name();
                 if ($name) {
-                    $this->command->outputComponents()->info($step->name());
+                    $this->io->info($step->name());
                 }
 
                 $this->executeStep($step);
@@ -49,7 +61,7 @@ class Runner
     /**
      * @throws UserException
      */
-    private function executeStep(StepInterface $step): void
+    private function executeStep(Step $step): void
     {
         if ($step->done($this)) {
             return;
@@ -65,11 +77,9 @@ class Runner
     public function exec(string $command, ?string $path = null, array $env = []): bool
     {
         try {
-            return Process::forever()
-                ->env($this->environment($env))
+            return $this->process($command, $path, $env)
                 ->tty()
-                ->path($path ?? $this->config->cwd())
-                ->run(['shadowenv', 'exec', '--', 'sh', '-c', $command], $this->handleOutput(...))
+                ->run(output: $this->handleOutput(...))
                 ->throw()
                 ->successful();
         } catch (ProcessFailedException) {
@@ -79,24 +89,44 @@ class Runner
 
     public function spawn(string $command, ?string $path = null, array $env = []): InvokedProcess
     {
-        return Process::forever()
-            ->env($this->environment($env))
+        return $this->process($command, $path, $env)
             ->tty()
-            ->path($path ?? $this->config->cwd())
-            ->start(['shadowenv', 'exec', '--', 'sh', '-c', $command], $this->handleOutput(...));
+            ->start(output: $this->handleOutput(...));
     }
 
     private function environment(array $env = []): array
     {
         return $this->config
-            ->environment
+            ->envs()
             ->merge(getenv())
             ->merge($env)
+            ->merge($this->envResolver?->envs() ?? [])
             ->merge([
                 'SOURCE_ROOT'  => Config::sourcePath(),
                 'SERVICE_ROOT' => $this->config->servicePath(),
                 'DEV_PATH'     => $this->config->devPath(),
             ])->all();
+    }
+
+    public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess
+    {
+        $command = is_string($command)
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
+
+        return Process::forever()
+            ->path($path ?? $this->config->cwd())
+            ->command($command)
+            ->env($this->environment($env));
+    }
+
+    public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
+    {
+        $command = is_string($command)
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
+
+        return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
     }
 
     public function pool(callable $callback): ProcessPoolResults
@@ -106,12 +136,12 @@ class Runner
 
     private function handleOutput(string $_, string $output, ?string $key = null): void
     {
-        $this->io()->getOutput()->write($output);
+        $this->io()->write($output);
     }
 
-    public function io(): Command
+    public function io(): IOInterface
     {
-        return $this->command;
+        return $this->io;
     }
 
     public function config(): Config

@@ -4,8 +4,10 @@ namespace App\Commands;
 
 use App\Config\Config;
 use App\Config\Service;
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
+use App\Factory;
 use App\Repository\StepRepository;
 use App\Step\Git\CloneStep;
 use Exception;
@@ -34,25 +36,25 @@ class UpCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository)
+    public function __construct(protected readonly StepRepository $stepRepository, Dev $dev)
     {
         parent::__construct();
 
-        $this->config = Config::fromPath(getcwd());
-        $this->runner = new Runner($this->config, $this);
+        $this->config = $dev->config;
+        $this->runner = $dev->runner;
     }
 
     /**
      * @throws Exception
      */
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
-        if (! $this->option('self') && $this->config->services()->count() > 0) {
-            $this->info("🚀 Project contains {$this->config->services()->count()} services. Resolving all services...");
+        if (! $this->option('self') && $dev->config->services()->count() > 0) {
+            $this->info("🚀 Project contains {$dev->config->services()->count()} services. Resolving all services...");
             $this->config->services()->each(fn ($service) => $this->resolveService($service, $this->config->path()));
         }
 
-        $this->stepRepository->addService($this->config->service());
+        $this->stepRepository->addService(new Service($dev));
 
         $services = $this->stepRepository->getServices();
 
@@ -62,8 +64,7 @@ class UpCommand extends Command
             }
 
             $this->info("🚀 Running steps for $service->id...");
-            $runner = new Runner($service->config, $this);
-            if ($runner->execute($service->steps->toArray()) !== 0) {
+            if ($service->runSteps() !== 0) {
                 $this->error("⛔️ Failed to run steps for $service->id");
 
                 return self::FAILURE;
@@ -103,7 +104,9 @@ class UpCommand extends Command
             $config->services()->each(fn ($service) => $this->resolveService($service, $root));
         }
 
-        $this->stepRepository->addService($service = new Service(Config::fromServiceName($serviceName)));
+        $dev = Factory::create($this->runner->io(), Config::fromServiceName($serviceName));
+
+        $this->stepRepository->addService($service = new Service($dev));
 
         return $service;
     }

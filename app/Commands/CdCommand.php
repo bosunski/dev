@@ -2,8 +2,7 @@
 
 namespace App\Commands;
 
-use App\Config\Config;
-use App\Execution\Runner;
+use App\Dev;
 use App\Step\CdStep;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
@@ -37,7 +36,7 @@ class CdCommand extends Command
      *
      * @throws Exception
      */
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
         $source = $this->option('source');
         if ($source && ! in_array($source, self::KNOWN_SOURCES)) {
@@ -46,10 +45,7 @@ class CdCommand extends Command
             return 1;
         }
 
-        $config = new Config(getcwd(), []);
-        $runner = new Runner($config, $this);
-
-        return $runner->execute([
+        return $dev->runner->execute([
             new CdStep($this->argument('repo'), self::KNOWN_SOURCES[$source] ?? 'github.com'),
         ]);
     }

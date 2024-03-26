@@ -3,12 +3,26 @@
 namespace App\Config;
 
 use App\Exceptions\UserException;
-use Exception;
+use App\Plugin\StepResolverInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
+/**
+ * @phpstan-type Command array{
+ *    desc?: string,
+ *    run: string,
+ *    signature?: string,
+ * }
+ *
+ * @phpstan-type Serve string | array{
+ *   run: string,
+ *   env?: string | false,
+ * }
+ *
+ * @phpstan-type Site string
+ */
 class Config
 {
     public const OP_PATH = '.dev';
@@ -19,18 +33,23 @@ class Config
 
     public const FILE_NAME = 'dev.yml';
 
-    public readonly Collection $environment;
-
     public readonly Collection $paths;
 
     public array $settings = [];
 
+    private readonly UpConfig $up;
+
     public function __construct(protected string $path, protected readonly array $config, public bool $isRoot = false)
     {
-        $this->environment = collect($this->config['env'] ?? []);
         $this->readSettings();
 
         $this->paths = collect();
+        $this->up = new UpConfig($this);
+    }
+
+    public function addStepResolver(StepResolverInterface $resolver): void
+    {
+        $this->up->addResolver($resolver);
     }
 
     private function readSettings(): void
@@ -83,14 +102,6 @@ class Config
         return collect($this->config['commands'] ?? []);
     }
 
-    /**
-     * @throws Exception
-     */
-    public function service(): Service
-    {
-        return new Service($this);
-    }
-
     public function getType(): string
     {
         return $this->config['type'] ?? '';
@@ -98,7 +109,7 @@ class Config
 
     public function up(): UpConfig
     {
-        return new UpConfig($this);
+        return $this->up;
     }
 
     public function steps(): array
@@ -211,5 +222,10 @@ class Config
     public function getServe(): array
     {
         return $this->config['serve'] ?? [];
+    }
+
+    public function envs(): Collection
+    {
+        return collect($this->config['env'] ?? []);
     }
 }

@@ -46,25 +46,34 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 
 $status = 0;
-\Swoole\Coroutine\run(function () use ($kernel, &$status) {
-    $status = $kernel->handle(
-        $input = new Symfony\Component\Console\Input\ArgvInput,
-        new Symfony\Component\Console\Output\ConsoleOutput
-    );
-
-    $kernel->terminate($input, $status);
+$lastError = null;
+\Swoole\Coroutine\run(function () use ($kernel, &$status, &$lastError): void {
+    try {
+        $status = $kernel->handle(
+            $input = new Symfony\Component\Console\Input\ArgvInput,
+            new Symfony\Component\Console\Output\ConsoleOutput
+        );
+    
+        /*
+        |--------------------------------------------------------------------------
+        | Shutdown The Application
+        |--------------------------------------------------------------------------
+        |
+        | Once Artisan has finished running, we will fire off the shutdown events
+        | so that any final work may be done by the application before we shut
+        | down the process. This is the last thing to happen to the request.
+        |
+        */
+        $kernel->terminate($input, $status);
+    } catch (Throwable $e) {
+        $lastError = $e;
+    }
 });
 
-/*
-|--------------------------------------------------------------------------
-| Shutdown The Application
-|--------------------------------------------------------------------------
-|
-| Once Artisan has finished running, we will fire off the shutdown events
-| so that any final work may be done by the application before we shut
-| down the process. This is the last thing to happen to the request.
-|
-*/
+if ($lastError) {
+    throw $lastError;
+}
+
 
 Event::wait();
 exit($status);
