@@ -101,11 +101,7 @@ class Runner
             ->merge(getenv())
             ->merge($env)
             ->merge($this->envResolver?->envs() ?? [])
-            ->merge([
-                'SOURCE_ROOT'  => Config::sourcePath(),
-                'SERVICE_ROOT' => $this->config->servicePath(),
-                'DEV_PATH'     => $this->config->devPath(),
-            ])->all();
+            ->all();
     }
 
     public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess

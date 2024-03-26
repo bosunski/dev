@@ -18,7 +18,7 @@ class Browser
         };
     }
 
-    private static function runCommand($command): void
+    private static function runCommand(string $command): void
     {
         shell_exec($command);
     }

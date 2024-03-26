@@ -32,9 +32,7 @@ class CloneCommand extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
-     *
+     * @return int
      * @throws Exception
      */
     public function handle(Dev $dev): int

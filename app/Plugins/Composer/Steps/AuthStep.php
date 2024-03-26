@@ -52,7 +52,7 @@ class AuthStep implements Step
     private function ensureTokenOrPassword(Runner $runner): void
     {
         if ($this->auth->isBasic() && ! $this->auth->hasPassword()) {
-            $runner->io()->getOutput()->writeln('');
+            $runner->io()->write('');
             $this->auth->password = password("Enter password for {$this->auth->host}:");
         }
     }

@@ -32,19 +32,6 @@ trait ResolvesEnvironment
         return $environment;
     }
 
-    private function injectEnvs(): void
-    {
-        $this->dev->config->environment->put('PHP_DIR', $this->config['environment']['php']['dir']);
-        $this->dev->config->environment->put('PHP_BIN', $this->config['environment']['php']['bin']);
-
-        $home = $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null;
-        $this->dev->config->environment->put('HERD_OR_VALET', 'valet');
-        $this->dev->config->environment->put('SITE_PATH', "$home/.config/valet/Nginx");
-        $this->dev->config->environment->put('VALET_OR_HERD_SITE_PATH', "$home/.config/valet/Nginx");
-
-        $this->dev->config->paths->push(dirname($this->config['environment']['php']['bin']));
-    }
-
     protected static function phpPath(string $version): string
     {
         $source = ValetStepResolver::PHP_VERSION_MAP[$version] ?? null;

@@ -20,20 +20,21 @@
         "ext-pcntl": "*",
         "ext-posix": "*",
         "ext-session": "*",
-        "amphp/process": "^2.0",
+        "ext-swoole": "*",
         "guzzlehttp/guzzle": "^7.5",
         "illuminate/http": "^10.0",
         "laravel-zero/framework": "^10.2.0",
         "laravel-zero/phar-updater": "^1.3",
         "laravel/prompts": "^0.1.0",
         "nunomaduro/termwind": "^1.15",
-        "swoole/ide-helper": "^5.1",
         "symfony/yaml": "^6.3"
     },
     "require-dev": {
+        "larastan/larastan": "^2.0",
         "laravel/pint": "^1.14",
         "mockery/mockery": "^1.5.1",
-        "pestphp/pest": "^2.5"
+        "pestphp/pest": "^2.5",
+        "swoole/ide-helper": "^5.1"
     },
     "autoload": {
         "psr-4": {

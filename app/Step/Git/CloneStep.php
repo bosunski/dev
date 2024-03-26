@@ -95,7 +95,7 @@ class CloneStep implements StepInterface
     }
 
     /**
-     * @return array{owner: string, repo: string}
+     * @return array{string, string}
      *
      * @throws UserException
      */
