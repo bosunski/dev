@@ -13,6 +13,7 @@ class BrewStep implements Step
 
     public function name(): string
     {
+        dump($this->packages);
         $packages = implode(', ', $this->packages);
 
         return "Install brew packages: $packages";

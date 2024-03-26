@@ -14,6 +14,7 @@ use Illuminate\Process\PendingProcess;
 use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Console\Command\Command as Cmd;
+use Symfony\Component\Process\Process as SymfonyProcess;
 
 class Runner
 {
@@ -117,6 +118,15 @@ class Runner
             ->path($path ?? $this->config->cwd())
             ->command($command)
             ->env($this->environment($env));
+    }
+
+    public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
+    {
+        $command = is_string($command)
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
+
+        return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
     }
 
     public function pool(callable $callback): ProcessPoolResults

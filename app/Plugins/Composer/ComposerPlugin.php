@@ -3,16 +3,17 @@
 namespace App\Plugins\Composer;
 
 use App\Dev;
+use App\Plugin\Capability\ConfigProvider;
+use App\Plugin\Capable;
 use App\Plugin\PluginInterface;
 
-class ComposerPlugin implements PluginInterface
+class ComposerPlugin implements Capable, PluginInterface
 {
     private Dev $dev;
 
     public function activate(Dev $dev): void
     {
         $this->dev = $dev;
-        $this->dev->config->addStepResolver(new ComposerStepResolver($this->dev));
     }
 
     public function deactivate(Dev $dev): void
@@ -21,5 +22,12 @@ class ComposerPlugin implements PluginInterface
 
     public function uninstall(Dev $dev): void
     {
+    }
+
+    public function capabilities(): array
+    {
+        return [
+            ConfigProvider::class => ComposerConfigProvider::class,
+        ];
     }
 }

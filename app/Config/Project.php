@@ -73,7 +73,13 @@ class Project
             $processes[] = [
                 'name'     => $name,
                 'project'  => $this->config->getName(),
-                'instance' => $this->dev->runner->process($serve['run'], $this->config->cwd(), $this->getEnv($serve['env'] ?? '.env')),
+                /**
+                 * Sometimes we do get errors like "Class "Illuminate\Process\InvokedProcess" not found".
+                 * when using the Illuminate\Process. That's why we are using the SymfonyProcess instead.
+                 * The reason for this is yet to be known. But I have a hunch it has something to do with the
+                 * fact that we are running DEV inside Coroutines.
+                 */
+                'instance' => $this->dev->runner->symfonyProcess($serve['run'], $this->config->cwd(), $this->getEnv($serve['env'] ?? '.env')),
             ];
         }
 

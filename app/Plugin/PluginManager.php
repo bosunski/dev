@@ -37,13 +37,6 @@ class PluginManager
     {
         $this->plugins[] = $plugin;
         $plugin->activate($this->dev, $this->io);
-
-        // foreach ($this->getPluginCapabilities(Capabilities::Config, [$this->dev, $this->dev->io()]) as $capability) {
-        //     $resolvers = $capability->stepResolvers();
-        //     foreach ($resolvers as $resolver) {
-        //         $this->dev->config->addStepResolver($resolver);
-        //     }
-        // }
     }
 
     public function loadInstalledPlugins(): void

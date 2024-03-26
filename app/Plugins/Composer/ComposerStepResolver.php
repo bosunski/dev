@@ -2,7 +2,6 @@
 
 namespace App\Plugins\Composer;
 
-use App\Dev;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
@@ -12,13 +11,9 @@ class ComposerStepResolver implements StepResolverInterface
 {
     protected array $config = [];
 
-    public function __construct(protected readonly Dev $dev)
-    {
-    }
-
     public function name(): string
     {
-        return 'brew';
+        return 'composer';
     }
 
     /**
