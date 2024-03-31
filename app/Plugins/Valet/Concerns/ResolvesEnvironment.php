@@ -79,6 +79,17 @@ trait ResolvesEnvironment
 
     protected static function runCommand(string $command): ProcessResult
     {
-        return Process::timeout(3)->command($command)->run()->throw();
+        try {
+            return Process::timeout(3)->command($command)->run()->throw();
+        } catch (ProcessFailedException $exception) {
+            // TODO: Fix this
+            // For weird reasons, the command is returning exit code -1 and causing the exception to be thrown
+            // This is a temporary fix to return the result instead of throwing the exception
+            if ($exception->result->exitCode() == -1) {
+                return $exception->result;
+            }
+
+            throw $exception;
+        }
     }
 }
