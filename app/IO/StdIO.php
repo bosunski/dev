@@ -20,4 +20,9 @@ class StdIO implements IOInterface
     {
         $this->output->writeln($message);
     }
+
+    public function error(string $message): void
+    {
+        $this->output->writeln("<error>$message</error>");
+    }
 }

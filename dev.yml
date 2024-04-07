@@ -78,6 +78,9 @@ commands:
   build-php:
     desc: Build PHP
     run: ./scripts/build-static-cli
+  analyse:
+    desc: Check PHP version
+    run: ./vendor/bin/phpstan analyse --memory-limit=2G
 
 serve:
   write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done

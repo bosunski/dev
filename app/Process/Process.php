@@ -25,7 +25,11 @@ class Process
     public function start(): void
     {
         try {
-            $this->process->start(function (string $type, string $buffer): void {
+            /**
+             * We are enabling PTY mode to allow the process to display output correctly as
+             * it would in a terminal. For example, some processes may disable colored output without this.
+             */
+            $this->process->setPty(true)->start(function (string $type, string $buffer): void {
                 $this->writeOutput($buffer);
             });
 
@@ -35,10 +39,17 @@ class Process
                 }
             });
 
-            $this->writeExitMessage($this->process->wait());
+            $code = $this->process->wait();
+            if ($code != -1) {
+                $this->writeExitMessage($code);
+            }
         } catch (ProcessSignaledException $e) {
-            $this->writeExitMessage($e->getProcess()->getExitCode());
+            $this->writeExitMessage($e->getSignal());
         } catch (Throwable $e) {
+            if ($this->shouldIgnoreError($e)) {
+                return;
+            }
+
             $this->writeError("\033[1mError: {$e->getMessage()}\033[0m");
         } finally {
             $this->signalChannel->close();
@@ -86,8 +97,19 @@ class Process
 
             $this->process->signal($signal);
         } catch (Throwable $e) {
-            $this->writeError("(DEV) Sending Signal Failed: {$e->getMessage()}");
+            if (! $this->shouldIgnoreError($e)) {
+                $this->writeError("(DEV) Sending Signal Failed: {$e->getMessage()}");
+            }
         }
+    }
+
+    private function shouldIgnoreError(Throwable $e): bool
+    {
+        if (str_contains($e->getMessage(), 'supplied resource is not a valid stream resource')) {
+            return true;
+        }
+
+        return false;
     }
 
     public function doSignal(int $signal): void
@@ -97,7 +119,7 @@ class Process
 
     public function interrupt(): void
     {
-        if (! $this->process?->isRunning()) {
+        if (! $this->process->isRunning()) {
             return;
         }
 
@@ -107,7 +129,7 @@ class Process
 
     public function kill(): void
     {
-        if (! $this->process?->isRunning()) {
+        if (! $this->process->isRunning()) {
             return;
         }
 

@@ -7,6 +7,9 @@ use App\Plugins\Git\Commands\CloneCommand;
 
 class GitCommandProvider implements CommandProvider
 {
+    /**
+     * @inheritDoc
+     */
     public function getCommands(): array
     {
         return [

@@ -9,11 +9,8 @@ use App\Plugin\PluginInterface;
 
 class BrewPlugin implements Capable, PluginInterface
 {
-    private Dev $dev;
-
     public function activate(Dev $dev): void
     {
-        $this->dev = $dev;
     }
 
     public function deactivate(Dev $dev): void

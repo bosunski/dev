@@ -48,7 +48,12 @@ class Dev implements EnvResolver
             $envs = array_merge($envs, $newEnvs);
         }
 
-        return $this->config->envs()->merge($envs);
+        return $this->config->envs()->merge($envs)->merge([
+            'DEV_PATH'     => $this->config->devPath(),
+            'DEV'          => 1,
+            'SOURCE_ROOT'  => Config::sourcePath(),
+            'SERVICE_ROOT' => $this->config->servicePath(),
+        ]);
     }
 
     public function paths(): array

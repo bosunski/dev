@@ -32,19 +32,6 @@ trait ResolvesEnvironment
         return $environment;
     }
 
-    private function injectEnvs(): void
-    {
-        $this->dev->config->environment->put('PHP_DIR', $this->config['environment']['php']['dir']);
-        $this->dev->config->environment->put('PHP_BIN', $this->config['environment']['php']['bin']);
-
-        $home = $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null;
-        $this->dev->config->environment->put('HERD_OR_VALET', 'valet');
-        $this->dev->config->environment->put('SITE_PATH', "$home/.config/valet/Nginx");
-        $this->dev->config->environment->put('VALET_OR_HERD_SITE_PATH', "$home/.config/valet/Nginx");
-
-        $this->dev->config->paths->push(dirname($this->config['environment']['php']['bin']));
-    }
-
     protected static function phpPath(string $version): string
     {
         $source = ValetStepResolver::PHP_VERSION_MAP[$version] ?? null;
@@ -92,6 +79,17 @@ trait ResolvesEnvironment
 
     protected static function runCommand(string $command): ProcessResult
     {
-        return Process::timeout(3)->command($command)->run()->throw();
+        try {
+            return Process::timeout(3)->command($command)->run()->throw();
+        } catch (ProcessFailedException $exception) {
+            // TODO: Fix this
+            // For weird reasons, the command is returning exit code -1 and causing the exception to be thrown
+            // This is a temporary fix to return the result instead of throwing the exception
+            if ($exception->result->exitCode() == -1) {
+                return $exception->result;
+            }
+
+            throw $exception;
+        }
     }
 }
