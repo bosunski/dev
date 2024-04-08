@@ -23,8 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(StepRepository::class, function (Application $app) {
-            return new StepRepository($app->get(Dev::class));
+        $this->app->singleton(StepRepository::class, function (Application $app): StepRepository {
+            return new StepRepository($app->make(Dev::class));
         });
 
         Signals::resolveAvailabilityUsing(function () {

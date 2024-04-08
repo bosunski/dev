@@ -5,7 +5,6 @@ namespace App\Config;
 use App\Dev;
 use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Contracts\Step;
-use App\Step\ShadowEnvStep;
 use Exception;
 use Illuminate\Support\Collection;
 
@@ -13,6 +12,9 @@ class Service
 {
     public readonly string $id;
 
+    /**
+     * @var Collection<string, Step>
+     */
     public readonly Collection $steps;
 
     /**
@@ -20,25 +22,29 @@ class Service
      */
     public function __construct(public readonly Dev $dev)
     {
-        $this->id = $dev->config->serviceName();
+        $this->id = $dev->config->projectName();
         $this->steps = collect();
     }
 
     /**
+     * @return Collection<int, Step>
      * @throws Exception
      */
-    private function steps(): array
+    private function steps(): Collection
     {
         $manager = $this->dev->getPluginManager();
         $resolvers = [];
+        /** @var Collection<int, Step> $steps */
+        $steps = collect();
         foreach ($manager->getCcs(ConfigProvider::class, [$this->dev]) as $capability) {
-            $newResolvers = $capability->stepResolvers($this->dev);
-            foreach ($newResolvers as $resolver) {
-                $resolvers[$resolver->name()] = $resolver;
+            $newResolvers = $capability->stepResolvers();
+            $steps = $steps->merge($capability->steps());
+            foreach ($newResolvers as $name => $resolver) {
+                $resolvers[$name] = $resolver;
             }
         }
 
-        return [new ShadowEnvStep($this->dev), ...$this->dev->config->up()->steps($resolvers)];
+        return $steps->merge($this->dev->config->up()->steps($resolvers));
     }
 
     /**
@@ -54,7 +60,6 @@ class Service
     public function add(Step $step): void
     {
         $this->steps->put($step->id(), $step);
-
     }
 
     public function hasStep(string $id): bool
@@ -64,6 +69,6 @@ class Service
 
     public function runSteps(): int
     {
-        return $this->dev->runner->execute($this->steps->toArray());
+        return $this->dev->runner->execute($this->steps->all());
     }
 }

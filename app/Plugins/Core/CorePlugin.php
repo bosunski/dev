@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Plugins\Git;
+namespace App\Plugins\Core;
 
 use App\Dev;
-use App\Plugin\Capability\Capabilities;
+use App\Plugin\Capability\CommandProvider;
+use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Capable;
 use App\Plugin\PluginInterface;
 
-class GitPlugin implements Capable, PluginInterface
+class CorePlugin implements Capable, PluginInterface
 {
     public function activate(Dev $dev): void
     {
@@ -24,7 +25,8 @@ class GitPlugin implements Capable, PluginInterface
     public function capabilities(): array
     {
         return [
-            Capabilities::Command->value => GitCommandProvider::class,
+            ConfigProvider::class  => CoreConfigProvider::class,
+            CommandProvider::class => CoreCommandProvider::class,
         ];
     }
 }

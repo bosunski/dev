@@ -1,13 +1,15 @@
 <?php
 
-namespace App\Commands;
+namespace App\Plugins\Core\Commands;
 
 use App\Dev;
-use App\Step\CdStep;
+use App\Plugins\Core\Steps\CdStep;
+use App\Plugins\Core\Steps\CloneStep;
 use Exception;
+use InvalidArgumentException;
 use LaravelZero\Framework\Commands\Command;
 
-class CdCommand extends Command
+class CloneCommand extends Command
 {
     private const KNOWN_SOURCES = [
         'github'    => 'github.com',
@@ -20,20 +22,18 @@ class CdCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'cd {repo} {--source=}';
+    protected $signature = 'clone {repo} {args?*} {--source=}';
 
     /**
      * The description of the command.
      *
      * @var string
      */
-    protected $description = 'Change directory to a project repo';
+    protected $description = 'Clones a GitHub repository';
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
-     *
+     * @return int
      * @throws Exception
      */
     public function handle(Dev $dev): int
@@ -45,8 +45,11 @@ class CdCommand extends Command
             return 1;
         }
 
+        assert(is_string($fullName = $this->argument('repo')), new InvalidArgumentException('Repository full name must be a string'));
+
         return $dev->runner->execute([
-            new CdStep($this->argument('repo'), self::KNOWN_SOURCES[$source] ?? 'github.com'),
+            new CloneStep($fullName, $source = self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('args')),
+            new CdStep($this->argument('repo'), $source),
         ]);
     }
 }

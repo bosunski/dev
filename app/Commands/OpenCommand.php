@@ -2,7 +2,7 @@
 
 namespace App\Commands;
 
-use App\Config\Config;
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Repository\StepRepository;
 use App\Utils\Browser;
@@ -29,29 +29,25 @@ class OpenCommand extends Command
      */
     protected $description = 'Open a site in the browser';
 
-    protected readonly Config $config;
-
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository)
+    public function __construct(protected readonly StepRepository $stepRepository, protected Dev $dev)
     {
         parent::__construct();
-
-        $this->config = Config::fromPath(getcwd());
     }
 
     /**
      * Execute the console command.
      *
-     * @return mixed
+     * @return int
      *
      * @throws UserException
      */
     public function handle(): int
     {
         $site = $this->argument('site');
-        $sites = $this->config->sites();
+        $sites = $this->dev->config->sites();
 
         if ($sites->isEmpty()) {
             throw new UserException('No sites found');
@@ -63,16 +59,17 @@ class OpenCommand extends Command
             return self::FAILURE;
         }
 
-        $url = $sites->get($site);
-        if (! $url && $sites->has(self::DEFAULT_SITE)) {
+        if (! $site) {
             $site = select(
                 label: 'Which site will you like to open?',
+                // @phpstan-ignore-next-line
                 options: $sites->map($this->formatSite(...)),
-                hint: 'The country will determine the currency and the timezone of the user.',
             );
-            $url = $sites->get($site);
+
+            assert(is_string($site), 'Selected site must be a string');
         }
 
+        $url = $sites->get($site);
         if (! $url) {
             $this->error('No site selected');
 

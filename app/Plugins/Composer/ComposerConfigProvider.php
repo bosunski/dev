@@ -24,7 +24,7 @@ class ComposerConfigProvider implements ConfigProvider
     public function stepResolvers(): array
     {
         return [
-            new ComposerStepResolver(),
+            'composer' => new ComposerStepResolver(),
         ];
     }
 }

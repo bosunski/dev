@@ -24,7 +24,7 @@ class BrewConfigProvider implements ConfigProvider
     public function stepResolvers(): array
     {
         return [
-            new BrewStepResolver($this->dev),
+            'brew' => new BrewStepResolver($this->dev),
         ];
     }
 }

@@ -17,6 +17,9 @@ class ServeCommand extends Command
      */
     protected $signature = 'serve';
 
+    /**
+     * @var string[]
+     */
     protected $aliases = ['s'];
 
     /**
@@ -28,9 +31,6 @@ class ServeCommand extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
-     *
      * @throws Exception
      */
     public function handle(Dev $dev): int

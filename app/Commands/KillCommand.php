@@ -30,8 +30,8 @@ class KillCommand extends Command
         $config = Config::fromPath(getcwd());
 
         if ($service = $this->option('service')) {
-            if ($config->services()->contains($service)) {
-                $config = Config::fromServiceName($service);
+            if ($config->projects()->contains($service)) {
+                $config = Config::fromProjectName($service);
             } else {
                 throw new UserException("Service $service not found in this project. Are you sure it is registered?");
             }

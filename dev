@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+use Swoole\Coroutine;
 use Swoole\Event;
 
 define('LARAVEL_START', microtime(true));
@@ -23,7 +24,7 @@ define('LARAVEL_START', microtime(true));
  *
  * @see https://github.com/swoole/swoole-src/issues/5275
  */
-\Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_ALL ^ SWOOLE_HOOK_FILE ^ SWOOLE_HOOK_PROC);
+\Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_ALL ^ SWOOLE_HOOK_FILE);
 
 /*
 |--------------------------------------------------------------------------
@@ -56,6 +57,7 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 
 $status = 0;
 $lastError = null;
+// @phpstan-ignore-next-line
 \Swoole\Coroutine\run(function () use ($kernel, &$status, &$lastError): void {
     try {
         $status = $kernel->handle(

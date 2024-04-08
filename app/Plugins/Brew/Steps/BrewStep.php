@@ -7,24 +7,27 @@ use App\Plugin\Contracts\Step;
 
 class BrewStep implements Step
 {
+    /**
+     * @param string[] $packages
+     * @return void
+     */
     public function __construct(private readonly array $packages)
     {
     }
 
     public function name(): string
     {
-        dump($this->packages);
         $packages = implode(', ', $this->packages);
 
         return "Install brew packages: $packages";
     }
 
-    public function command(): ?string
+    public function command(): string
     {
         return 'brew install ' . implode(' ', $this->packages);
     }
 
-    public function checkCommand(): ?string
+    public function checkCommand(): string
     {
         return $this->command();
     }

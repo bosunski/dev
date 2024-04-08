@@ -10,15 +10,8 @@ use App\Plugins\Brew\Steps\BrewStep;
 
 class BrewStepResolver implements StepResolverInterface
 {
-    protected array $config = [];
-
     public function __construct(protected readonly Dev $dev)
     {
-    }
-
-    public function name(): string
-    {
-        return 'brew';
     }
 
     /**

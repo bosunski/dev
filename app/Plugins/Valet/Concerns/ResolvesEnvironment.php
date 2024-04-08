@@ -5,12 +5,25 @@ namespace App\Plugins\Valet\Concerns;
 use App\Plugins\Valet\ValetStepResolver;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Process\Exceptions\ProcessFailedException;
+use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 trait ResolvesEnvironment
 {
+    /**
+     * @param array{
+     *      php: array{version?: string} | string
+     * } $config
+     * @return array{
+     *      php: array{bin: string, pecl: string, dir: string, version: string, extensionPath: string, cwd: string, home: string}
+     * }
+     * @throws ProcessFailedException
+     * @throws ProcessTimedOutException
+     * @throws RuntimeException
+     */
     private function resolveEnvironmentSettings(array $config): array
     {
         $environment = ['php' => []];
