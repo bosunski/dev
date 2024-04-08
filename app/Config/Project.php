@@ -193,6 +193,6 @@ class Project
 
     public function runSteps(): int
     {
-        return $this->dev->runner->execute($this->steps->all());
+        return $this->dev->runner->execute($this->steps->all(), true);
     }
 }

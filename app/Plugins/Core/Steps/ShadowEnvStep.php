@@ -37,7 +37,7 @@ class ShadowEnvStep implements Step
              * can only be used after the path has been trusted. At this point, the path is not trusted
              * so, we will run this directly.
              */
-            return Process::path($runner->config()->cwd())->run(['/opt/homebrew/bin/shadowenv', 'trust'])->throw()->successful();
+            return Process::path($runner->config()->cwd())->run(['/opt/homebrew/bin/shadowenvc', 'trust'])->throw()->successful();
         }
 
         return false;

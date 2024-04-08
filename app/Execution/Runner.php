@@ -54,7 +54,7 @@ class Runner
             }
 
             return Cmd::SUCCESS;
-        } catch (ProcessFailedException|UserException $e) {
+        } catch (UserException $e) {
             if ($throw) {
                 throw $e;
             }
