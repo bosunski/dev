@@ -36,7 +36,6 @@ class EnvSubstituteStep implements Step
         $currentEnvs = Dotenv::parse($envContent);
 
         if (count($sampleEnvs) > 0) {
-            $runner->io()->info('Substituting variables in .env file with discovered .env.example');
             $envContent .= "\n";
         }
 
