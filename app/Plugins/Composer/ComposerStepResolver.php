@@ -5,7 +5,7 @@ namespace App\Plugins\Composer;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
-use App\Plugins\Brew\Steps\BrewStep;
+use App\Plugins\Composer\Config\ComposerConfig;
 
 class ComposerStepResolver implements StepResolverInterface
 {
@@ -15,6 +15,8 @@ class ComposerStepResolver implements StepResolverInterface
      */
     public function resolve(mixed $args): Config | Step
     {
-        return new BrewStep($args);
+        assert(is_array($args), 'Composer configuration should be an array');
+
+        return new ComposerConfig($args);
     }
 }
