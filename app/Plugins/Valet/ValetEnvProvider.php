@@ -20,14 +20,6 @@ class ValetEnvProvider implements EnvProvider
 
         $home = $environment['php']['home'];
         $iniScanDir = $this->dev->config->devPath('php.d');
-        /**
-         * ToDo: Fix issue where the paths are being appended for every
-         * run of `dev up`. An idea is to get the original PHP_INI_SCAN_DIR
-         * without using env vars.
-         */
-        if (! empty($oldIniScanDir = getenv('PHP_INI_SCAN_DIR'))) {
-            $iniScanDir .= ":$oldIniScanDir";
-        }
 
         return [
             'PHP_DIR'                 => $environment['php']['dir'],
