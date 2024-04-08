@@ -3,9 +3,9 @@
 namespace App\Config;
 
 use App\Exceptions\UserException;
-use App\Plugin\StepResolverInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -22,6 +22,26 @@ use Symfony\Component\Yaml\Yaml;
  * }
  *
  * @phpstan-type Site string
+ *
+ * @phpstan-type Script array{
+ *      desc?: string,
+ *      run: string,
+ *      'met?'?: string
+ * }
+ *
+ * @phpstan-type Step array<string, mixed> | Script
+ *
+ * @phpstan-type Up array<int, array<string | "script", Step>>
+ *
+ * @phpstan-type RawConfig array{
+ *      name?: string,
+ *      up?: Up,
+ *      commands?: array<string, Command>,
+ *      serve?: array<string, Serve>,
+ *      sites?: array<string, string>,
+ *      env?: array<string, string>,
+ *      services: string[]
+ * }
  */
 class Config
 {
@@ -33,23 +53,24 @@ class Config
 
     public const FILE_NAME = 'dev.yml';
 
-    public readonly Collection $paths;
-
+    /**
+     * @var array{disabled?: string[]}
+     */
     public array $settings = [];
 
     private readonly UpConfig $up;
 
-    public function __construct(protected string $path, protected readonly array $config, public bool $isRoot = false)
+    /**
+     * @param string $path
+     * @param RawConfig $config
+     * @param bool $isRoot
+     * @return void
+     */
+    public function __construct(protected string $path, public readonly array $config, public bool $isRoot = false)
     {
         $this->readSettings();
 
-        $this->paths = collect();
-        $this->up = new UpConfig($this);
-    }
-
-    public function addStepResolver(StepResolverInterface $resolver): void
-    {
-        $this->up->addResolver($resolver);
+        $this->up = new UpConfig($config['up'] ?? []);
     }
 
     private function readSettings(): void
@@ -81,30 +102,35 @@ class Config
         return $this->config['name'] ?? '';
     }
 
-    public function services(bool $all = false): Collection
+    /**
+     * @param bool $all
+     * @return Collection<int, string>
+     */
+    public function projects(bool $all = false): Collection
     {
-        return collect($this->config['services'] ?? [])->filter(fn ($service) => $all || ! in_array($service, $this->settings['disabled']))->map(function (string $service) {
-            if ($service === $this->serviceName()) {
-                throw new UserException('You cannot reference the current service in its own config!');
+        return collect($this->config['projects'] ?? [])->filter(fn ($service) => $all || ! in_array($service, $this->settings['disabled']))->map(function (string $service) {
+            if ($service === $this->projectName()) {
+                throw new UserException('You cannot reference the current project in its own config!');
             }
 
             return $service;
         })->unique();
     }
 
+    /**
+     * @return Collection<string, string>
+     */
     public function sites(): Collection
     {
         return collect($this->config['sites'] ?? []);
     }
 
+    /**
+     * @return Collection<string, Command>
+     */
     public function commands(): Collection
     {
         return collect($this->config['commands'] ?? []);
-    }
-
-    public function getType(): string
-    {
-        return $this->config['type'] ?? '';
     }
 
     public function up(): UpConfig
@@ -115,11 +141,6 @@ class Config
     public function steps(): array
     {
         return $this->config['up'] ?? [];
-    }
-
-    public function valet(): array
-    {
-        return $this->steps()['valet'] ?? [];
     }
 
     public function path(?string $path = null): string
@@ -148,7 +169,7 @@ class Config
 
     public static function home(): string
     {
-        return getenv('HOME');
+        return (string) getenv('HOME');
     }
 
     public static function sourcePath(?string $path = null, ?string $source = null, ?string $root = null): string
@@ -162,7 +183,7 @@ class Config
         return $sourceDir;
     }
 
-    public function serviceName(): string
+    public function projectName(): string
     {
         return Str::of($this->cwd())->after($this->sourcePath())->trim('/')->toString();
     }
@@ -191,7 +212,7 @@ class Config
     /**
      * @throws UserException
      */
-    public static function fromServiceName(string $path, ?string $root = null): Config
+    public static function fromProjectName(string $path, ?string $root = null): Config
     {
         $root = $root ?? sprintf('%s/%s', getcwd(), self::OP_PATH);
 
@@ -219,11 +240,26 @@ class Config
         return $path . DIRECTORY_SEPARATOR . self::FILE_NAME;
     }
 
+    /**
+     * @return array<string, Serve>
+     */
     public function getServe(): array
     {
-        return $this->config['serve'] ?? [];
+        $hasServe = isset($this->config['serve']);
+        if (! $hasServe) {
+            return [];
+        }
+
+        if (! is_array($this->config['serve'])) {
+            throw new RuntimeException('Serve config should be an array');
+        }
+
+        return $this->config['serve'];
     }
 
+    /**
+     * @return Collection<string, string|null>
+     */
     public function envs(): Collection
     {
         return collect($this->config['env'] ?? []);

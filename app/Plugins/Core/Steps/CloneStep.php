@@ -1,28 +1,41 @@
 <?php
 
-namespace App\Step\Git;
+namespace App\Plugins\Core\Steps;
 
 use App\Config\Config;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
-class CloneStep implements StepInterface
+class CloneStep implements Step
 {
     private const GIT_URL_REGEX = '/^(https|git)(:\/\/|@)([^\/:]+)[\/:]([^\/:]+)\/(.+).git$/';
 
     private const REPO_LOCATION = 'src';
 
+    private readonly string $owner;
+
+    private readonly string $repo;
+
+    /**
+     * @param string $repoFullName
+     * @param string $host
+     * @param string[] $args
+     * @param null|string $root
+     * @param bool $update
+     * @return void
+     * @throws UserException
+     */
     public function __construct(
-        private readonly string $owner,
-        private readonly string $repo,
+        string $repoFullName,
         private readonly string $host,
         private readonly array $args = [],
         private readonly ?string $root = null,
         private readonly bool $update = false,
     ) {
+        [$this->owner, $this->repo] = self::parseService($repoFullName);
     }
 
     public function id(): string
@@ -99,7 +112,7 @@ class CloneStep implements StepInterface
      *
      * @throws UserException
      */
-    public static function parseService(string $service): array
+    protected static function parseService(string $service): array
     {
         if (self::isUrl($service)) {
             preg_match("/^(https?:\/\/)?(www\.)?github\.com\/(?<owner>[a-zA-Z0-9-]+)\/(?<repo>[a-zA-Z0-9-]+)(\.git)?$/", $service, $matches);

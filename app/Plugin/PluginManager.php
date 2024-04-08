@@ -8,8 +8,9 @@ use App\Plugin\Capability\Capabilities;
 use App\Plugin\Capability\Capability;
 use App\Plugins\Brew\BrewPlugin;
 use App\Plugins\Composer\ComposerPlugin;
-use App\Plugins\Git\GitPlugin;
+use App\Plugins\Core\CorePlugin;
 use App\Plugins\Valet\ValetPlugin;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use RuntimeException;
 
 class PluginManager
@@ -23,7 +24,7 @@ class PluginManager
      * @var class-string<PluginInterface>[]
      */
     protected const DEFAULT_PLUGINS = [
-        GitPlugin::class,
+        CorePlugin::class,
         ValetPlugin::class,
         BrewPlugin::class,
         ComposerPlugin::class,
@@ -62,7 +63,7 @@ class PluginManager
     /**
      * @template T of Capability
      * @param class-string<T> $capabilityClassName
-     * @param array $ctorArgs
+     * @param mixed[] $ctorArgs
      * @return T[]
      * @throws RuntimeException
      */
@@ -79,6 +80,14 @@ class PluginManager
         return $capabilities;
     }
 
+    /**
+     * @param PluginInterface $plugin
+     * @param Capabilities $capabilityClassName
+     * @param mixed[]
+     * @return null|Capability
+     * @throws RuntimeException
+     * @throws BindingResolutionException
+     */
     public function getPluginCapability(PluginInterface $plugin, Capabilities $capabilityClassName, array $ctorArgs = []): ?Capability
     {
         if ($capabilityClass = $this->getCapabilityImplementationClassName($plugin, $capabilityClassName)) {

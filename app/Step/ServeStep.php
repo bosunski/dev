@@ -10,23 +10,27 @@ use App\Process\ProcessOutput;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use RuntimeException;
 use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 use Swoole\Coroutine\WaitGroup;
 use Swoole\Timer;
 
-use function Swoole\Coroutine\defer;
-use function Swoole\Coroutine\go;
-
 class ServeStep implements StepInterface
 {
+    /**
+     * @var Collection<int, AppProcessProcess>
+     */
     protected Collection $processes;
 
     protected Channel $done;
 
     protected Channel $interrupted;
 
-    protected array $trapIds = [];
+    /**
+     * @var array{int|false, int|false, int|false}
+     */
+    protected array $trapIds = [false, false, false];
 
     public function __construct(protected readonly Dev $dev)
     {
@@ -40,16 +44,6 @@ class ServeStep implements StepInterface
         return null;
     }
 
-    public function command(): ?string
-    {
-        return null;
-    }
-
-    public function checkCommand(): ?string
-    {
-        return null;
-    }
-
     /**
      * @throws Exception
      */
@@ -58,13 +52,9 @@ class ServeStep implements StepInterface
         $output = new ProcessOutput();
         $project = new Project($this->dev);
 
+        $this->storePid();
+
         try {
-            if (! File::isDirectory($runner->config()->path())) {
-                File::makeDirectory($runner->config()->path(), recursive: true);
-            }
-
-            File::put($runner->config()->path($name = config('app.name')), getmypid());
-
             $ps = $project->getServe();
             $shouldPrefixProjectName = $ps->count() > 1;
             $processes = $ps->values()->flatMap(fn ($commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
@@ -86,8 +76,8 @@ class ServeStep implements StepInterface
                 $process->writeOutput("\033[1mRunning...\033[0m\n");
                 $wg->add();
                 Coroutine::create(function () use ($process, $wg, $done): void {
-                    defer(fn () => $wg->done());
-                    defer(fn () => $done->push(true));
+                    Coroutine::defer(fn () => $wg->done());
+                    Coroutine::defer(fn () => $done->push(true));
 
                     $process->start();
                 });
@@ -95,7 +85,7 @@ class ServeStep implements StepInterface
 
             $this->trapSignals();
 
-            go(fn () => $this->waitForExit($done));
+            Coroutine::create(fn () => $this->waitForExit($done));
 
             $wg->wait();
             foreach ($this->trapIds as $id) {
@@ -104,26 +94,39 @@ class ServeStep implements StepInterface
 
             return true;
         } finally {
-            if (File::exists($runner->config()->path($name))) {
-                File::delete($runner->config()->path($name));
+            if (is_file($this->dev->config->path($this->dev->name))) {
+                unlink($this->dev->config->path($this->dev->name));
             }
         }
+    }
+
+    protected function storePid(): void
+    {
+        if (! File::isDirectory($this->dev->config->path())) {
+            File::makeDirectory($this->dev->config->path(), recursive: true);
+        }
+
+        if (! $pid = getmypid()) {
+            throw new RuntimeException('DEV was unable to retrieve process ID for persistence.');
+        }
+
+        File::put($this->dev->config->path($name = $this->dev->name), (string) $pid);
     }
 
     private function trapSignals(): void
     {
         $this->trapIds = [
-            go(function (): void {
+            Coroutine::create(function (): void {
                 while(Coroutine::waitSignal(SIGINT)) {
                     $this->signal();
                 }
             }),
-            go(function (): void {
+            Coroutine::create(function (): void {
                 while(Coroutine::waitSignal(SIGTERM)) {
                     $this->signal();
                 }
             }),
-            go(function (): void {
+            Coroutine::create(function (): void {
                 while(Coroutine::waitSignal(SIGHUP)) {
                     $this->signal();
                 }
@@ -131,7 +134,7 @@ class ServeStep implements StepInterface
         ];
     }
 
-    private function generateRandomColor(int $index): string
+    private function generateRandomColor(int $index): int
     {
         $colors = [2, 3, 4, 5, 6, 42, 130, 103, 129, 108];
 
@@ -156,8 +159,8 @@ class ServeStep implements StepInterface
     protected function waitForDoneOrInterrupt(Channel $done): void
     {
         $finished = new Channel();
-        go(fn () => $finished->push($done->pop()));
-        go(fn () => $finished->push($this->interrupted->pop()));
+        Coroutine::create(fn () => $finished->push($done->pop()));
+        Coroutine::create(fn () => $finished->push($this->interrupted->pop()));
 
         $finished->pop();
     }
@@ -166,7 +169,7 @@ class ServeStep implements StepInterface
     {
         $finished = new Channel();
         $timer = swoole_timer_after(5, fn () => $finished->push(true));
-        go(fn () => $finished->push($this->interrupted->pop()));
+        Coroutine::create(fn () => $finished->push($this->interrupted->pop()));
 
         $finished->pop();
         Timer::clear($timer);
@@ -176,11 +179,11 @@ class ServeStep implements StepInterface
     {
         $this->waitForDoneOrInterrupt($done);
 
-        $this->processes->each(fn (AppProcessProcess $process) => go(fn () => $process->interrupt()));
+        $this->processes->each(fn (AppProcessProcess $process) => Coroutine::create(fn () => $process->interrupt()));
 
         $this->waitTimeoutOrInterrupt();
 
-        $this->processes->each(fn (AppProcessProcess $process) => go(fn () => $process->kill()));
+        $this->processes->each(fn (AppProcessProcess $process) => Coroutine::create(fn () => $process->kill()));
 
         $this->done->close();
         $this->interrupted->close();

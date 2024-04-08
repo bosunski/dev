@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Plugins\Valet;
+namespace App\Plugins\Core;
 
 use App\Dev;
 use App\Plugin\Contracts\Config;
@@ -8,7 +8,7 @@ use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
 use App\Plugins\Valet\Config\ValetConfig;
 
-class ValetStepResolver implements StepResolverInterface
+class CoreStepResolver implements StepResolverInterface
 {
     use Concerns\ResolvesEnvironment;
 
@@ -24,6 +24,11 @@ class ValetStepResolver implements StepResolverInterface
 
     public function __construct(protected readonly Dev $dev)
     {
+    }
+
+    public function name(): string
+    {
+        return 'valet';
     }
 
     /**

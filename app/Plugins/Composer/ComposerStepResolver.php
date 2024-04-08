@@ -9,13 +9,6 @@ use App\Plugins\Brew\Steps\BrewStep;
 
 class ComposerStepResolver implements StepResolverInterface
 {
-    protected array $config = [];
-
-    public function name(): string
-    {
-        return 'composer';
-    }
-
     /**
      * @param mixed $args
      * @return Config|Step

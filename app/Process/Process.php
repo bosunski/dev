@@ -15,7 +15,7 @@ class Process
 
     public function __construct(
         public readonly string $name,
-        public readonly string $color,
+        public readonly int $color,
         protected readonly ProcessOutput $output,
         protected readonly SymfonyProcess $process
     ) {
@@ -35,6 +35,7 @@ class Process
 
             Coroutine::create(function (): void {
                 while($signal = $this->signalChannel->pop()) {
+                    assert(is_int($signal), 'Signal should be an integer');
                     $this->signal($signal);
                 }
             });

@@ -2,18 +2,19 @@
 
 namespace App\Repository;
 
-use App\Config\Service;
+use App\Config\Project;
 use App\Dev;
 use App\Exceptions\UserException;
 use App\Plugin\Contracts\Step;
 use App\Step\CanBeDeferred;
 use App\Step\DeferredStep;
 use Exception;
+use RuntimeException;
 
 class StepRepository
 {
     /**
-     * @var array<string, Service>
+     * @var array<string, Project>
      */
     protected array $services;
 
@@ -24,7 +25,7 @@ class StepRepository
     public function __construct(Dev $dev)
     {
         $this->services = [
-            'deferred' => new Service($dev),
+            'deferred' => new Project($dev),
         ];
     }
 
@@ -48,7 +49,7 @@ class StepRepository
             $step = new DeferredStep($this, $step);
         }
 
-        if (! $this->services[$service] ?? false) {
+        if (! ($this->services[$service] ?? false)) {
             throw new UserException("Service $service does not exist!");
         }
 
@@ -73,14 +74,14 @@ class StepRepository
     public function hasStep(string $id): bool
     {
         return collect($this->services)
-            ->map(fn (Service $service) => $service->hasStep($id))
+            ->map(fn (Project $service) => $service->hasStep($id))
             ->contains(true);
     }
 
     /**
      * @throws Exception
      */
-    public function addService(Service $service): void
+    public function addProject(Project $service): void
     {
         $this->services[$service->id] = $service;
         /**
@@ -90,22 +91,24 @@ class StepRepository
         $service->addSteps($this->add(...));
     }
 
-    public function hasService(string $id): bool
-    {
-        return collect($this->services)->has($id);
-    }
-
-    public function getService(string $id): ?Service
+    public function getProject(string $id): ?Project
     {
         return $this->services[$id] ?? null;
     }
 
     /**
-     * @return array<string, Service>
+     * @return array<string, Project>
      */
-    public function getServices(): array
+    public function getProjects(): array
     {
         $deferred = array_shift($this->services);
+        if (! $deferred) {
+            throw new RuntimeException('Expect to find default defered project but found none.');
+        }
+
+        /**
+         * Put the deferred project as the last in the list of projects
+         */
         $this->services['deferred'] = $deferred;
 
         return $this->services;

@@ -13,6 +13,7 @@ use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
+use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command as Cmd;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
@@ -32,17 +33,21 @@ class Runner
     }
 
     /**
-     * @param  Step[]  $steps
+     * @param Step|Step[] $steps
      *
      * @throws Exception
      */
-    public function execute(array $steps = [], bool $throw = false): int
+    public function execute(array|Step $steps = [], bool $throw = false): int
     {
         try {
+            if (! is_array($steps)) {
+                $steps = [$steps];
+            }
+
             foreach ($steps as $step) {
                 $name = $step->name();
                 if ($name) {
-                    $this->io->info($step->name());
+                    $this->io->info($name);
                 }
 
                 $this->executeStep($step);
@@ -74,7 +79,14 @@ class Runner
         }
     }
 
-    public function exec(string $command, ?string $path = null, array $env = []): bool
+    /**
+     * @param string[]|string $command
+     * @param null|string $path
+     * @param array<string, string> $env
+     * @return bool
+     * @throws InvalidArgumentException
+     */
+    public function exec(string|array $command, ?string $path = null, array $env = []): bool
     {
         try {
             return $this->process($command, $path, $env)
@@ -87,13 +99,25 @@ class Runner
         }
     }
 
-    public function spawn(string $command, ?string $path = null, array $env = []): InvokedProcess
+    /**
+     * @param string[]|string $command
+     * @param null|string $path
+     * @param array<string, string> $env
+     * @return InvokedProcess
+     * @throws InvalidArgumentException
+     */
+    public function spawn(string|array $command, ?string $path = null, array $env = []): InvokedProcess
     {
         return $this->process($command, $path, $env)
             ->tty()
             ->start(output: $this->handleOutput(...));
     }
 
+    /**
+     * @param array<string, string|null> $env
+     * @return array<string, string|null>
+     * @throws InvalidArgumentException
+     */
     private function environment(array $env = []): array
     {
         return $this->config
@@ -104,6 +128,13 @@ class Runner
             ->all();
     }
 
+    /**
+     * @param string[]|string $command
+     * @param null|string $path
+     * @param array<string, string> $env
+     * @return PendingProcess
+     * @throws InvalidArgumentException
+     */
     public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess
     {
         $command = is_string($command)
@@ -116,6 +147,13 @@ class Runner
             ->env($this->environment($env));
     }
 
+    /**
+     * @param string[]|string $command
+     * @param null|string $path
+     * @param array<string, string|null> $env
+     * @return SymfonyProcess
+     * @throws InvalidArgumentException
+     */
     public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
     {
         $command = is_string($command)

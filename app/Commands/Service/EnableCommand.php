@@ -2,33 +2,24 @@
 
 namespace App\Commands\Service;
 
-use App\Config\Config;
 use App\Dev;
 use App\Exceptions\UserException;
-use App\Execution\Runner;
 use LaravelZero\Framework\Commands\Command;
 
 use function Laravel\Prompts\select;
 
 class EnableCommand extends Command
 {
-    protected $signature = 'service:enable {service?}';
+    protected $signature = 'project:enable {project?}';
 
-    protected $description = 'Enables a registered and disabled service';
-
-    protected readonly Config $config;
-
-    protected readonly Runner $runner;
+    protected $description = 'Enables a registered and disabled dependency project';
 
     /**
      * @throws UserException
      */
-    public function __construct(Dev $dev)
+    public function __construct(protected Dev $dev)
     {
         parent::__construct();
-
-        $this->config = $dev->config;
-        $this->runner = $dev->runner;
     }
 
     /**
@@ -36,49 +27,51 @@ class EnableCommand extends Command
      */
     public function handle(): int
     {
-        $services = $this->config->services(true);
-        if ($services->isEmpty()) {
-            $this->error('No registered services found');
+        $projects = $this->dev->config->projects(true);
+        if ($projects->isEmpty()) {
+            $this->error('No registered dependency project found');
 
             return self::INVALID;
         }
 
-        if (! $service = $this->argument('service')) {
-            $service = $this->askForService($services->toArray());
+        if (! $project = $this->argument('project')) {
+            $project = $this->askForProject($projects->all());
         }
 
-        if (! $services->contains($service)) {
-            $this->error("Service $service not found in configuration");
+        if (! $projects->contains($project)) {
+            $this->error("Project $project not found in configuration");
 
             return self::INVALID;
         }
 
-        if (! in_array($service, $this->config->settings['disabled'])) {
-            $this->info("Service $service is not disabled");
+        $disabledProjects = $this->dev->config->settings['disabled'] ?? [];
+        if (! in_array($project, $disabledProjects)) {
+            $this->info("Project $project is not disabled");
 
             return self::SUCCESS;
         }
 
-        $this->config->settings['disabled'] = array_filter($this->config->settings['disabled'], fn ($disabledService) => $disabledService !== $service);
+        $this->dev->config->settings['disabled'] = array_filter($disabledProjects, fn ($disabledService): bool => $disabledService !== $project);
+        $this->dev->config->writeSettings();
 
-        $this->config->writeSettings();
-
-        $this->info("Service $service enabled");
+        $this->info("Project $project enabled");
 
         return self::SUCCESS;
     }
 
     /**
+     * @param string[] $projects
      * @throws UserException
      */
-    private function askForService(array $services): string
+    private function askForProject(array $projects): string
     {
-        $service = select('Which service do you want to enable?', $services);
-
-        if (! $service) {
-            throw new UserException('No service selected');
+        $project = select('Which project do you want to enable?', $projects);
+        if (! $project) {
+            throw new UserException('No project selected');
         }
 
-        return $service;
+        assert(is_string($project), 'Project must be a string');
+
+        return (string) $project;
     }
 }

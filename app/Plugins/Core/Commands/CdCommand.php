@@ -1,14 +1,13 @@
 <?php
 
-namespace App\Plugins\Git\Commands;
+namespace App\Plugins\Core\Commands;
 
 use App\Dev;
-use App\Step\CdStep;
-use App\Step\Git\CloneStep;
+use App\Plugins\Core\Steps\CdStep;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
 
-class CloneCommand extends Command
+class CdCommand extends Command
 {
     private const KNOWN_SOURCES = [
         'github'    => 'github.com',
@@ -21,18 +20,17 @@ class CloneCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'clone {repo} {args?*} {--source=}';
+    protected $signature = 'cd {repo} {--source=}';
 
     /**
      * The description of the command.
      *
      * @var string
      */
-    protected $description = 'Clones a GitHub repository';
+    protected $description = 'Change directory to a project repo';
 
     /**
      * Execute the console command.
-     * @return int
      * @throws Exception
      */
     public function handle(Dev $dev): int
@@ -44,11 +42,8 @@ class CloneCommand extends Command
             return 1;
         }
 
-        [$owner, $repo] = CloneStep::parseService($this->argument('repo'));
-
         return $dev->runner->execute([
-            new CloneStep($owner, $repo, $source = self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('args')),
-            new CdStep($this->argument('repo'), $source),
+            new CdStep($this->argument('repo'), self::KNOWN_SOURCES[$source] ?? 'github.com'),
         ]);
     }
 }

@@ -3,44 +3,38 @@
 namespace App\Config;
 
 use App\Config\Config as DevConfig;
-use App\Config\Herd\HerdConfig;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
-use App\Plugins\Brew\Steps\BrewStep;
-use App\Step\CustomStep;
-use App\Step\Env\EnvSubstituteStep;
-use App\Step\PHPStep;
-use App\Step\Priority;
-use App\Step\ShadowEnvStep;
 use App\Step\StepInterface;
 use Exception;
+use Illuminate\Support\Collection;
 
+/**
+ * @phpstan-import-type Up from DevConfig
+ */
 class UpConfig implements Config
 {
     /**
-     * @var array<non-empty-string, StepResolverInterface>
+     * @param Up $steps
+     * @return void
      */
-    private array $stepResolvers = [];
-
-    public function __construct(protected readonly DevConfig $config)
+    public function __construct(protected array $steps = [])
     {
-    }
-
-    public function addResolver(StepResolverInterface $resolver): void
-    {
-        $this->stepResolvers[$resolver->name()] = $resolver;
     }
 
     /**
      * @param array<non-empty-string, StepResolverInterface> $resolvers
-     * @return StepInterface[]
+     * @return Step[]
      * @throws Exception
      */
     public function steps(array $resolvers = []): array
     {
-        $steps = [];
-        foreach ($this->config->steps() as $step) {
+        /**
+         * @var Collection<int, Step> $steps
+         */
+        $steps = collect();
+        foreach ($this->steps as $step) {
             foreach ($step as $name => $args) {
                 if (isset($resolvers[$name])) {
                     $configOrStep = $resolvers[$name]->resolve($args);
@@ -49,19 +43,16 @@ class UpConfig implements Config
                 }
 
                 if ($configOrStep instanceof Config) {
-                    $steps = array_merge($steps, $this->resolveStepFromConfig($configOrStep));
+                    $steps = $steps->merge($this->resolveStepFromConfig($configOrStep));
 
                     continue;
                 }
 
-                $steps[] = $configOrStep;
+                $steps->push($configOrStep);
             }
         }
 
-        return collect($steps)
-            ->sortBy($this->stepSorter(...))
-            ->prepend(new EnvSubstituteStep($this->config))
-            ->toArray();
+        return $steps->all();
     }
 
     /**
@@ -70,7 +61,7 @@ class UpConfig implements Config
      */
     public function get(string $key): mixed
     {
-        foreach($this->config->steps() as $step) {
+        foreach($this->steps as $step) {
             foreach ($step as $name => $args) {
                 if ($name === $key) {
                     return $args;
@@ -81,29 +72,24 @@ class UpConfig implements Config
         return null;
     }
 
-    private function resolveStepFromConfig(Config $config): array
+    /**
+     * @param Config $config
+     * @return Collection<int, StepInterface>
+     */
+    private function resolveStepFromConfig(Config $config): Collection
     {
-        $steps = [];
+        $steps = collect();
         foreach ($config->steps() as $configOrStep) {
             if ($configOrStep instanceof Config) {
-                $steps = array_merge($steps, $this->resolveStepFromConfig($configOrStep));
+                $steps = $steps->merge($this->resolveStepFromConfig($configOrStep));
 
                 continue;
             }
 
-            $steps[] = $configOrStep;
+            $steps->push($configOrStep);
         }
 
         return $steps;
-    }
-
-    private function stepSorter(Step $step): Priority
-    {
-        if ($step instanceof ShadowEnvStep || $step instanceof EnvSubstituteStep) {
-            return Priority::HIGH;
-        }
-
-        return $step instanceof BrewStep ? Priority::HIGH : Priority::NORMAL;
     }
 
     /**
@@ -112,10 +98,7 @@ class UpConfig implements Config
     private function makeStep(string $name, mixed $config): Step|Config
     {
         return match ($name) {
-            'herd'     => new HerdConfig($config),
-            'custom', 'script' => new CustomStep($config),
-            'php'   => new PHPStep($config),
-            default => throw new Exception("Unknown step: $name"),
+            default => throw new Exception("Unknown step: $name")
         };
     }
 }

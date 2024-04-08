@@ -10,13 +10,17 @@ use App\Plugin\Capability\EnvProvider;
 use App\Plugin\Capability\PathProvider;
 use App\Plugin\PluginManager;
 use Illuminate\Support\Collection;
+use RuntimeException;
 
 class Dev implements EnvResolver
 {
     protected PluginManager $pluginManager;
 
+    public readonly string $name;
+
     public function __construct(public readonly Config $config, public readonly Runner $runner, protected IOInterface $io)
     {
+        $this->name = 'dev';
         $this->runner->setEnvResolver($this);
     }
 
@@ -56,9 +60,16 @@ class Dev implements EnvResolver
         ]);
     }
 
+    /**
+     * @return string[]
+     * @throws RuntimeException
+     */
     public function paths(): array
     {
-        $paths = [];
+        $paths = [
+            $this->config->devPath('bin'),
+        ];
+
         foreach ($this->pluginManager->getCcs(PathProvider::class, [$this]) as $capability) {
             $newPaths = $capability->paths();
             $paths = array_merge($paths, $newPaths);

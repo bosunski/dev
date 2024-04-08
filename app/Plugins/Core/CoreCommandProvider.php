@@ -1,11 +1,13 @@
 <?php
 
-namespace App\Plugins\Git;
+namespace App\Plugins\Core;
 
 use App\Plugin\Capability\CommandProvider;
-use App\Plugins\Git\Commands\CloneCommand;
+use App\Plugins\Core\Commands\CdCommand;
+use App\Plugins\Core\Commands\CloneCommand;
+use App\Plugins\Core\Commands\UpCommand;
 
-class GitCommandProvider implements CommandProvider
+class CoreCommandProvider implements CommandProvider
 {
     /**
      * @inheritDoc
@@ -14,6 +16,8 @@ class GitCommandProvider implements CommandProvider
     {
         return [
             new CloneCommand(),
+            new CdCommand(),
+            app(UpCommand::class),
         ];
     }
 
@@ -21,7 +25,7 @@ class GitCommandProvider implements CommandProvider
     {
         return [
             'check' => [
-                'desc' => 'Check if git is installed',
+                'desc' => 'Check if git is installedas',
                 'run'  => 'git --version',
             ],
         ];

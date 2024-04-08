@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Step;
+namespace App\Plugins\Core\Steps;
 
 use App\Config\Config;
 use App\Execution\Runner;
+use App\Plugin\Contracts\Step;
 use Illuminate\Support\Facades\Process;
 use Symfony\Component\Finder\Finder;
 
-class CdStep implements StepInterface
+class CdStep implements Step
 {
     public const DEFAULT_SHELL = '/bin/bash';
 
@@ -77,7 +78,7 @@ class CdStep implements StepInterface
             $shell = $defaultShell;
         }
 
-        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($this->path)->run([$shell]);
+        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($this->path)->run("exec $shell");
 
         return true;
     }

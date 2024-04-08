@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Step\Env;
+namespace App\Plugins\Core\Steps;
 
 use App\Config\Config;
 use App\Execution\Runner;
-use App\Step\StepInterface;
+use App\Plugin\Contracts\Step;
 use Dotenv\Dotenv;
 
-class EnvSubstituteStep implements StepInterface
+class EnvSubstituteStep implements Step
 {
     public function __construct(protected readonly Config $config)
     {
@@ -20,7 +20,7 @@ class EnvSubstituteStep implements StepInterface
 
     public function run(Runner $runner): bool
     {
-        if ($this->shouldCopyEnv()) {
+        if ($this->shouldCopyEnv($runner->config())) {
             return copy($runner->config()->cwd('.env.example'), $runner->config()->cwd('.env'));
         }
 
@@ -83,10 +83,10 @@ class EnvSubstituteStep implements StepInterface
         return true;
     }
 
-    private function shouldCopyEnv(): bool
+    private function shouldCopyEnv(Config $config): bool
     {
-        return ! is_file($this->config->cwd('.env'))
-            && is_file($this->config->cwd('.env.example'));
+        return ! is_file($config->cwd('.env'))
+            && is_file($config->cwd('.env.example'));
     }
 
     public function done(Runner $runner): bool
@@ -102,11 +102,6 @@ class EnvSubstituteStep implements StepInterface
     private function hasEnvFile(Config $config): bool
     {
         return is_file($config->cwd('.env'));
-    }
-
-    private function hasRequiredEnvFiles(Config $config): bool
-    {
-        return $this->hasSampleEnvFile($config) && $this->hasEnvFile($config);
     }
 
     public function id(): string

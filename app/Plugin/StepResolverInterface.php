@@ -8,11 +8,6 @@ use App\Plugin\Contracts\Step;
 interface StepResolverInterface
 {
     /**
-     * @return non-empty-string
-     */
-    public function name(): string;
-
-    /**
      * @param mixed $args
      * @return Config|Step
      */
