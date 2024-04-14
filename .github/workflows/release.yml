@@ -52,9 +52,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: vendor
-          key: ${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          key: composer-${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ github.repository }}-${{ runner.os }}-php-
+            composer-${{ github.repository }}-${{ runner.os }}-php-
 
       - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
         run: composer install
@@ -70,7 +70,7 @@ jobs:
           echo "SPC_EXTENSIONS=$SPC_EXTENSIONS" >> $GITHUB_OUTPUT
           echo "SPC_EXTENSIONS_SHA256=$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "PHP_VERSION=$PHP_VERSION" >> $GITHUB_OUTPUT
-          echo "CACHE_KEY=${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
+          echo "CACHE_KEY=spc-${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256" >> $GITHUB_OUTPUT
           echo "FILENAME=$FILENAME" >> $GITHUB_OUTPUT
           echo "FILEPATH=$GITHUB_WORKSPACE/dist/$FILENAME" >> $GITHUB_OUTPUT
           echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS" >> $GITHUB_OUTPUT
@@ -89,7 +89,7 @@ jobs:
         working-directory: spc
 
       - if: steps.cache-download.outputs.cache-hit != 'true'
-        run: ./bin/spc download --with-php=8.2 --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        run: ./bin/spc download -U "swoole:https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz" --with-php=8.2 --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
 
       - if: steps.cache-download.outputs.cache-hit != 'true'

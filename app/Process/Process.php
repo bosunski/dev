@@ -17,7 +17,7 @@ class Process
         public readonly string $name,
         public readonly int $color,
         protected readonly ProcessOutput $output,
-        protected readonly SymfonyProcess $process
+        protected readonly SymfonyProcess|ProcProcess $process
     ) {
         $this->signalChannel = new Channel();
     }

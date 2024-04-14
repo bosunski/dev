@@ -107,7 +107,7 @@ class Project
                  * The reason for this is yet to be known. But I have a hunch it has something to do with the
                  * fact that we are running DEV inside Coroutines.
                  */
-                'instance' => $this->dev->runner->symfonyProcess($serve['run'], $this->config->cwd(), $this->getEnv($serve['env'] ?? '.env')),
+                'instance' => $this->dev->runner->procProcess($serve['run'], $this->config->cwd(), $this->getEnv($serve['env'] ?? '.env')),
             ];
         }
 

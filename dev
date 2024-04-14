@@ -1,7 +1,6 @@
 #!/usr/bin/env php
 <?php
 
-use Swoole\Coroutine;
 use Swoole\Event;
 
 define('LARAVEL_START', microtime(true));
@@ -85,6 +84,4 @@ if ($lastError) {
     throw $lastError;
 }
 
-
-Event::wait();
 exit($status);

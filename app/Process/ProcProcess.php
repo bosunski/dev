@@ -2,103 +2,140 @@
 
 namespace App\Process;
 
+use Closure;
 use Exception;
-use Swoole\Coroutine;
-use Swoole\Coroutine\Channel;
+use LogicException;
+use RuntimeException;
 
 class ProcProcess
 {
+    public const CHUNK_SIZE = 16384;
+
+    private int $exitcode = -1;
+
     /**
      * @var resource | null
      */
     protected $process = null;
 
     /**
-     * @var array{command: string, pid: int, running: bool, signaled: bool, stopped: bool, exitcode: int, termsig: int, stopsig: int}
+     * @var null|array{command: string, pid: int, running: bool, signaled: bool, stopped: bool, exitcode: int, termsig: int, stopsig: int}
      */
     protected ?array $info = null;
 
+    /**
+     * @var resource[]
+     */
+    protected array $pipes = [];
+
     protected int $cachedExitCode = -1;
+
+    protected ?Closure $output = null;
 
     /**
      * @param string[] $command
+     * @param string|null $cwd
+     * @param array<string, string|null> $envs
+     *
      * @return void
      */
-    public function __construct(protected readonly array $command)
+    public function __construct(public readonly array $command, public readonly ?string $cwd = null, public readonly array $envs = [])
     {
     }
 
-    public function run(callable $output): int
+    public function setPty(bool $pty): ProcProcess
     {
-        $descriptorspec = [['pty'], ['pty'], ['pty']];
+        return $this;
+    }
 
-        $process = proc_open($this->command, $descriptorspec, $pipes);
+    public function start(callable $output): void
+    {
+        $this->output = Closure::fromCallable($output);
+        // $descriptorspec = [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']];
+        $descriptorspec = [['pipe', 'r'], ['pty'], ['pty']];
+        // $descriptorspec = [['pty'], ['pty'], ['pty']];
+        $envPairs = [];
+        $envs = $this->envs + $this->getDefaultEnv();
+        foreach ($envs as $k => $v) {
+            if ($v !== false && \in_array($k, ['argc', 'argv', 'ARGC', 'ARGV'], true) === false) {
+                $envPairs[] = $k . '=' . $v;
+            }
+        }
+        $process = proc_open($this->command, $descriptorspec, $pipes, $this->cwd, $envPairs);
         if (! $process) {
             throw new Exception('Unable to start process');
         }
 
         $this->process = $process;
+        $this->pipes = $pipes;
         $this->updateStatus();
-
-        while (! feof($pipes[2]) || ! feof($pipes[1])) {
-            $out = stream_get_contents($pipes[2], 8192);
-            if ($out) {
-                $output($out);
-            }
-
-            $out = fread($pipes[1], 8192);
-            if ($out) {
-                $output($out);
-            }
-
-            $this->updateStatus();
-        }
-
-        return $this->wait();
     }
 
-    protected function wait(): int
+    public function wait(): int
     {
         if (! $this->process) {
-            return -1;
+            throw new RuntimeException('You need to start the process first');
         }
 
-        $chan = new Channel();
-        Coroutine::create(function (Channel $chan, $process): void {
-            while (true) {
-                $status = proc_get_status($process);
-                if (! $status['running']) {
-                    $chan->push($status['exitcode']);
+        while ($this->isRunning()) {
+            $w = $e = [];
+            $pipes = $this->pipes;
+            $s = stream_select($pipes, $w, $e, 1, 0);
 
+            if ($s === 0) {
+                continue;
+            }
+
+            foreach ($pipes as $pipe) {
+                /**
+                 * We don't want to read from the STDIN, we only care
+                 * about the outputs for now.
+                 */
+                if ($pipe === $this->pipes[0]) {
+                    continue;
+                }
+
+                $out = @fread($pipe, self::CHUNK_SIZE);
+                if ($out === '' || $out === false) {
                     break;
                 }
+
+                if (isset($out[0])) {
+                    $this->output($out);
+                }
             }
-        }, $chan, $this->process);
+        }
 
-        $exitCode = $chan->pop();
-        assert(is_int($exitCode), 'Exit code must be an integer');
+        $this->close();
 
-        return $exitCode;
+        return $this->exitcode;
+    }
+
+    private function output(string $chunk): void
+    {
+        if ($this->output) {
+            call_user_func($this->output, '', $chunk);
+        }
     }
 
     public function isRunning(): bool
     {
-        if (! $this->process) {
+        if (! is_resource($this->process)) {
             return false;
         }
 
-        $status = proc_get_status($this->process);
+        $this->updateStatus();
 
-        return $status['running'];
+        return $this->info['running'];
     }
 
     public function signal(int $signal): bool
     {
-        if (! $this->process) {
-            return false;
+        if (! $this->process || empty($this->info) || ! $this->isRunning()) {
+            throw new LogicException('Cannot send signal on a non running process.');
         }
 
-        return proc_terminate($this->process, $signal);
+        return posix_kill($this->info['pid'], $signal);
     }
 
     /**
@@ -125,5 +162,57 @@ class ProcProcess
                 $this->info['exitcode'] = $this->cachedExitCode;
             }
         }
+
+        if (! $running) {
+            $this->close();
+        }
+    }
+
+    /**
+     * Closes process resource, closes file handles, sets the exitcode.
+     *
+     * @return int The exitcode
+     */
+    public function close(): int
+    {
+        // $this->closePipes();
+        if (is_resource($this->process)) {
+            proc_close($this->process);
+        }
+
+        $this->exitcode = $this->info['exitcode'];
+        // $this->status = self::STATUS_TERMINATED;
+
+        if ($this->exitcode === -1) {
+            if ($this->info['signaled'] && $this->info['termsig'] > 0) {
+                // if process has been signaled, no exitcode but a valid termsig, apply Unix convention
+                $this->exitcode = 128 + $this->info['termsig'];
+            }
+        }
+
+        // Free memory from self-reference callback created by buildCallback
+        // Doing so in other contexts like __destruct or by garbage collector is ineffective
+        // Now pipes are closed, so the callback is no longer necessary
+        $this->output = null;
+
+        return $this->exitcode;
+    }
+
+    protected function closePipes(): void
+    {
+        foreach ($this->pipes as $pipe) {
+            if (is_resource($pipe)) {
+                fclose($pipe);
+            }
+        }
+        $this->pipes = [];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function getDefaultEnv(): array
+    {
+        return $_ENV + getenv();
     }
 }

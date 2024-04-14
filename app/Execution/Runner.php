@@ -7,6 +7,7 @@ use App\Contracts\EnvResolver;
 use App\Exceptions\UserException;
 use App\IO\IOInterface;
 use App\Plugin\Contracts\Step;
+use App\Process\ProcProcess;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
@@ -161,6 +162,22 @@ class Runner
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
+    }
+
+    /**
+     * @param string[]|string $command
+     * @param null|string $path
+     * @param array<string, string|null> $env
+     * @return ProcProcess
+     * @throws InvalidArgumentException
+     */
+    public function procProcess(array|string $command, ?string $path = null, array $env = []): ProcProcess
+    {
+        $command = is_string($command)
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
+
+        return new ProcProcess($command, $path, $this->environment($env));
     }
 
     public function pool(callable $callback): ProcessPoolResults

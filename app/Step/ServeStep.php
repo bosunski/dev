@@ -23,8 +23,6 @@ class ServeStep implements StepInterface
      */
     protected Collection $processes;
 
-    protected Channel $done;
-
     protected Channel $interrupted;
 
     /**
@@ -35,7 +33,6 @@ class ServeStep implements StepInterface
     public function __construct(protected readonly Dev $dev)
     {
         $this->processes = collect();
-        $this->done = new Channel();
         $this->interrupted = new Channel();
     }
 
@@ -61,7 +58,7 @@ class ServeStep implements StepInterface
                 $name = $shouldPrefixProjectName ? $process['project'] . ':' . $process['name'] : $process['name'];
                 $color = $this->generateRandomColor($index);
 
-                $wrappedProcess = new AppProcessProcess($name, $color, $output, $process['instance']);
+                $wrappedProcess = new AppProcessProcess(strtolower($name), $color, $output, $process['instance']);
                 $output->addProcess($wrappedProcess);
 
                 $this->processes->push($wrappedProcess);
@@ -84,7 +81,6 @@ class ServeStep implements StepInterface
             });
 
             $this->trapSignals();
-
             Coroutine::create(fn () => $this->waitForExit($done));
 
             $wg->wait();
@@ -117,19 +113,16 @@ class ServeStep implements StepInterface
     {
         $this->trapIds = [
             Coroutine::create(function (): void {
-                while(Coroutine::waitSignal(SIGINT)) {
-                    $this->signal();
-                }
+                Coroutine::waitSignal(SIGINT);
+                $this->signal();
             }),
             Coroutine::create(function (): void {
-                while(Coroutine::waitSignal(SIGTERM)) {
-                    $this->signal();
-                }
+                Coroutine::waitSignal(SIGTERM);
+                $this->signal();
             }),
             Coroutine::create(function (): void {
-                while(Coroutine::waitSignal(SIGHUP)) {
-                    $this->signal();
-                }
+                Coroutine::waitSignal(SIGHUP);
+                $this->signal();
             }),
         ];
     }
@@ -156,6 +149,34 @@ class ServeStep implements StepInterface
         $this->interrupted->push(true);
     }
 
+    protected function waitForExit(Channel $done): void
+    {
+        $this->waitForDoneOrInterrupt($done);
+
+        Coroutine::create(function (): void {
+            Coroutine::defer(fn () => $this->interrupted->close());
+
+            $wg = new WaitGroup();
+            $this->processes->each(function (AppProcessProcess $process) use ($wg): void {
+                $wg->add();
+
+                Coroutine::create(function (AppProcessProcess $process, WaitGroup $wg): void {
+                    $process->interrupt();
+
+                    $wg->done();
+                }, $process, $wg);
+            });
+
+            $wg->wait();
+        });
+
+        $this->waitTimeoutOrInterrupt();
+
+        $this->processes->each(fn (AppProcessProcess $process) => Coroutine::create(fn () => $process->kill()));
+
+        $done->close();
+    }
+
     protected function waitForDoneOrInterrupt(Channel $done): void
     {
         $finished = new Channel();
@@ -168,24 +189,10 @@ class ServeStep implements StepInterface
     protected function waitTimeoutOrInterrupt(): void
     {
         $finished = new Channel();
-        $timer = swoole_timer_after(5, fn () => $finished->push(true));
+        $timer = Timer::after(5000, fn () => $finished->push(true));
         Coroutine::create(fn () => $finished->push($this->interrupted->pop()));
 
         $finished->pop();
         Timer::clear($timer);
-    }
-
-    protected function waitForExit(Channel $done): void
-    {
-        $this->waitForDoneOrInterrupt($done);
-
-        $this->processes->each(fn (AppProcessProcess $process) => Coroutine::create(fn () => $process->interrupt()));
-
-        $this->waitTimeoutOrInterrupt();
-
-        $this->processes->each(fn (AppProcessProcess $process) => Coroutine::create(fn () => $process->kill()));
-
-        $this->done->close();
-        $this->interrupted->close();
     }
 }

@@ -63,7 +63,7 @@ commands:
     desc: Build Dev binary
     signature: "{name?} {subcommand?} {--service}"
     run: |
-      php dev app:build dev.phar && \
+      php dev app:build --build-version=dev dev.phar && \
       spc micro:combine builds/dev.phar -O builds/dev && \
       chmod +x builds/dev && \
       rm builds/dev.phar
