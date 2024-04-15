@@ -1,71 +1,33 @@
 name: dev
 
 up:
-  - brew:
-      - gh
-      - php@8.2
-      - c-ares
-  - valet:
+  - spc:
+      combine:
+        input: builds/dev.phar
+        output: builds/dev
       php:
         version: 8.2
+        preset: common
         extensions:
-          pcov:
-            before: |
-              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
-          swoole-5.1.1:
-            before: |
-              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
-            options:
-              enable-sockets: "yes"
-              enable-openssl: "yes --with-openssl-dir=`find /opt/homebrew/Cellar | grep \"openssl@3/3.*.*$\" | head -n 1`"
-              enable-http2: "yes"
-              enable-brotli: "yes"
-              enable-mysqlnd: "no"
-              enable-swoole-json: "no"
-              enable-swoole-curl: "yes"
-              enable-cares: "no"
-  # - php:
-  #     extensions:
-  #       - xdebug
-  #     ini:
-  #       - xdebug.mode=coverage
+          - swoole
+        sources:
+          swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
 
   - script:
       desc: Install composer dependencies
       run: composer install
-  - script:
-      desc: Setup SPC Binary
-      met?: test -f $DEV_PATH/bin/spc
-      run: |
-        export FILENAME=spc-macos-aarch64.tar.gz
-        gh release --repo crazywhalecc/static-php-cli download -p $FILENAME
-        tar -xvf $FILENAME
-        mv spc $DEV_PATH/bin/spc
-        chmod +x $DEV_PATH/bin/spc
-        rm $FILENAME
-  - script:
-      desc: Print INI_DIR
-      run: echo $PHP_INI_SCAN_DIR
-  - script:
-      desc: Setup Static PHP
-      met?: |
-        PHP_PATH=buildroot/bin/php && test -f $PHP_PATH \
-        && PHP_INI_SCAN_DIR="" \
-        && $PHP_PATH -r 'version_compare(phpversion(), "8.2.10", ">=") ? exit(0) : exit(1);'
-      run: ./scripts/build-static-cli
+
   - script:
       desc: Create output.txt
-      met?: test -f output.txt
-      run: echo "Hello World $(date)\n" > output.txt
+      run: echo "Hello World $(date)" > output.txt
 
 commands:
   build:
-    desc: Build Dev binary
+    desc: Build DEV binary
     signature: "{name?} {subcommand?} {--service}"
     run: |
       php dev app:build --build-version=dev dev.phar && \
-      spc micro:combine builds/dev.phar -O builds/dev && \
-      chmod +x builds/dev && \
+      php dev spc:combine && chmod +x builds/dev && \
       rm builds/dev.phar
   install:
     desc: Install Dev binary
@@ -78,6 +40,9 @@ commands:
   build-php:
     desc: Build PHP
     run: ./scripts/build-static-cli
+  style:
+    desc: Fix PHP code style
+    run: pint
   analyse:
     desc: Check PHP version
     run: ./vendor/bin/phpstan analyse --memory-limit=2G

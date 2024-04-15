@@ -47,9 +47,9 @@ class Runner
 
             foreach ($steps as $step) {
                 $name = $step->name();
-                if ($name) {
-                    $this->io->info($name);
-                }
+                // if ($name) {
+                //     $this->io->info($name);
+                // }
 
                 $this->executeStep($step);
             }
@@ -71,6 +71,11 @@ class Runner
     {
         if ($step->done($this)) {
             return;
+        }
+
+        $name = $step->name();
+        if ($name) {
+            $this->io->info($name);
         }
 
         $done = $step->run($this);
@@ -138,8 +143,13 @@ class Runner
      */
     public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess
     {
+        $shOptions = 'ec';
+        if ($this->config->isDebug()) {
+            $shOptions .= 'v';
+        }
+
         $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return Process::forever()
@@ -157,8 +167,13 @@ class Runner
      */
     public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
     {
+        $shOptions = 'ec';
+        if ($this->config->isDebug()) {
+            $shOptions .= 'v';
+        }
+
         $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
@@ -173,8 +188,13 @@ class Runner
      */
     public function procProcess(array|string $command, ?string $path = null, array $env = []): ProcProcess
     {
+        $shOptions = 'ec';
+        if ($this->config->isDebug()) {
+            $shOptions .= 'v';
+        }
+
         $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return new ProcProcess($command, $path, $this->environment($env));

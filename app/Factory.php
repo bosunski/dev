@@ -21,12 +21,25 @@ class Factory
         $runner = new Runner($config, $io);
         $dev = new Dev($config, $runner, $io);
 
+        if (! $factory->ensureGlobalDirectory($dev)) {
+            throw new RuntimeException('Unable to create global path for DEV!');
+        }
+
         $manager = $factory->createPluginManager($dev, $io);
         $dev->setPluginManager($manager);
 
         $manager->loadInstalledPlugins();
 
         return $dev;
+    }
+
+    protected function ensureGlobalDirectory(Dev $dev): bool
+    {
+        if (! is_dir($globalPath = $dev->config->globalPath('bin'))) {
+            return mkdir($globalPath, recursive: true);
+        }
+
+        return true;
     }
 
     protected function createPluginManager(Dev $dev, IOInterface $io): PluginManager

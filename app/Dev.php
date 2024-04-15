@@ -68,6 +68,7 @@ class Dev implements EnvResolver
     {
         $paths = [
             $this->config->devPath('bin'),
+            $this->config->globalPath('bin'),
         ];
 
         foreach ($this->pluginManager->getCcs(PathProvider::class, [$this]) as $capability) {
@@ -76,5 +77,10 @@ class Dev implements EnvResolver
         }
 
         return $paths;
+    }
+
+    public function isDebug(): bool
+    {
+        return $this->config->isDebug();
     }
 }

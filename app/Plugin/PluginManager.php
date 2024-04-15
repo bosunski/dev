@@ -9,6 +9,7 @@ use App\Plugin\Capability\Capability;
 use App\Plugins\Brew\BrewPlugin;
 use App\Plugins\Composer\ComposerPlugin;
 use App\Plugins\Core\CorePlugin;
+use App\Plugins\Spc\SpcPlugin;
 use App\Plugins\Valet\ValetPlugin;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use RuntimeException;
@@ -28,6 +29,7 @@ class PluginManager
         ValetPlugin::class,
         BrewPlugin::class,
         ComposerPlugin::class,
+        SpcPlugin::class,
     ];
 
     public function __construct(protected readonly Dev $dev, protected readonly IOInterface $io)

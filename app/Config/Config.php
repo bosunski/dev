@@ -167,6 +167,16 @@ class Config
         return $this->path;
     }
 
+    public function globalPath(?string $path = null): string
+    {
+        $home = $this->home() . DIRECTORY_SEPARATOR . self::OP_PATH;
+        if ($path) {
+            return $home . DIRECTORY_SEPARATOR . trim($path, DIRECTORY_SEPARATOR);
+        }
+
+        return $home;
+    }
+
     public static function home(): string
     {
         return (string) getenv('HOME');
@@ -263,5 +273,10 @@ class Config
     public function envs(): Collection
     {
         return collect($this->config['env'] ?? []);
+    }
+
+    public function isDebug(): bool
+    {
+        return false;
     }
 }
