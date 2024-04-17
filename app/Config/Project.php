@@ -181,9 +181,4 @@ class Project
     {
         return $this->steps->has($id);
     }
-
-    public function runSteps(): int
-    {
-        return $this->dev->runner->execute($this->steps()->all(), true);
-    }
 }

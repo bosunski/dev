@@ -2,7 +2,7 @@
 <?php
 
 /**
- * USed to be Sek, Garm, and DEV
+ * Used to be Sek, Garm, and now DEV
  */
 define('LARAVEL_START', microtime(true));
 

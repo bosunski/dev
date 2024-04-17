@@ -4,6 +4,7 @@ namespace App\Plugins\Spc;
 
 use App\Dev;
 use App\Plugin\Capability\PathProvider;
+use App\Plugins\Spc\Config\SpcConfig;
 
 class SpcPathProvider implements PathProvider
 {
@@ -13,7 +14,7 @@ class SpcPathProvider implements PathProvider
 
     public function paths(): array
     {
-        $config = $this->dev->config->up()->get(SpcPlugin::NAME) ?? [];
+        $config = $this->dev->config->up()->get(SpcConfig::Name) ?? [];
         if (empty($config)) {
             return [];
         }

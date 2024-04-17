@@ -108,6 +108,8 @@ class EnvSubstituteStep implements Step
         }
 
         if ($envWasAdded) {
+            // A little cleanup to ensure there are no more than 2 newlines in the file
+            // It's not a big deal, but a cosmetic change to make the file look better
             $envContent = (string) preg_replace("/\n{3,}/", PHP_EOL . PHP_EOL, $envContent);
 
             // Ensure there is a newline at the end of the file

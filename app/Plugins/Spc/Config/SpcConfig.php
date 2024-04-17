@@ -34,6 +34,8 @@ use Exception;
  */
 class SpcConfig implements Config
 {
+    public const Name = 'spc';
+
     public const DefaultPhpVersion = '8.2';
 
     public const SupportedPhpVersions = ['8.0', '8.1', '8.2', '8.3'];

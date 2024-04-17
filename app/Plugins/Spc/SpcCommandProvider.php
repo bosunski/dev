@@ -22,7 +22,7 @@ class SpcCommandProvider implements CommandProvider
 
     public function getConfigCommands(): array
     {
-        $rawSpcConfig = $this->dev->config->up()->get(SpcPlugin::NAME) ?? [];
+        $rawSpcConfig = $this->dev->config->up()->get(SpcConfig::Name) ?? [];
         if (empty($rawSpcConfig)) {
             return [];
         }

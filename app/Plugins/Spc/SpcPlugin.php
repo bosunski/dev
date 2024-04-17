@@ -5,15 +5,12 @@ namespace App\Plugins\Spc;
 use App\Dev;
 use App\Plugin\Capability\CommandProvider;
 use App\Plugin\Capability\ConfigProvider;
-use App\Plugin\Capability\PathProvider;
 use App\Plugin\Capable;
 use App\Plugin\PluginInterface;
 use Illuminate\Support\Facades\File;
 
 class SpcPlugin implements Capable, PluginInterface
 {
-    public const NAME = 'spc';
-
     public function activate(Dev $dev): void
     {
         if (! is_dir($path = $dev->config->globalPath('spc'))) {
@@ -37,7 +34,6 @@ class SpcPlugin implements Capable, PluginInterface
         return [
             ConfigProvider::class  => SpcConfigProvider::class,
             CommandProvider::class => SpcCommandProvider::class,
-            // PathProvider::class => SpcPathProvider::class,
         ];
     }
 }
