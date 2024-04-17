@@ -7,8 +7,6 @@ use App\Plugin\Capability\PathProvider;
 
 class SpcPathProvider implements PathProvider
 {
-    use Concerns\ResolvesEnvironment;
-
     public function __construct(protected Dev $dev)
     {
     }

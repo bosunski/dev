@@ -13,8 +13,6 @@ use App\Plugins\Spc\Config\SpcConfig;
  */
 class SpcStepResolver implements StepResolverInterface
 {
-    use Concerns\ResolvesEnvironment;
-
     public const PHP_VERSION_MAP = [
         '8.3' => 'php',
         '8.2' => 'php@8.2',
@@ -22,11 +20,6 @@ class SpcStepResolver implements StepResolverInterface
         '8.0' => 'php@8.0',
         '7.4' => 'php@7.4',
     ];
-
-    /**
-     * @var RawSpcConfig
-     */
-    protected array $config = [];
 
     public function __construct(protected readonly Dev $dev)
     {

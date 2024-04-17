@@ -4,11 +4,8 @@ namespace App\Config;
 
 use App\Exceptions\UserException;
 use App\Utils\Values;
-use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
-use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -287,49 +284,6 @@ class Config
         return collect($this->config['env'] ?? [])
             ->map(Values::evaluateEnv(...))
             ->map(fn ($value) => Values::substituteEnv($value, collect(getenv())));
-    }
-
-    /**
-     * @param string $value
-     * @param Collection<string, string|null> $envs
-     * @return string
-     */
-    protected function substituteEnv(string|null $value, Collection $envs): string|null
-    {
-        if (! $value) {
-            return $value;
-        }
-
-        preg_match_all('/\${([^}]*)}/', $value, $matches);
-        foreach ($matches[1] ?? [] as $match) {
-            $replacement = $envs->get($match);
-            if (! $replacement) {
-                return $value;
-            }
-
-            $value = str_replace('${' . $match . '}', $replacement, $value);
-        }
-
-        return $value;
-    }
-
-    protected function evaluateEnv(string|null $value): string|null
-    {
-        if (! $value) {
-            return $value;
-        }
-
-        preg_match_all('/`([^`]*)`/', $value, $matches);
-        foreach ($matches[1] ?? [] as $match) {
-            try {
-                $output = Process::run($match)->throw()->output();
-                $value = str_replace("`$match`", trim($output), $value);
-            } catch (ProcessFailedException $e) {
-                throw new InvalidArgumentException("Failed to evaluate environment variable: $value. Output: {$e->result->output()}");
-            }
-        }
-
-        return $value;
     }
 
     public function isDebug(): bool
