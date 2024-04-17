@@ -9,7 +9,7 @@ use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Factory;
 use App\Plugins\Core\Steps\CloneStep;
-use App\Repository\StepRepository;
+use App\Repository\Repository;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
 
@@ -32,7 +32,7 @@ class UpCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository, Dev $dev)
+    public function __construct(protected readonly Repository $repository, Dev $dev)
     {
         parent::__construct();
 
@@ -47,19 +47,20 @@ class UpCommand extends Command
     {
         if (! $this->option('self') && $dev->config->projects()->count() > 0) {
             $this->info("🚀 Project contains {$dev->config->projects()->count()} dependency projects. Resolving all dependency projects...");
-            $this->config->projects()->each(fn ($project) => $this->resolveProject($project, $this->config->path()));
+            $this->config->projects()->each(fn (string $project) => $this->resolveProject($project, $this->config->path()));
         }
 
-        $this->stepRepository->addProject(new Project($dev));
+        $this->repository->addProject(new Project($dev));
 
-        $projects = $this->stepRepository->getProjects();
+        $projects = $this->repository->getProjects();
         foreach ($projects as $project) {
-            if ($project->steps->count() === 0) {
+            $steps = $project->steps();
+            if ($steps->count() === 0) {
                 continue;
             }
 
             $this->info("🚀 Running steps for $project->id...");
-            if ($project->runSteps() !== 0) {
+            if ($project->dev->runner->execute($steps->all()) !== 0) {
                 $this->error("⛔️ Failed to run steps for $project->id");
 
                 return self::FAILURE;
@@ -80,7 +81,7 @@ class UpCommand extends Command
          * If, so, this means its already been cloned, and we can just return it.
          * This will also eventually prevent infinite loops caused by circular dependencies.
          */
-        if ($project = $this->stepRepository->getProject($projectName)) {
+        if ($project = $this->repository->getProject($projectName)) {
             return $project;
         }
 
@@ -95,12 +96,11 @@ class UpCommand extends Command
 
         $config = Config::fromProjectName($projectName, $root);
         if ($config->projects()->isNotEmpty()) {
-            $config->projects()->each(fn ($project) => $this->resolveProject($project, $root));
+            $config->projects()->each(fn (string $project) => $this->resolveProject($project, $root));
         }
 
-        $dev = Factory::create($this->runner->io(), Config::fromProjectName($projectName));
-
-        $this->stepRepository->addProject($project = new Project($dev));
+        $dev = Factory::create($this->runner->io(), $config);
+        $this->repository->addProject($project = new Project($dev));
 
         return $project;
     }

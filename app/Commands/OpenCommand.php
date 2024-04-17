@@ -4,7 +4,6 @@ namespace App\Commands;
 
 use App\Dev;
 use App\Exceptions\UserException;
-use App\Repository\StepRepository;
 use App\Utils\Browser;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
@@ -30,24 +29,16 @@ class OpenCommand extends Command
     protected $description = 'Open a site in the browser';
 
     /**
-     * @throws UserException
-     */
-    public function __construct(protected readonly StepRepository $stepRepository, protected Dev $dev)
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return int
      *
      * @throws UserException
      */
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
         $site = $this->argument('site');
-        $sites = $this->dev->config->sites();
+        $sites = $dev->config->sites();
 
         if ($sites->isEmpty()) {
             throw new UserException('No sites found');

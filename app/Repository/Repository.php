@@ -3,15 +3,13 @@
 namespace App\Repository;
 
 use App\Config\Project;
-use App\Dev;
 use App\Exceptions\UserException;
 use App\Plugin\Contracts\Step;
 use App\Step\CanBeDeferred;
 use App\Step\DeferredStep;
 use Exception;
-use RuntimeException;
 
-class StepRepository
+class Repository
 {
     /**
      * @var array<string, Project>
@@ -19,14 +17,17 @@ class StepRepository
     protected array $services;
 
     /**
+     * @var array<string, Step>
+     */
+    public array $steps = [];
+
+    /**
      * @throws UserException
      * @throws Exception
      */
-    public function __construct(Dev $dev)
+    public function __construct()
     {
-        $this->services = [
-            'deferred' => new Project($dev),
-        ];
+        $this->services = [];
     }
 
     /**
@@ -84,11 +85,6 @@ class StepRepository
     public function addProject(Project $service): void
     {
         $this->services[$service->id] = $service;
-        /**
-         * We are adding the steps through this repository to ensure there is
-         * no duplicate across services.
-         */
-        $service->addSteps($this->add(...));
     }
 
     public function getProject(string $id): ?Project
@@ -101,16 +97,6 @@ class StepRepository
      */
     public function getProjects(): array
     {
-        $deferred = array_shift($this->services);
-        if (! $deferred) {
-            throw new RuntimeException('Expect to find default defered project but found none.');
-        }
-
-        /**
-         * Put the deferred project as the last in the list of projects
-         */
-        $this->services['deferred'] = $deferred;
-
         return $this->services;
     }
 }

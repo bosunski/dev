@@ -9,6 +9,7 @@ use App\Plugin\Capability\Capability;
 use App\Plugins\Brew\BrewPlugin;
 use App\Plugins\Composer\ComposerPlugin;
 use App\Plugins\Core\CorePlugin;
+use App\Plugins\Spc\SpcPlugin;
 use App\Plugins\Valet\ValetPlugin;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use RuntimeException;
@@ -28,6 +29,7 @@ class PluginManager
         ValetPlugin::class,
         BrewPlugin::class,
         ComposerPlugin::class,
+        SpcPlugin::class,
     ];
 
     public function __construct(protected readonly Dev $dev, protected readonly IOInterface $io)
@@ -96,7 +98,7 @@ class PluginManager
             }
 
             $ctorArgs['plugin'] = $plugin;
-            $capabilityObj = app($capabilityClass, $ctorArgs);
+            $capabilityObj = app()->make($capabilityClass, $ctorArgs);
 
             // FIXME these could use is_a and do the check *before* instantiating once drop support for php<5.3.9
             if (! $capabilityObj instanceof Capability || ! $capabilityObj instanceof $capabilityClassName->value) {

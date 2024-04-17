@@ -3,6 +3,7 @@
 namespace App\Config;
 
 use App\Exceptions\UserException;
+use App\Utils\Values;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -40,7 +41,7 @@ use Symfony\Component\Yaml\Yaml;
  *      serve?: array<string, Serve>,
  *      sites?: array<string, string>,
  *      env?: array<string, string>,
- *      services: string[]
+ *      projects: non-empty-string[]
  * }
  */
 class Config
@@ -62,12 +63,16 @@ class Config
 
     /**
      * @param string $path
-     * @param RawConfig $config
+     * @param RawConfig|array{} $config
      * @param bool $isRoot
      * @return void
      */
-    public function __construct(protected string $path, public readonly array $config, public bool $isRoot = false)
-    {
+    public function __construct(
+        protected readonly string $path,
+        protected array $config,
+        public bool $isRoot = false,
+        public readonly ?string $root = null,
+    ) {
         $this->readSettings();
 
         $this->up = new UpConfig($config['up'] ?? []);
@@ -138,6 +143,9 @@ class Config
         return $this->up;
     }
 
+    /**
+     * @return RawConfig['up']|array{}
+     */
     public function steps(): array
     {
         return $this->config['up'] ?? [];
@@ -167,6 +175,16 @@ class Config
         return $this->path;
     }
 
+    public function globalPath(?string $path = null): string
+    {
+        $home = $this->home() . DIRECTORY_SEPARATOR . self::OP_PATH;
+        if ($path) {
+            return $home . DIRECTORY_SEPARATOR . trim($path, DIRECTORY_SEPARATOR);
+        }
+
+        return $home;
+    }
+
     public static function home(): string
     {
         return (string) getenv('HOME');
@@ -185,7 +203,7 @@ class Config
 
     public function projectName(): string
     {
-        return Str::of($this->cwd())->after($this->sourcePath())->trim('/')->toString();
+        return Str::of($this->cwd())->after($this->sourcePath(root: $this->root))->trim('/')->toString();
     }
 
     public function isDevProject(): bool
@@ -196,9 +214,9 @@ class Config
     /**
      * @throws UserException
      */
-    public static function read(string $path): Config
+    public static function read(string $path, string $root = null): Config
     {
-        return new Config($path, self::parseYaml($path));
+        return new Config($path, self::parseYaml($path), root: $root);
     }
 
     /**
@@ -216,10 +234,11 @@ class Config
     {
         $root = $root ?? sprintf('%s/%s', getcwd(), self::OP_PATH);
 
-        return static::read(static::sourcePath($path, root: $root));
+        return static::read(static::sourcePath($path, root: $root), $root);
     }
 
     /**
+     * @return RawConfig|array{}
      * @throws UserException
      */
     private static function parseYaml(string $path): array
@@ -262,6 +281,13 @@ class Config
      */
     public function envs(): Collection
     {
-        return collect($this->config['env'] ?? []);
+        return collect($this->config['env'] ?? [])
+            ->map(Values::evaluateEnv(...))
+            ->map(fn ($value) => Values::substituteEnv($value, collect(getenv())));
+    }
+
+    public function isDebug(): bool
+    {
+        return false;
     }
 }

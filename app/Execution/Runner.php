@@ -8,6 +8,8 @@ use App\Exceptions\UserException;
 use App\IO\IOInterface;
 use App\Plugin\Contracts\Step;
 use App\Process\ProcProcess;
+use App\Repository\Repository;
+use App\Utils\Values;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
@@ -24,7 +26,8 @@ class Runner
 
     public function __construct(
         private readonly Config $config,
-        private readonly IOInterface $io
+        private readonly IOInterface $io,
+        protected readonly Repository $stepRepository
     ) {
     }
 
@@ -46,11 +49,12 @@ class Runner
             }
 
             foreach ($steps as $step) {
-                $name = $step->name();
-                if ($name) {
-                    $this->io->info($name);
+                $id = $step->id();
+                if (isset($this->stepRepository->steps[$id])) {
+                    continue;
                 }
 
+                $this->stepRepository->steps[$id] = $step;
                 $this->executeStep($step);
             }
 
@@ -71,6 +75,11 @@ class Runner
     {
         if ($step->done($this)) {
             return;
+        }
+
+        $name = $step->name();
+        if ($name) {
+            $this->io->info($name);
         }
 
         $done = $step->run($this);
@@ -121,12 +130,18 @@ class Runner
      */
     private function environment(array $env = []): array
     {
-        return $this->config
-            ->envs()
+        /**
+         * ToDo: Review this precedence order and make sure it's correct.
+         */
+        $config = collect($env)
             ->merge(getenv())
-            ->merge($env)
             ->merge($this->envResolver?->envs() ?? [])
-            ->all();
+            ->merge($this->config->envs())
+            ->map(Values::evaluateEnv(...));
+
+        return $config->map(function ($value) use ($config) {
+            return Values::substituteEnv($value, $config);
+        })->all();
     }
 
     /**
@@ -138,8 +153,13 @@ class Runner
      */
     public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess
     {
+        $shOptions = 'ec';
+        if ($this->config->isDebug()) {
+            $shOptions .= 'v';
+        }
+
         $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return Process::forever()
@@ -157,8 +177,13 @@ class Runner
      */
     public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
     {
+        $shOptions = 'ec';
+        if ($this->config->isDebug()) {
+            $shOptions .= 'v';
+        }
+
         $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
@@ -173,8 +198,13 @@ class Runner
      */
     public function procProcess(array|string $command, ?string $path = null, array $env = []): ProcProcess
     {
+        $shOptions = 'ec';
+        if ($this->config->isDebug()) {
+            $shOptions .= 'v';
+        }
+
         $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', '-c', $command]
+            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
 
         return new ProcProcess($command, $path, $this->environment($env));

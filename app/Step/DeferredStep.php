@@ -3,11 +3,11 @@
 namespace App\Step;
 
 use App\Execution\Runner;
-use App\Repository\StepRepository;
+use App\Repository\Repository;
 
 class DeferredStep implements StepInterface
 {
-    public function __construct(private readonly StepRepository $repository, protected readonly StepInterface $step)
+    public function __construct(private readonly Repository $repository, protected readonly StepInterface $step)
     {
     }
 

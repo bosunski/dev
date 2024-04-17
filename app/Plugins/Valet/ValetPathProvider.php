@@ -16,6 +16,10 @@ class ValetPathProvider implements PathProvider
     public function paths(): array
     {
         $config = $this->dev->config->up()->get(ValetPlugin::NAME) ?? [];
+        if (empty($config)) {
+            return [];
+        }
+
         $environment = $this->resolveEnvironmentSettings($config);
 
         return [
