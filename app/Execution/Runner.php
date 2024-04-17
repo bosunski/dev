@@ -8,7 +8,7 @@ use App\Exceptions\UserException;
 use App\IO\IOInterface;
 use App\Plugin\Contracts\Step;
 use App\Process\ProcProcess;
-use App\Repository\StepRepository;
+use App\Repository\Repository;
 use App\Utils\Values;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
@@ -27,7 +27,7 @@ class Runner
     public function __construct(
         private readonly Config $config,
         private readonly IOInterface $io,
-        protected readonly StepRepository $stepRepository
+        protected readonly Repository $stepRepository
     ) {
     }
 

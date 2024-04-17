@@ -9,7 +9,7 @@ use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Factory;
 use App\Plugins\Core\Steps\CloneStep;
-use App\Repository\StepRepository;
+use App\Repository\Repository;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
 
@@ -32,7 +32,7 @@ class UpCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository, Dev $dev)
+    public function __construct(protected readonly Repository $repository, Dev $dev)
     {
         parent::__construct();
 
@@ -50,9 +50,9 @@ class UpCommand extends Command
             $this->config->projects()->each(fn (string $project) => $this->resolveProject($project, $this->config->path()));
         }
 
-        $this->stepRepository->addProject($p = new Project($dev));
+        $this->repository->addProject(new Project($dev));
 
-        $projects = $this->stepRepository->getProjects();
+        $projects = $this->repository->getProjects();
         foreach ($projects as $project) {
             $steps = $project->steps();
             if ($steps->count() === 0) {
@@ -81,7 +81,7 @@ class UpCommand extends Command
          * If, so, this means its already been cloned, and we can just return it.
          * This will also eventually prevent infinite loops caused by circular dependencies.
          */
-        if ($project = $this->stepRepository->getProject($projectName)) {
+        if ($project = $this->repository->getProject($projectName)) {
             return $project;
         }
 
@@ -100,7 +100,7 @@ class UpCommand extends Command
         }
 
         $dev = Factory::create($this->runner->io(), $config);
-        $this->stepRepository->addProject($project = new Project($dev));
+        $this->repository->addProject($project = new Project($dev));
 
         return $project;
     }

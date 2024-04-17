@@ -6,7 +6,7 @@ use App\Config\Config;
 use App\Execution\Runner;
 use App\IO\IOInterface;
 use App\Plugin\PluginManager;
-use App\Repository\StepRepository;
+use App\Repository\Repository;
 use RuntimeException;
 
 class Factory
@@ -49,14 +49,14 @@ class Factory
         return new PluginManager($dev, $io);
     }
 
-    protected function createStepRepository(): StepRepository
+    protected function createStepRepository(): Repository
     {
-        if (app()->has(StepRepository::class)) {
-            return app(StepRepository::class);
+        if (app()->has(Repository::class)) {
+            return app(Repository::class);
         }
 
-        $repository = new StepRepository();
-        app()->instance(StepRepository::class, $repository);
+        $repository = new Repository();
+        app()->instance(Repository::class, $repository);
 
         return $repository;
     }

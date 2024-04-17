@@ -9,7 +9,7 @@ use App\Step\CanBeDeferred;
 use App\Step\DeferredStep;
 use Exception;
 
-class StepRepository
+class Repository
 {
     /**
      * @var array<string, Project>
