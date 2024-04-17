@@ -6,6 +6,7 @@ use App\Config\Config;
 use App\Execution\Runner;
 use App\IO\IOInterface;
 use App\Plugin\PluginManager;
+use App\Repository\StepRepository;
 use RuntimeException;
 
 class Factory
@@ -18,7 +19,8 @@ class Factory
         }
 
         $config = $config ?? Config::fromPath($cwd);
-        $runner = new Runner($config, $io);
+        $repository = $factory->createStepRepository();
+        $runner = new Runner($config, $io, $repository);
         $dev = new Dev($config, $runner, $io);
 
         if (! $factory->ensureGlobalDirectory($dev)) {
@@ -45,5 +47,17 @@ class Factory
     protected function createPluginManager(Dev $dev, IOInterface $io): PluginManager
     {
         return new PluginManager($dev, $io);
+    }
+
+    protected function createStepRepository(): StepRepository
+    {
+        if (app()->has(StepRepository::class)) {
+            return app(StepRepository::class);
+        }
+
+        $repository = new StepRepository();
+        app()->instance(StepRepository::class, $repository);
+
+        return $repository;
     }
 }

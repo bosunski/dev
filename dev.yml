@@ -1,5 +1,9 @@
 name: dev
 
+env:
+  PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
+  PROCF: "${PWD}/Procfile"
+
 up:
   - spc:
       combine:
@@ -10,6 +14,7 @@ up:
         preset: common
         extensions:
           - swoole
+          - ffi
         sources:
           swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
 
@@ -46,6 +51,12 @@ commands:
   analyse:
     desc: Check PHP version
     run: ./vendor/bin/phpstan analyse --memory-limit=2G
+  test:
+    desc: Run PHP tests
+    run: php -d zend_extension=/opt/homebrew/lib/php/pecl/20220829/xdebug.so -d memory_limit=-1 vendor/bin/pest --coverage
+  pro:
+    desc: PRO
+    run: echo $PSB_DIR
 
 serve:
   write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done

@@ -98,7 +98,7 @@ class PluginManager
             }
 
             $ctorArgs['plugin'] = $plugin;
-            $capabilityObj = app($capabilityClass, $ctorArgs);
+            $capabilityObj = app()->make($capabilityClass, $ctorArgs);
 
             // FIXME these could use is_a and do the check *before* instantiating once drop support for php<5.3.9
             if (! $capabilityObj instanceof Capability || ! $capabilityObj instanceof $capabilityClassName->value) {

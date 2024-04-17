@@ -47,19 +47,20 @@ class UpCommand extends Command
     {
         if (! $this->option('self') && $dev->config->projects()->count() > 0) {
             $this->info("🚀 Project contains {$dev->config->projects()->count()} dependency projects. Resolving all dependency projects...");
-            $this->config->projects()->each(fn ($project) => $this->resolveProject($project, $this->config->path()));
+            $this->config->projects()->each(fn (string $project) => $this->resolveProject($project, $this->config->path()));
         }
 
-        $this->stepRepository->addProject(new Project($dev));
+        $this->stepRepository->addProject($p = new Project($dev));
 
         $projects = $this->stepRepository->getProjects();
         foreach ($projects as $project) {
-            if ($project->steps->count() === 0) {
+            $steps = $project->steps();
+            if ($steps->count() === 0) {
                 continue;
             }
 
             $this->info("🚀 Running steps for $project->id...");
-            if ($project->runSteps() !== 0) {
+            if ($project->dev->runner->execute($steps->all()) !== 0) {
                 $this->error("⛔️ Failed to run steps for $project->id");
 
                 return self::FAILURE;
@@ -95,11 +96,10 @@ class UpCommand extends Command
 
         $config = Config::fromProjectName($projectName, $root);
         if ($config->projects()->isNotEmpty()) {
-            $config->projects()->each(fn ($project) => $this->resolveProject($project, $root));
+            $config->projects()->each(fn (string $project) => $this->resolveProject($project, $root));
         }
 
-        $dev = Factory::create($this->runner->io(), Config::fromProjectName($projectName));
-
+        $dev = Factory::create($this->runner->io(), $config);
         $this->stepRepository->addProject($project = new Project($dev));
 
         return $project;

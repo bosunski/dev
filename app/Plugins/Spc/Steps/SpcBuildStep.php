@@ -26,7 +26,7 @@ class SpcBuildStep implements Step
     {
         $extensions = implode(',', $this->config->extensions);
 
-        $command = "{$this->config->bin()} build --build-micro --build-cli --with-micro-fake-cli '$extensions'";
+        $command = "{$this->config->bin()} build --no-strip --build-micro --build-cli --with-micro-fake-cli '$extensions'";
 
         return $runner->exec($command, $this->config->phpPath());
     }

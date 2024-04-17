@@ -40,14 +40,14 @@ class Project
     /**
      * @return Collection<int, Project>
      */
-    protected function projects(): Collection
+    protected function projects(?string $root = null): Collection
     {
-        return $this->config->projects()->unique()->map(function (string $service) {
+        return $this->config->projects()->unique()->map(function (string $service) use ($root): Project {
             if ($service === $this->config->projectName()) {
                 throw new UserException('You cannot reference the current service in its own config!');
             }
 
-            return new Project(Factory::create($this->dev->io(), Config::fromProjectName($service)));
+            return new Project(Factory::create($this->dev->io(), Config::fromProjectName($service, $root)));
         });
     }
 
@@ -154,13 +154,14 @@ class Project
      * @return Collection<int, Step>
      * @throws Exception
      */
-    private function steps(): Collection
+    public function steps(): Collection
     {
         $manager = $this->dev->getPluginManager();
         $resolvers = [];
         /** @var Collection<int, Step> $steps */
         $steps = collect();
-        foreach ($manager->getCcs(ConfigProvider::class, [$this->dev]) as $capability) {
+
+        foreach ($manager->getCcs(ConfigProvider::class, ['dev' => $this->dev]) as $capability) {
             $newResolvers = $capability->stepResolvers();
             $steps = $steps->merge($capability->steps());
             foreach ($newResolvers as $name => $resolver) {
@@ -169,16 +170,6 @@ class Project
         }
 
         return $steps->merge($this->dev->config->up()->steps($resolvers));
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function addSteps(callable $add): void
-    {
-        foreach ($this->steps() as $step) {
-            $add($this->id, $step);
-        }
     }
 
     public function add(Step $step): void
@@ -193,6 +184,6 @@ class Project
 
     public function runSteps(): int
     {
-        return $this->dev->runner->execute($this->steps->all(), true);
+        return $this->dev->runner->execute($this->steps()->all(), true);
     }
 }

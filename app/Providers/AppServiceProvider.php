@@ -2,11 +2,8 @@
 
 namespace App\Providers;
 
-use App\Dev;
-use App\Repository\StepRepository;
 use Illuminate\Console\Signals;
 use Illuminate\Support\ServiceProvider;
-use LaravelZero\Framework\Application;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,10 +20,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(StepRepository::class, function (Application $app): StepRepository {
-            return new StepRepository($app->make(Dev::class));
-        });
-
         Signals::resolveAvailabilityUsing(function () {
             return $this->app->runningInConsole()
                 && ! $this->app->runningUnitTests()

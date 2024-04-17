@@ -8,6 +8,8 @@ use App\Exceptions\UserException;
 use App\IO\IOInterface;
 use App\Plugin\Contracts\Step;
 use App\Process\ProcProcess;
+use App\Repository\StepRepository;
+use App\Utils\Values;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
@@ -24,7 +26,8 @@ class Runner
 
     public function __construct(
         private readonly Config $config,
-        private readonly IOInterface $io
+        private readonly IOInterface $io,
+        protected readonly StepRepository $stepRepository
     ) {
     }
 
@@ -46,11 +49,12 @@ class Runner
             }
 
             foreach ($steps as $step) {
-                $name = $step->name();
-                // if ($name) {
-                //     $this->io->info($name);
-                // }
+                $id = $step->id();
+                if (isset($this->stepRepository->steps[$id])) {
+                    continue;
+                }
 
+                $this->stepRepository->steps[$id] = $step;
                 $this->executeStep($step);
             }
 
@@ -126,12 +130,18 @@ class Runner
      */
     private function environment(array $env = []): array
     {
-        return $this->config
-            ->envs()
+        /**
+         * ToDo: Review this precedence order and make sure it's correct.
+         */
+        $config = collect($env)
             ->merge(getenv())
-            ->merge($env)
             ->merge($this->envResolver?->envs() ?? [])
-            ->all();
+            ->merge($this->config->envs())
+            ->map(Values::evaluateEnv(...));
+
+        return $config->map(function ($value) use ($config) {
+            return Values::substituteEnv($value, $config);
+        })->all();
     }
 
     /**

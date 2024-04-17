@@ -6,7 +6,6 @@ use App\Config\Config;
 use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
-use App\Repository\StepRepository;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 
@@ -33,7 +32,7 @@ class RunCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository, Dev $dev)
+    public function __construct(Dev $dev)
     {
         parent::__construct();
 

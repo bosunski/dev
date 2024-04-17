@@ -4,7 +4,6 @@ namespace App\Commands;
 
 use App\Dev;
 use App\Exceptions\UserException;
-use App\Repository\StepRepository;
 use App\Utils\Browser;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
@@ -32,7 +31,7 @@ class OpenCommand extends Command
     /**
      * @throws UserException
      */
-    public function __construct(protected readonly StepRepository $stepRepository, protected Dev $dev)
+    public function __construct(protected Dev $dev)
     {
         parent::__construct();
     }
