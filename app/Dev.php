@@ -83,4 +83,9 @@ class Dev implements EnvResolver
     {
         return $this->config->isDebug();
     }
+
+    public function activated(): bool
+    {
+        return is_file($this->config->cwd('dev.yml'));
+    }
 }

@@ -8,6 +8,7 @@ use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Factory;
+use App\Plugins\Core\Steps\CacheFilesStep;
 use App\Plugins\Core\Steps\CloneStep;
 use App\Repository\Repository;
 use Exception;
@@ -50,7 +51,7 @@ class UpCommand extends Command
             $this->config->projects()->each(fn (string $project) => $this->resolveProject($project, $this->config->path()));
         }
 
-        $this->repository->addProject(new Project($dev));
+        $this->repository->addProject($rootProject = new Project($dev));
 
         $projects = $this->repository->getProjects();
         foreach ($projects as $project) {
@@ -67,7 +68,7 @@ class UpCommand extends Command
             }
         }
 
-        return self::SUCCESS;
+        return $rootProject->dev->runner->execute(new CacheFilesStep($dev));
     }
 
     /**
