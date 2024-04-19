@@ -52,10 +52,19 @@ class Config
 
     private const DEFAULT_SOURCE_HOST = 'github.com';
 
-    public const FILE_NAME = 'dev.yml';
+    public const FileName = 'dev.yml';
+
+    public const LockFiles = [
+        'composer.json',
+        'package.json',
+        'composer.lock',
+        'yarn.lock',
+        'package-lock.json',
+        self::FileName,
+    ];
 
     /**
-     * @var array{disabled?: string[]}
+     * @var array{disabled?: string[], locks: array<string, string>}
      */
     public array $settings = [];
 
@@ -256,7 +265,7 @@ class Config
 
     private static function fullPath(string $path): string
     {
-        return $path . DIRECTORY_SEPARATOR . self::FILE_NAME;
+        return $path . DIRECTORY_SEPARATOR . self::FileName;
     }
 
     /**
