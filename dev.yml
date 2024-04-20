@@ -68,7 +68,9 @@ commands:
     desc: PRO
     run: echo $PSB_DIR
 
-serve: tail -f output.txt
+serve:
+  write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done
+  tail: tail -f output.txt
 
 sites:
   github: https://github.com/phpsandbox/dev
