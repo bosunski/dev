@@ -42,6 +42,16 @@ class Value
         return new Value($value);
     }
 
+    public static function setIO(IOInterface $io): void
+    {
+        self::$io = $io;
+    }
+
+    public function wasPrompted(): bool
+    {
+        return $this->prompted;
+    }
+
     /**
      * @param Collection<string, string> $substitutions
      * @return string
@@ -58,13 +68,13 @@ class Value
             return $this->value;
         }
 
-        $pipes = [
+        $fns = [
             fn () => $this->substitute($substitutions ?? collect()),
             fn () => $this->evaluate(),
             $this->parsePrompts(...),
         ];
 
-        array_reduce($pipes, fn ($carry, $pipe) => $pipe(), $this->value);
+        array_reduce($fns, fn ($carry, $fn) => $fn(), $this->value);
 
         return $this->value;
     }
@@ -76,9 +86,7 @@ class Value
      */
     protected function prompt(array $args): string
     {
-        $prompt = $args['prompt'];
-
-        return match ($prompt) {
+        return match ($args['prompt']) {
             'password' => self::$io->password(
                 $args['label'],
                 $args['placeholder'] ?? '',
@@ -94,7 +102,7 @@ class Value
                 null,
                 $args['hint'] ?? ''
             ),
-            default => throw new InvalidArgumentException("Unknown prompt: $prompt"),
+            default => throw new InvalidArgumentException("Unknown prompt: {$args['prompt']}"),
         };
     }
 
@@ -178,15 +186,5 @@ class Value
         }
 
         return $this->value;
-    }
-
-    public static function setIO(IOInterface $io): void
-    {
-        self::$io = $io;
-    }
-
-    public function wasPrompted(): bool
-    {
-        return $this->prompted;
     }
 }
