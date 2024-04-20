@@ -76,13 +76,17 @@ class Project
     }
 
     /**
-     * @param array<string, Serve> $serves
+     * @param array<string, Serve>|string $serves
      * @return ServeConfig[]
      * @throws UserException
      * @throws InvalidArgumentException
      */
-    protected function processServe(array $serves): array
+    protected function processServe(array|string $serves): array
     {
+        if (is_string($serves)) {
+            $serves = ['serve' => $serves];
+        }
+
         $processes = [];
         foreach ($serves as $name => $serve) {
             /**
