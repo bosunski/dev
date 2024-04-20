@@ -46,7 +46,63 @@ class Value
      * @param Collection<string, string> $substitutions
      * @return string
      */
-    public function substitute(Collection $substitutions): string
+    public function resolve(?Collection $substitutions = null): string
+    {
+        if (is_array($this->value)) {
+            $this->prompted = true;
+
+            return $this->value = $this->prompt($this->value);
+        }
+
+        if (! $this->value) {
+            return $this->value;
+        }
+
+        $pipes = [
+            fn () => $this->substitute($substitutions ?? collect()),
+            fn () => $this->evaluate(),
+            $this->parsePrompts(...),
+        ];
+
+        array_reduce($pipes, fn ($carry, $pipe) => $pipe(), $this->value);
+
+        return $this->value;
+    }
+
+    /**
+     * @param PromptArgs $args
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    protected function prompt(array $args): string
+    {
+        $prompt = $args['prompt'];
+
+        return match ($prompt) {
+            'password' => self::$io->password(
+                $args['label'],
+                $args['placeholder'] ?? '',
+                $args['required'] ?? false,
+                null,
+                $args['hint'] ?? ''
+            ),
+            'text' => self::$io->text(
+                $args['label'],
+                $args['placeholder'] ?? '',
+                $args['default'] ?? '',
+                $args['required'] ?? false,
+                null,
+                $args['hint'] ?? ''
+            ),
+            default => throw new InvalidArgumentException("Unknown prompt: $prompt"),
+        };
+    }
+
+    /**
+     * @param Collection<string, string> $substitutions
+     * @return string
+     */
+    protected function substitute(Collection $substitutions): string
     {
         assert(is_string($this->value), 'Value must be a string');
 
@@ -67,7 +123,7 @@ class Value
         return $this->value;
     }
 
-    public function evaluate(): string
+    protected function evaluate(): string
     {
         assert(is_string($this->value), 'Value must be a string');
 
@@ -88,7 +144,7 @@ class Value
         return $this->value;
     }
 
-    public function parsePrompts(): string
+    protected function parsePrompts(): string
     {
         assert(is_string($this->value), 'Value must be a string');
 
@@ -120,62 +176,6 @@ class Value
             $this->prompted = true;
             $this->value = str_replace("\$PROMPT($match)", $this->prompt($args), $this->value);
         }
-
-        return $this->value;
-    }
-
-    /**
-     * @param PromptArgs $args
-     * @return string
-     * @throws InvalidArgumentException
-     */
-    public function prompt(array $args): string
-    {
-        $prompt = $args['prompt'];
-
-        return match ($prompt) {
-            'password' => self::$io->password(
-                $args['label'],
-                $args['placeholder'] ?? '',
-                $args['required'] ?? false,
-                null,
-                $args['hint'] ?? ''
-            ),
-            'text' => self::$io->text(
-                $args['label'],
-                $args['placeholder'] ?? '',
-                $args['default'] ?? '',
-                $args['required'] ?? false,
-                null,
-                $args['hint'] ?? ''
-            ),
-            default => throw new InvalidArgumentException("Unknown prompt: $prompt"),
-        };
-    }
-
-    /**
-     * @param Collection<string, string> $substitutions
-     * @return string
-     */
-    public function resolve(?Collection $substitutions = null): string
-    {
-        if (is_array($this->value)) {
-            $this->prompted = true;
-
-            return $this->value = $this->prompt($this->value);
-        }
-
-        if (! $this->value) {
-            return $this->value;
-        }
-
-        $pipes = [
-            fn () => $this->substitute($substitutions ?? collect()),
-            fn () => $this->evaluate(),
-            $this->parsePrompts(...),
-        ];
-
-        array_reduce($pipes, fn ($carry, $pipe) => $pipe(), $this->value);
 
         return $this->value;
     }

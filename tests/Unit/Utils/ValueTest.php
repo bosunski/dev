@@ -4,7 +4,9 @@ namespace Tests\Unit\Utils;
 
 use App\IO\StdIO;
 use App\Utils\Value;
+use Laravel\Prompts\Key;
 use Laravel\Prompts\Output\ConsoleOutput;
+use Laravel\Prompts\Prompt;
 use Symfony\Component\Console\Input\ArrayInput;
 use Tests\TestCase;
 
@@ -17,7 +19,7 @@ class ValueTest extends TestCase
     {
         $value = new Value('Hello ${name}');
         $substitutions = collect(['name' => 'World']);
-        $this->assertEquals('Hello World', $value->substitute($substitutions));
+        $this->assertEquals('Hello World', $value->resolve($substitutions));
     }
 
     /**
@@ -27,7 +29,7 @@ class ValueTest extends TestCase
     public function testEvaluate(): void
     {
         $value = new Value('`echo "Hello World"`');
-        $this->assertEquals('Hello World', $value->evaluate());
+        $this->assertEquals('Hello World', $value->resolve());
     }
 
     /**
@@ -37,7 +39,7 @@ class ValueTest extends TestCase
     {
         $this->expectExceptionMessage('Failed to evaluate environment variable: `echo "Hello World" && exit 1`. Output: Hello World');
         $value = new Value('`echo "Hello World" && exit 1`');
-        $value->evaluate();
+        $value->resolve();
     }
 
     /**
@@ -46,7 +48,7 @@ class ValueTest extends TestCase
     public function evaluateWithEmptyValue(): void
     {
         $value = new Value('');
-        $this->assertEquals('', $value->evaluate());
+        $this->assertEquals('', $value->resolve());
     }
 
     /**
@@ -56,7 +58,7 @@ class ValueTest extends TestCase
     {
         $value = new Value('');
         $substitutions = collect(['name' => 'World']);
-        $this->assertEquals('', $value->substitute($substitutions));
+        $this->assertEquals('', $value->resolve($substitutions));
     }
 
     /**
@@ -66,7 +68,7 @@ class ValueTest extends TestCase
     {
         $value = new Value('Hello ${name}');
         $substitutions = collect([]);
-        $this->assertEquals('Hello ${name}', $value->substitute($substitutions));
+        $this->assertEquals('Hello ${name}', $value->resolve($substitutions));
     }
 
     /**
@@ -76,19 +78,23 @@ class ValueTest extends TestCase
     {
         $value = new Value('');
         $substitutions = collect([]);
-        $this->assertEquals('', $value->substitute($substitutions));
+        $this->assertEquals('', $value->resolve($substitutions));
     }
 
     /**
      * @test
      */
-    public function parsePrompts(): void
+    public function parseATextPrompts(): void
     {
+        Prompt::fake([
+            'Hello World',
+            Key::ENTER,
+        ]);
+
         $io = new StdIO(new ArrayInput([]), new ConsoleOutput());
-        Value::setOutput($io);
+        Value::setIO($io);
 
         $value = new Value('$PROMPT(password: Please enter your BAR key)');
-        $substitutions = collect(['name' => 'World']);
-        $this->assertEquals('Hello World', $value->parsePrompts());
+        $this->assertEquals('Hello World', $value->resolve());
     }
 }
