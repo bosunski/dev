@@ -5,7 +5,6 @@ namespace App\Config;
 use App\Exceptions\UserException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use RuntimeException;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
@@ -37,7 +36,7 @@ use Symfony\Component\Yaml\Yaml;
  *      name?: string,
  *      up?: Up,
  *      commands?: array<string, Command>,
- *      serve?: array<string, Serve>,
+ *      serve?: array<string, Serve>|string,
  *      sites?: array<string, string>,
  *      env?: array<string, string>,
  *      projects: non-empty-string[]
@@ -279,17 +278,12 @@ class Config
     }
 
     /**
-     * @return array<string, Serve>
+     * @return array<string, Serve>|string
      */
-    public function getServe(): array
+    public function getServe(): array|string
     {
-        $hasServe = isset($this->config['serve']);
-        if (! $hasServe) {
+        if (! isset($this->config['serve'])) {
             return [];
-        }
-
-        if (! is_array($this->config['serve'])) {
-            throw new RuntimeException('Serve config should be an array');
         }
 
         return $this->config['serve'];
