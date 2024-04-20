@@ -11,7 +11,7 @@ class PharUpdater extends BaseUpdater
      * @param string $phar
      * @return void
      */
-    protected function validatePhar(string $phar): void
+    protected function validatePhar($phar): void
     {
         // The default validatePhar implmentation doesn't apply to our case so we override it
     }

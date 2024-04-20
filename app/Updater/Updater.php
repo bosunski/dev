@@ -11,7 +11,7 @@ class Updater
      *
      * @var \Humbug\SelfUpdate\Updater
      */
-    private $updater;
+    public $updater;
 
     /**
      * Updater constructor.
@@ -31,8 +31,10 @@ class Updater
                 $this->updater->getOldVersion(),
                 $this->updater->getNewVersion()
             ));
+
             exit(0);
         }
+
         if (! $this->updater->getNewVersion()) {
             $output->success('There are no stable versions available.');
         } else {
