@@ -68,7 +68,10 @@ class UpCommand extends Command
             }
         }
 
-        return $rootProject->dev->runner->execute(new CacheFilesStep($dev));
+        $result = $rootProject->dev->runner->execute(new CacheFilesStep($dev));
+        $dev->config->writeSettings();
+
+        return $result;
     }
 
     /**

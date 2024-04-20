@@ -9,25 +9,16 @@ use Phar;
 
 class SelfUpdateCommand extends Command
 {
-    /**
-     * {@inheritdoc}
-     */
     protected $name = 'self-update';
 
-    /**
-     * {@inheritdoc}
-     */
     protected $description = 'Allows to self-update a build application';
 
-    /**
-     * {@inheritdoc}
-     */
-    public function handle(Updater $updater)
+    public function handle(Updater $updater): int
     {
         if (! Phar::running()) {
             $this->error('This command is only available in PHAR builds.');
 
-            return 1;
+            return self::FAILURE;
         }
 
         if (! env('GITHUB_TOKEN')) {
@@ -35,13 +26,32 @@ class SelfUpdateCommand extends Command
             if (! $token) {
                 $this->error('GitHub token is required to check for updates.');
 
-                return 1;
+                return self::INVALID;
             }
 
+            assert(is_string($token), 'Token must be a string');
             Env::getRepository()->set('GITHUB_TOKEN', $token);
         }
 
         $this->output->title('Checking for a new version...');
-        $updater->update($this->output);
+        $result = $updater->updater->update();
+
+        if ($result) {
+            $this->output->success(sprintf(
+                'Updated from version %s to %s.',
+                $updater->updater->getOldVersion(),
+                $updater->updater->getNewVersion()
+            ));
+
+            return self::SUCCESS;
+        }
+
+        if (! $updater->updater->getNewVersion()) {
+            $this->output->success('There are no stable versions available.');
+        } else {
+            $this->output->success('You have the latest version installed.');
+        }
+
+        return self::SUCCESS;
     }
 }

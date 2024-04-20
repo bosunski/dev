@@ -91,10 +91,8 @@ class EnvSubstituteStep implements Step
          * We also want to replace the value of the env if it already exists.
          */
         foreach ($runner->config()->envs() as $key => $value) {
-            $exists = in_array($key, array_keys($currentEnvs));
             $insert = "$key=\"$value\"";
 
-            $hasSampleValue = ! in_array($value, ['', 'null', 'NULL']);
             if (! preg_match("/$key=(.*)/m", $envContent)) {
                 $envContent .= $insert;
                 $envWasAdded = true;

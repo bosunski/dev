@@ -26,13 +26,12 @@ class CacheFilesStep implements Step
         $locks = [];
         foreach (Config::LockFiles as $file) {
             $path = $this->dev->config->cwd($file);
-            if (file_exists($path)) {
-                $locks[$file] = md5_file($path);
+            if (file_exists($path) && $md5 = @md5_file($path)) {
+                $locks[$file] = $md5;
             }
         }
 
         $this->dev->config->settings['locks'] = $locks;
-        $this->dev->config->writeSettings();
 
         return true;
     }

@@ -3,6 +3,12 @@ name: dev
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
   PROCF: "${PWD}/Procfile"
+  GITHUB_TOKEN:
+    prompt: text
+    label: "What is your GitHub Token?"
+    hint: "You can generate a token at https://github.com/settings/tokens"
+    placeholder: "Looks like ghp_5geLPNwhHzgAEDHZZzR4n5ko"
+    required: true
 
 up:
   - spc:
@@ -17,7 +23,11 @@ up:
           - ffi
         sources:
           swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
-
+  - composer:
+      auth:
+        - host: satis.spatie.bex
+          type: basic
+          username: bosun@egberinde.comfsd
   - script:
       desc: Install composer dependencies
       run: composer install

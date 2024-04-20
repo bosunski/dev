@@ -3,7 +3,6 @@
 namespace App\Config;
 
 use App\Exceptions\UserException;
-use App\Utils\Values;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -64,11 +63,21 @@ class Config
     ];
 
     /**
-     * @var array{disabled?: string[], locks: array<string, string>}
+     * @var array{
+     *      disabled?: string[],
+     *      locks: array<string, string>,
+     *      env: array<string, string>,
+     * }
      */
-    public array $settings = [];
+    public array $settings = [
+        'locks'    => [],
+        'disabled' => [],
+        'env'      => [],
+    ];
 
     private readonly UpConfig $up;
+
+    protected Env $env;
 
     /**
      * @param string $path
@@ -85,6 +94,7 @@ class Config
         $this->readSettings();
 
         $this->up = new UpConfig($config['up'] ?? []);
+        $this->env = new Env(collect($this->config['env'] ?? []), getenv());
     }
 
     private function readSettings(): void
@@ -95,7 +105,7 @@ class Config
             $jsonConfig = array_merge($jsonConfig, json_decode(file_get_contents($jsonPath), true));
         }
 
-        $this->settings = $jsonConfig;
+        $this->settings = array_merge($this->settings, $jsonConfig);
     }
 
     public function writeSettings(): void
@@ -286,13 +296,14 @@ class Config
     }
 
     /**
-     * @return Collection<string, string|null>
+     * @return Collection<string, string>
      */
     public function envs(): Collection
     {
-        return collect($this->config['env'] ?? [])
-            ->map(Values::evaluateEnv(...))
-            ->map(fn ($value) => Values::substituteEnv($value, collect(getenv())));
+        [$resolved, $prompted] = $this->env->resolve($this->settings['env']);
+        $this->settings['env'] = $prompted;
+
+        return $resolved;
     }
 
     public function isDebug(): bool
