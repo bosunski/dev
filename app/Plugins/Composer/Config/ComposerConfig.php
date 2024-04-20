@@ -26,11 +26,11 @@ class ComposerConfig implements ConfigInterface
     {
         $steps = [];
         if (isset($this->config['auth'])) {
-            $step[] = new AuthConfig($this->config['auth']);
+            $steps[] = new AuthConfig($this->config['auth']);
         }
 
         if (isset($this->config['packages'])) {
-            $step[] = new PackagesStep($this->config['packages']);
+            $steps[] = new PackagesStep($this->config['packages']);
         }
 
         return $steps;

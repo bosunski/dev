@@ -12,7 +12,7 @@ class InitCommand extends Command
      */
     protected $signature = 'init {shell=zsh}';
 
-    protected $description = 'Initializes preeexec hook';
+    protected $description = 'Initializes preeexec hook for BASH or ZSH';
 
     public function handle(): int
     {

@@ -5,10 +5,12 @@ namespace App\Plugins\Composer\Steps;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Composer\Config\Auth;
+use App\Utils\Value;
 use Exception;
 
-use function Laravel\Prompts\password;
-
+/**
+ * @phpstan-import-type RawAuth from Auth
+ */
 class AuthStep implements Step
 {
     public function __construct(private readonly Auth $auth)
@@ -23,38 +25,19 @@ class AuthStep implements Step
     /**
      * @throws Exception
      */
-    public function command(): ?string
-    {
-        return match ($this->auth->type) {
-            'basic' => "composer global config http-basic.{$this->auth->host} {$this->auth->username} {$this->auth->password}",
-            default => throw new Exception("Unknown auth type: {$this->auth->type}"),
-        };
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function checkCommand(): ?string
-    {
-        return $this->command();
-    }
-
-    /**
-     * @throws Exception
-     */
     public function run(Runner $runner): bool
     {
-        $this->ensureTokenOrPassword($runner);
+        $command = match ($this->auth->type) {
+            'basic' => "composer global config http-basic.{$this->auth->host} {$this->auth->username} {$this->resolvePassword()}",
+            default => throw new Exception("Unknown auth type: {$this->auth->type}"),
+        };
 
-        return $runner->exec($this->command());
+        return $runner->exec($command);
     }
 
-    private function ensureTokenOrPassword(Runner $runner): void
+    protected function resolvePassword(): string
     {
-        if ($this->auth->isBasic() && ! $this->auth->hasPassword()) {
-            $runner->io()->write('');
-            $this->auth->password = password("Enter password for {$this->auth->host}:");
-        }
+        return Value::from($this->auth->password)->resolve();
     }
 
     /**
@@ -62,9 +45,46 @@ class AuthStep implements Step
      */
     public function done(Runner $runner): bool
     {
-        $output = json_decode(`composer global config {$this->auth->getConfigName()}`, true);
+        $result = $runner->process("composer global config {$this->auth->getConfigName()}")->run();
+        if ($result->failed()) {
+            return false;
+        }
 
-        return $this->auth->validate($output ?? []);
+        $output = json_decode($result->output(), true);
+        if (! is_array($output)) {
+            return false;
+        }
+
+        /**
+         * ToDo: Maybe validate the decoded JSON?
+         */
+        // @phpstan-ignore-next-line
+        return $this->validate($output);
+    }
+
+    /**
+     * @param RawAuth $data
+     * @return bool
+     */
+    public function validate(array $data): bool
+    {
+        return match ($this->auth->type) {
+            'basic' => $this->validateBasic($data),
+            default => false,
+        };
+    }
+
+    /**
+     * @param RawAuth $data
+     * @return bool
+     */
+    private function validateBasic(array $data): bool
+    {
+        if (! isset($data['username'], $data['password'])) {
+            return false;
+        }
+
+        return $this->auth->username === $data['username'];
     }
 
     public function id(): string

@@ -9,7 +9,6 @@ use App\IO\IOInterface;
 use App\Plugin\Contracts\Step;
 use App\Process\ProcProcess;
 use App\Repository\Repository;
-use App\Utils\Values;
 use Exception;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
@@ -79,7 +78,7 @@ class Runner
 
         $name = $step->name();
         if ($name) {
-            $this->io->info($name);
+            $this->io->writeln($name);
         }
 
         $done = $step->run($this);
@@ -133,15 +132,10 @@ class Runner
         /**
          * ToDo: Review this precedence order and make sure it's correct.
          */
-        $config = collect($env)
+        return collect($env)
             ->merge(getenv())
             ->merge($this->envResolver?->envs() ?? [])
-            ->merge($this->config->envs())
-            ->map(Values::evaluateEnv(...));
-
-        return $config->map(function ($value) use ($config) {
-            return Values::substituteEnv($value, $config);
-        })->all();
+            ->merge($this->config->envs())->all();
     }
 
     /**

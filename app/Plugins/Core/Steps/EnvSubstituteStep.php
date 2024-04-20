@@ -94,7 +94,11 @@ class EnvSubstituteStep implements Step
             $exists = in_array($key, array_keys($currentEnvs));
             $insert = "$key=\"$value\"";
 
-            $hasSampleValue = ! in_array($value, ['', 'null', 'NULL']);
+            $hasSampleValue = ! in_array($currentEnvs[$key] ?? '', ['', 'null', 'NULL']);
+            // if ($hasPrompt && $exists) {
+            //     // Do not ask for values
+            // }
+
             if (! preg_match("/$key=(.*)/m", $envContent)) {
                 $envContent .= $insert;
                 $envWasAdded = true;

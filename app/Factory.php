@@ -7,6 +7,7 @@ use App\Execution\Runner;
 use App\IO\IOInterface;
 use App\Plugin\PluginManager;
 use App\Repository\Repository;
+use App\Utils\Value;
 use RuntimeException;
 
 class Factory
@@ -20,6 +21,7 @@ class Factory
 
         $config = $config ?? Config::fromPath($cwd);
         $repository = $factory->createStepRepository();
+        Value::setIO($io);
         $runner = new Runner($config, $io, $repository);
         $dev = new Dev($config, $runner, $io);
 

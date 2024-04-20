@@ -2,6 +2,18 @@
 
 namespace App\Plugins\Composer\Config;
 
+use App\Utils\Value;
+
+/**
+ * @phpstan-import-type PromptArgs from Value
+ * @phpstan-type RawAuth array{
+ *      host: string,
+ *      username?: string,
+ *      password?: string|PromptArgs,
+ *      token?: string|PromptArgs,
+ *      type?: 'basic'
+ * }
+ */
 class Auth
 {
     private const AUTH_TYPE_NAME = [
@@ -12,29 +24,52 @@ class Auth
 
     public readonly string $host;
 
-    public ?string $password;
+    /**
+     * @var string|PromptArgs
+     */
+    public string|array $password;
 
-    public ?string $token;
+    /**
+     * @var string|PromptArgs
+     */
+    public string|array $token;
 
     public readonly string $type;
 
+    /**
+     * @param RawAuth $config
+     * @return void
+     */
     public function __construct(array $config)
     {
-        $this->host = $config['host'] ?? '';
+        $this->host = $config['host'];
         $this->username = $config['username'] ?? '';
-        $this->password = $config['password'] ?? null;
-        $this->token = $config['token'] ?? null;
+        $hint = "This will be used by composer to authenticate {$this->host} and stored in the global composer config file.";
+        $this->password = $config['password'] ?? [
+            'prompt'   => 'password',
+            'label'    => "Enter password for {$this->host}",
+            'hint'     => $hint,
+            'required' => true,
+        ];
+
+        $this->token = $config['token'] ?? [
+            'prompt'   => 'token',
+            'label'    => "Enter token for {$this->host}",
+            'hint'     => $hint,
+            'required' => true,
+        ];
+
         $this->type = $config['type'] ?? 'basic';
     }
 
     public function hasPassword(): bool
     {
-        return $this->password !== null;
+        return is_string($this->password);
     }
 
     public function hasToken(): bool
     {
-        return $this->token !== null;
+        return is_string($this->token);
     }
 
     public function isBasic(): bool
@@ -45,22 +80,5 @@ class Auth
     public function getConfigName(): string
     {
         return self::AUTH_TYPE_NAME[$this->type] . '.' . $this->host;
-    }
-
-    public function validate(array $data): bool
-    {
-        return match ($this->type) {
-            'basic' => $this->validateBasic($data),
-            default => false,
-        };
-    }
-
-    private function validateBasic(array $data): bool
-    {
-        if (! isset($data['username'], $data['password'])) {
-            return false;
-        }
-
-        return $this->username === $data['username'];
     }
 }

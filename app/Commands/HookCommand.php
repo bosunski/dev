@@ -29,7 +29,7 @@ class HookCommand extends Command
 
         if ($message = $this->trackedFilesHaveChanged($dev->config)) {
             $message = "\e[90m" . $message . "\e[0m";
-            fwrite(STDERR, $prefix . ' ' . $message . PHP_EOL);
+            $dev->io()->write($prefix . ' ' . $message . PHP_EOL);
         }
 
         return 0;
@@ -39,7 +39,7 @@ class HookCommand extends Command
     {
         $locks = $config->settings['locks'] ?? [];
         foreach($locks as $name => $md5) {
-            if (md5_file($config->cwd($name)) !== $md5) {
+            if (@md5_file($config->cwd($name)) !== $md5) {
                 $name = "\e[33m$name\e[90m";
 
                 return "The file $name has changed, you should run dev up!";
