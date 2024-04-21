@@ -13,8 +13,8 @@ class MySqlResolver implements StepResolverInterface
 {
     public function resolve(mixed $args): Config|Step
     {
-        if (! is_array($args)) {
-            throw new InvalidArgumentException('Script configuration should be an array!');
+        if (! is_array($args) && ! is_string($args)) {
+            throw new InvalidArgumentException('MySQL configuration should be an array or string!');
         }
 
         if (! isset($args['databases'])) {
