@@ -4,13 +4,11 @@ env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
   PROCF: "${PWD}/Procfile"
   GITHUB_TOKEN:
-    prompt: text
-    label: "What is your GitHub Token?"
+    prompt: "What is your GitHub Token?"
     hint: "You can generate a token at https://github.com/settings/tokens"
     placeholder: "Looks like ghp_5geLPNwhHzgAEDHZZzR4n5ko"
-    required: true
 
-up:
+steps:
   - spc:
       combine:
         input: builds/dev.phar

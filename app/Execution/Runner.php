@@ -132,10 +132,10 @@ class Runner
         /**
          * ToDo: Review this precedence order and make sure it's correct.
          */
-        return collect($env)
+        return $this->config->envs()
             ->merge(getenv())
             ->merge($this->envResolver?->envs() ?? [])
-            ->merge($this->config->envs())->all();
+            ->merge($env)->all();
     }
 
     /**

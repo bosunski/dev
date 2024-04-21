@@ -11,12 +11,13 @@ use InvalidArgumentException;
 /**
  * @phpstan-type PromptArgs array{
 *      prompt: string,
-*      label: string,
+*      label?: string,
 *      placeholder?: string,
 *      default?: string,
 *      required?: bool,
 *      validate?: string[],
-*      hint?: string
+*      hint?: string,
+*      type?: 'password'|'text'
 * }
 */
 class Value
@@ -86,23 +87,30 @@ class Value
      */
     protected function prompt(array $args): string
     {
-        return match ($args['prompt']) {
+        if (! isset($args['type'])) {
+            $args['type'] = 'text';
+        }
+
+        if (! in_array($args['type'], ['password', 'text'])) {
+            throw new InvalidArgumentException("Unknown prompt type: {$args['type']}");
+        }
+
+        return match ($args['type']) {
             'password' => self::$io->password(
-                $args['label'],
+                $args['prompt'],
                 $args['placeholder'] ?? '',
-                $args['required'] ?? false,
+                $args['required'] ?? true,
                 null,
                 $args['hint'] ?? ''
             ),
             'text' => self::$io->text(
-                $args['label'],
+                $args['prompt'],
                 $args['placeholder'] ?? '',
                 $args['default'] ?? '',
-                $args['required'] ?? false,
+                $args['required'] ?? true,
                 null,
                 $args['hint'] ?? ''
             ),
-            default => throw new InvalidArgumentException("Unknown prompt: {$args['prompt']}"),
         };
     }
 
@@ -186,5 +194,10 @@ class Value
         }
 
         return $this->value;
+    }
+
+    public function shouldPrompt(): bool
+    {
+        return is_array($this->value) || preg_match('/^\$PROMPT\(([^)]*)\)$/', $this->value);
     }
 }
