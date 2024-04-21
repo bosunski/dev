@@ -21,11 +21,6 @@ steps:
           - ffi
         sources:
           swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
-  - mysql:
-      version: 8.0
-      databases:
-        - dev_development
-        - dev_test
   - script:
       desc: Install composer dependencies
       run: composer install
