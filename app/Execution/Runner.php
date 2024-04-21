@@ -98,7 +98,7 @@ class Runner
     public function exec(string|array $command, ?string $path = null, array $env = []): bool
     {
         try {
-            return $this->process($command, $path, $env)
+            return $this->process($this->createShadowEnvCommand($command), $path, $env)
                 ->tty()
                 ->run(output: $this->handleOutput(...))
                 ->throw()
@@ -117,7 +117,7 @@ class Runner
      */
     public function spawn(string|array $command, ?string $path = null, array $env = []): InvokedProcess
     {
-        return $this->process($command, $path, $env)
+        return $this->process($this->createShadowEnvCommand($command), $path, $env)
             ->tty()
             ->start(output: $this->handleOutput(...));
     }
@@ -147,19 +147,26 @@ class Runner
      */
     public function process(array|string $command, ?string $path = null, array $env = []): PendingProcess
     {
+        return Process::forever()
+            ->path($path ?? $this->config->cwd())
+            ->command($command)
+            ->env($this->environment($env));
+    }
+
+    /**
+     * @param string|string[] $command
+     * @return string[]
+     */
+    protected function createShadowEnvCommand(string|array $command): array
+    {
         $shOptions = 'ec';
         if ($this->config->isDebug()) {
             $shOptions .= 'v';
         }
 
-        $command = is_string($command)
+        return is_string($command)
             ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
             : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
-
-        return Process::forever()
-            ->path($path ?? $this->config->cwd())
-            ->command($command)
-            ->env($this->environment($env));
     }
 
     /**
@@ -171,16 +178,7 @@ class Runner
      */
     public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
     {
-        $shOptions = 'ec';
-        if ($this->config->isDebug()) {
-            $shOptions .= 'v';
-        }
-
-        $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
-            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
-
-        return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
+        return new SymfonyProcess($this->createShadowEnvCommand($command), $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
     }
 
     /**
@@ -192,16 +190,7 @@ class Runner
      */
     public function procProcess(array|string $command, ?string $path = null, array $env = []): ProcProcess
     {
-        $shOptions = 'ec';
-        if ($this->config->isDebug()) {
-            $shOptions .= 'v';
-        }
-
-        $command = is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
-            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
-
-        return new ProcProcess($command, $path, $this->environment($env));
+        return new ProcProcess($this->createShadowEnvCommand($command), $path, $this->environment($env));
     }
 
     public function pool(callable $callback): ProcessPoolResults

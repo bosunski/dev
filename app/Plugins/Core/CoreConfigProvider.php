@@ -4,6 +4,7 @@ namespace App\Plugins\Core;
 
 use App\Dev;
 use App\Plugin\Capability\ConfigProvider;
+use App\Plugins\Core\Resolvers\MySqlResolver;
 use App\Plugins\Core\Resolvers\ScriptResolver;
 use App\Plugins\Core\Steps\EnvSubstituteStep;
 use App\Plugins\Core\Steps\ShadowEnvStep;
@@ -32,6 +33,7 @@ class CoreConfigProvider implements ConfigProvider
         return [
             'script' => $r = new ScriptResolver(),
             'custom' => $r,
+            'mysql'  => new MySqlResolver(),
         ];
     }
 }

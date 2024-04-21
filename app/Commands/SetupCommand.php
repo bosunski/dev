@@ -2,7 +2,7 @@
 
 namespace App\Commands;
 
-use Illuminate\Support\Facades\Process;
+use App\Dev;
 use LaravelZero\Framework\Commands\Command;
 
 class SetupCommand extends Command
@@ -21,19 +21,23 @@ class SetupCommand extends Command
      */
     protected $description = 'Put the application in system binary path';
 
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
         $this->info('Installing required dependencies...');
-        Process::forever()
-            ->tty()
-            ->run('brew install hivemind shadowenv orbstack', function (string $type, string $output): void {
-                echo $output;
-            })->throw();
+
+        $dev->runner->process('brew install hivemind shadowenv orbstack')
+            ->env(['HOMEBREW_NO_AUTO_UPDATE' => '1'])
+            ->run(output: $this->handleOutput(...))->throw();
 
         $this->info('Starting services...');
 
-        Process::run(['orb', 'start']);
+        return $dev->runner
+            ->process(['orb', 'start'])
+            ->run(output: $this->handleOutput(...))->successful() ? self::SUCCESS : self::FAILURE;
+    }
 
-        return 0;
+    protected function handleOutput(string $type, string $buffer): void
+    {
+        echo $buffer;
     }
 }

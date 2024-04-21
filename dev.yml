@@ -21,11 +21,6 @@ steps:
           - ffi
         sources:
           swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
-  - composer:
-      auth:
-        - host: satis.spatie.bex
-          type: basic
-          username: bosun@egberinde.comfsd
   - script:
       desc: Install composer dependencies
       run: composer install
