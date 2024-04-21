@@ -20,7 +20,9 @@ class CreateDatabaseStep implements Step
 
     public function id(): string
     {
-        return 'mysql-create-database';
+        $databases = is_array($this->databases) ? implode('-', $this->databases) : $this->databases;
+
+        return "mysql-create-database-$databases";
     }
 
     public function name(): ?string
@@ -42,7 +44,7 @@ class CreateDatabaseStep implements Step
             implode(' ', $commands)
         );
 
-        return $runner->exec($command);
+        return $runner->process($command)->run()->successful();
     }
 
     public function done(Runner $runner): bool

@@ -24,8 +24,8 @@ steps:
   - mysql:
       version: 8.0
       databases:
-        - phpsandbox_okra_development
-        - phpsandbox_okra_test
+        - dev_development
+        - dev_test
   - script:
       desc: Install composer dependencies
       run: composer install

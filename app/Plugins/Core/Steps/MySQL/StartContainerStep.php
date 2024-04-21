@@ -22,11 +22,11 @@ class StartContainerStep implements Step
         $dataDir = $runner->config()->globalPath('mysql/data');
         $command = "docker run --rm -v $dataDir:/var/lib/mysql -l dev.orbstack.domains=mysql.dev.local --name dev-mysql -e MYSQL_ALLOW_EMPTY_PASSWORD='yes' -d mysql:8.3.0";
 
-        return $runner->exec($command);
+        return $runner->process($command)->run()->successful();
     }
 
     public function done(Runner $runner): bool
     {
-        return $runner->exec('docker ps | grep dev-mysql');
+        return $runner->process('docker ps | grep dev-mysql')->run()->successful();
     }
 }
