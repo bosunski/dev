@@ -62,7 +62,7 @@ class CloneStep implements Step
     {
         $clonePath = $this->clonePath($runner->config());
         if (File::isDirectory($clonePath)) {
-            $runner->io()->info("Repository already exists at $clonePath");
+            $runner->io()->writeln("Repository already exists at $clonePath");
 
             return ! $this->update || $this->pullChanges($runner, $clonePath);
         }
@@ -84,7 +84,14 @@ class CloneStep implements Step
 
     public function pullChanges(Runner $runner, string $clonePath): bool
     {
-        return $runner->exec('git reset --hard HEAD && git pull', $clonePath);
+        return $runner->exec('git reset --hard HEAD && git pull', $clonePath, [
+            /**
+             * Both of these variables prevents git from looking for the .git directory in the parent directories
+             * so as to avoid any unexpected behavior.
+             */
+            'GIT_DIR'       => $clonePath . DIRECTORY_SEPARATOR . '.git',
+            'GIT_WORK_TREE' => $clonePath,
+        ]);
     }
 
     protected function clonePath(Config $config): string

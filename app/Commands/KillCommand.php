@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Config\Config;
+use App\Dev;
 use App\Exceptions\UserException;
 use LaravelZero\Framework\Commands\Command;
 
@@ -13,7 +14,7 @@ class KillCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'kill {--service=}';
+    protected $signature = 'kill {--project=}';
 
     /**
      * The description of the command.
@@ -25,15 +26,14 @@ class KillCommand extends Command
     /**
      * @throws UserException
      */
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
-        $config = Config::fromPath(getcwd());
-
-        if ($service = $this->option('service')) {
-            if ($config->projects()->contains($service)) {
-                $config = Config::fromProjectName($service);
+        $config = $dev->config;
+        if ($project = $this->option('project')) {
+            if ($config->projects()->contains($project)) {
+                $config = Config::fromProjectName($project);
             } else {
-                throw new UserException("Service $service not found in this project. Are you sure it is registered?");
+                throw new UserException("Service $project not found in this project. Are you sure it is registered?");
             }
         }
 
@@ -45,7 +45,13 @@ class KillCommand extends Command
 
         $pid = file_get_contents($config->path('dev.pid'));
 
-        if (! posix_kill($pid, SIGTERM)) {
+        if ($pid === false) {
+            $this->error('Failed to read services PID');
+
+            return self::FAILURE;
+        }
+
+        if (! posix_kill((int) $pid, SIGTERM)) {
             $this->error('Failed to kill services');
 
             return self::FAILURE;

@@ -35,6 +35,7 @@ use Symfony\Component\Yaml\Yaml;
  * @phpstan-type RawConfig array{
  *      name?: string,
  *      up?: Up,
+ *      steps?: Up,
  *      commands?: array<string, Command>,
  *      serve?: array<string, Serve>|string,
  *      sites?: array<string, string>,
@@ -92,7 +93,7 @@ class Config
     ) {
         $this->readSettings();
 
-        $this->up = new UpConfig($config['up'] ?? []);
+        $this->up = new UpConfig($config['steps'] ?? $config['up'] ?? []);
         $this->env = new Env(collect($this->config['env'] ?? []), getenv());
     }
 

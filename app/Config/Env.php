@@ -37,7 +37,7 @@ class Env
         }
 
         foreach ($this->env as $key => $value) {
-            if (array_key_exists($key, $prompted)) {
+            if (Value::from($value)->shouldPrompt() && array_key_exists($key, $prompted)) {
                 $resolved = $prompted[$key];
                 $this->prompted[$key] = $resolved;
             } else {
