@@ -23,11 +23,11 @@ up:
           - ffi
         sources:
           swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
-  - composer:
-      auth:
-        - host: satis.spatie.bex
-          type: basic
-          username: bosun@egberinde.comfsd
+  - mysql:
+      version: 8.0
+      databases:
+        - phpsandbox_okra_development
+        - phpsandbox_okra_test
   - script:
       desc: Install composer dependencies
       run: composer install
