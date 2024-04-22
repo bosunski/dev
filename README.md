@@ -34,8 +34,16 @@ At the moment, DEV works on MacOS as some aspect of the code assumes this. The f
 To install DEV for the first time, you can follow this process to install the pre-built MacOS binary using [GitHub CLI](https://cli.github.com):
 
 ```bash
-sudo gh release --repo phpsandbox/dev download --clobber -p "dev-*-macOS-arm64" -O /usr/local/bin/dev 
+sudo gh release --repo phpsandbox/dev download --clobber -p "dev-*-macOS-arm64" -O /usr/local/bin/dev && sudo chmod +x /usr/local/bin/dev
 ```
+
+Once DEV is installed, you should add this to your SHELL profile:
+```
+# DEV
+eval "$(/usr/local/bin/dev init zsh)"
+```
+
+This will make it possible for DEV to provide notices when there's changes in your project and you need to run `dev up`
 
 ### Updating Dev
 If you already have DEV installed, you can run this to update to the the existing binary to the latest available version:
@@ -47,8 +55,8 @@ sudo -E dev self-update
 
 For this, you will need your GITHUB_TOKEN since the repo is currently private.
 
-### Contributing
-### Requirements
+### Contributing to DEV
+#### Requirements
 - PHP >=8.2
 - Composer
 
