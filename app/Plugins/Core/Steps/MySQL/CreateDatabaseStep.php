@@ -4,6 +4,7 @@ namespace App\Plugins\Core\Steps\MySQL;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use Illuminate\Process\Exceptions\ProcessFailedException;
 
 class CreateDatabaseStep implements Step
 {
@@ -44,7 +45,13 @@ class CreateDatabaseStep implements Step
             implode(' ', $commands)
         );
 
-        return $runner->process($command)->run()->successful();
+        try {
+            return $runner->process($command)->run()->throw()->successful();
+        } catch (ProcessFailedException $e) {
+            echo $e->getMessage();
+
+            return false;
+        }
     }
 
     public function done(Runner $runner): bool
