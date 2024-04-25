@@ -165,7 +165,7 @@ class Project
         /** @var Collection<int, Step> $steps */
         $steps = collect();
 
-        foreach ($manager->getCcs(ConfigProvider::class, ['dev' => $this->dev]) as $capability) {
+        foreach ($manager->getPluginCapabilities(ConfigProvider::class, ['dev' => $this->dev]) as $capability) {
             $newResolvers = $capability->stepResolvers();
             $steps = $steps->merge($capability->steps());
             foreach ($newResolvers as $name => $resolver) {

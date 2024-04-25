@@ -4,6 +4,7 @@ namespace App\Plugins\Core;
 
 use App\Dev;
 use App\Plugin\Capability\ConfigProvider;
+use App\Plugins\Core\Resolvers\CommandResolver;
 use App\Plugins\Core\Resolvers\MySqlResolver;
 use App\Plugins\Core\Resolvers\ScriptResolver;
 use App\Plugins\Core\Steps\EnvSubstituteStep;
@@ -31,9 +32,10 @@ class CoreConfigProvider implements ConfigProvider
     public function stepResolvers(): array
     {
         return [
-            'script' => $r = new ScriptResolver(),
-            'custom' => $r,
-            'mysql'  => new MySqlResolver(),
+            'script'  => $r = new ScriptResolver(),
+            'custom'  => $r,
+            'command' => new CommandResolver($this->dev->config->commands()),
+            'mysql'   => new MySqlResolver(),
         ];
     }
 }

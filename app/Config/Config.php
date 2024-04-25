@@ -298,7 +298,11 @@ class Config
         [$resolved, $prompted] = $this->env->resolve($this->settings['env']);
         $this->settings['env'] = $prompted;
 
-        if (! $this->env->wasPrompted()) {
+        /**
+         * If we had to prompt for any values, we need to persist the settings
+         * to disk. So we can use them next and not prompt again.
+         */
+        if ($this->env->wasPrompted()) {
             $this->writeSettings();
         }
 

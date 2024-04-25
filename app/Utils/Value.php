@@ -60,8 +60,6 @@ class Value
     public function resolve(?Collection $substitutions = null): string
     {
         if (is_array($this->value)) {
-            $this->prompted = true;
-
             return $this->value = $this->prompt($this->value);
         }
 
@@ -94,6 +92,8 @@ class Value
         if (! in_array($args['type'], ['password', 'text'])) {
             throw new InvalidArgumentException("Unknown prompt type: {$args['type']}");
         }
+
+        $this->prompted = true;
 
         return match ($args['type']) {
             'password' => self::$io->password(
@@ -189,7 +189,6 @@ class Value
                 'hint'        => $args[6] ?? '',
             ];
 
-            $this->prompted = true;
             $this->value = str_replace("\$PROMPT($match)", $this->prompt($args), $this->value);
         }
 

@@ -8,6 +8,7 @@ use App\Plugin\Contracts\Step;
 use App\Plugins\Spc\Steps\SpcBuildStep;
 use App\Plugins\Spc\Steps\SpcCacheStep;
 use App\Plugins\Spc\Steps\SpcDownloadStep;
+use App\Plugins\Spc\Steps\SpcInstallRequirementsStep;
 use App\Plugins\Spc\Steps\SpcInstallStep;
 use App\Plugins\Spc\Steps\SpcLinkStep;
 use Exception;
@@ -125,6 +126,7 @@ class SpcConfig implements Config
          * to run or not based on Step::done() method.
          */
         return [
+            new SpcInstallRequirementsStep(),
             new SpcInstallStep(),
             new SpcDownloadStep($this),
             new SpcBuildStep($this),
