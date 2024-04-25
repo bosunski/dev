@@ -53,13 +53,14 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 |
 */
 
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
-
 $status = 0;
 $lastError = null;
+
 // @phpstan-ignore-next-line
-\Swoole\Coroutine\run(function () use ($kernel, &$status, &$lastError): void {
+\Swoole\Coroutine\run(function () use (&$status, &$lastError, $app): void {
     try {
+        $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+
         $status = $kernel->handle(
             $input = new Symfony\Component\Console\Input\ArgvInput,
             new Symfony\Component\Console\Output\ConsoleOutput

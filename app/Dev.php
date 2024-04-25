@@ -47,14 +47,14 @@ class Dev implements EnvResolver
     public function envs(): Collection
     {
         $envs = [];
-        foreach ($this->pluginManager->getCcs(EnvProvider::class, [$this]) as $capability) {
+        foreach ($this->pluginManager->getPluginCapabilities(EnvProvider::class, ['dev' => $this]) as $capability) {
             $newEnvs = $capability->envs();
             $envs = array_merge($envs, $newEnvs);
         }
 
         return $this->config->envs()->merge($envs)->merge([
             'DEV_PATH'     => $this->config->devPath(),
-            'DEV'          => 1,
+            'DEV'          => '1',
             'SOURCE_ROOT'  => Config::sourcePath(),
             'SERVICE_ROOT' => $this->config->servicePath(),
         ]);
@@ -71,7 +71,7 @@ class Dev implements EnvResolver
             $this->config->globalPath('bin'),
         ];
 
-        foreach ($this->pluginManager->getCcs(PathProvider::class, [$this]) as $capability) {
+        foreach ($this->pluginManager->getPluginCapabilities(PathProvider::class, ['dev' => $this]) as $capability) {
             $newPaths = $capability->paths();
             $paths = array_merge($paths, $newPaths);
         }

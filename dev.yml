@@ -3,10 +3,6 @@ name: dev
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
   PROCF: "${PWD}/Procfile"
-  GITHUB_TOKEN:
-    prompt: "What is your GitHub Token?"
-    hint: "You can generate a token at https://github.com/settings/tokens"
-    placeholder: "Looks like ghp_5geLPNwhHzgAEDHZZzR4n5ko"
 
 steps:
   - spc:

@@ -4,6 +4,7 @@ namespace App\Plugins\Core\Config;
 
 use App\Plugin\Contracts\Config;
 use App\Plugins\Core\Steps\MySQL\CreateDatabaseStep;
+use App\Plugins\Core\Steps\MySQL\EnsureDockerStep;
 use App\Plugins\Core\Steps\MySQL\StartContainerStep;
 
 /**
@@ -25,6 +26,7 @@ class MySqlConfig implements Config
     public function steps(): array
     {
         return [
+            new EnsureDockerStep(),
             new StartContainerStep(),
             new CreateDatabaseStep($this->config['databases']),
         ];
