@@ -54,7 +54,7 @@ class RunCommand extends Command
     protected function resolveDev(Dev $oldDev, string $project): Dev
     {
         if ($oldDev->config->projects()->contains($project)) {
-            return Factory::create($oldDev->io(), Config::fromProjectName($project, $oldDev->config->cwd()));
+            return Factory::create($oldDev->io(), Config::fromProjectName($project, $oldDev->config->path()));
         }
 
         throw new UserException("Depedency project `$project` not found in this project config. Are you sure it is registered in dev.yml and enabled?");
