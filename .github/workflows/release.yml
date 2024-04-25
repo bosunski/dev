@@ -22,10 +22,9 @@ jobs:
           - macos-latest
         include:
           - os: macos-latest
-            runner: self-hosted
             arch: arm64
             platform: macOS
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
