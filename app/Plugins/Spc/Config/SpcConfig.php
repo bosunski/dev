@@ -6,7 +6,6 @@ use App\Config\Config as DevConfig;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Spc\Steps\SpcBuildStep;
-use App\Plugins\Spc\Steps\SpcCacheStep;
 use App\Plugins\Spc\Steps\SpcDownloadStep;
 use App\Plugins\Spc\Steps\SpcInstallRequirementsStep;
 use App\Plugins\Spc\Steps\SpcInstallStep;
@@ -87,6 +86,8 @@ class SpcConfig implements Config
      */
     public readonly array $sources;
 
+    public readonly string $md5;
+
     /**
      * @param RawSpcConfig $config
      * @return void
@@ -100,6 +101,7 @@ class SpcConfig implements Config
         );
 
         $this->sources = $this->config['php']['sources'] ?? [];
+        $this->md5 = $this->md5();
     }
 
     /**
@@ -131,7 +133,6 @@ class SpcConfig implements Config
             new SpcDownloadStep($this),
             new SpcBuildStep($this),
             new SpcLinkStep($this),
-            new SpcCacheStep($this),
         ];
     }
 
@@ -145,7 +146,7 @@ class SpcConfig implements Config
         return $this->devConfig->globalPath("spc/$this->phpVersion/lock");
     }
 
-    public function checksum(): string
+    protected function md5(): string
     {
         $cacheContent = implode(',', (array) $this->extensions);
 
@@ -161,9 +162,9 @@ class SpcConfig implements Config
         return $this->devConfig->globalPath('bin/spc');
     }
 
-    public function phpPath(?string $path = null): string
+    public function phpPath(string $path = ''): string
     {
-        return $this->devConfig->globalPath("spc/$this->phpVersion/$path");
+        return $this->devConfig->globalPath("spc/$this->phpVersion/$this->md5/$path");
     }
 
     /**

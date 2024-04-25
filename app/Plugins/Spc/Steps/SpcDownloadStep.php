@@ -14,7 +14,7 @@ class SpcDownloadStep implements Step
 
     public function id(): string
     {
-        return 'spc-download';
+        return "spc-download-{$this->config->md5}";
     }
 
     public function name(): string
@@ -24,14 +24,13 @@ class SpcDownloadStep implements Step
 
     public function run(Runner $runner): bool
     {
-        $spc = $runner->config()->globalPath('bin/spc');
-        $spcGlobalPath = $runner->config()->globalPath("spc/{$this->config->phpVersion}");
+        $spcGlobalPath = $this->config->phpPath();
 
         if (! is_dir($spcGlobalPath)) {
             mkdir($spcGlobalPath, recursive: true);
         }
 
-        $command = "$spc download --debug --with-php={$this->config->phpVersion}";
+        $command = "{$this->config->bin()} download --debug --with-php={$this->config->phpVersion}";
         foreach ($this->config->sources as $extensionOrLib => $url) {
             $command .= " -U '$extensionOrLib:$url'";
         }
@@ -43,8 +42,6 @@ class SpcDownloadStep implements Step
 
     public function done(Runner $runner): bool
     {
-        $lockPath = $this->config->lockPath();
-
-        return is_file($lockPath) && file_get_contents($lockPath) === $this->config->checksum();
+        return is_file($this->config->phpPath('downloads/.lock.json'));
     }
 }

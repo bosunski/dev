@@ -26,6 +26,6 @@ class SpcInstallRequirementsStep implements Step
 
     public function done(Runner $runner): bool
     {
-        return $runner->exec('cmake --version');
+        return $runner->process('cmake --version')->run()->successful();
     }
 }

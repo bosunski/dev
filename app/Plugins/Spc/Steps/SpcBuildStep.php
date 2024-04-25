@@ -14,7 +14,7 @@ class SpcBuildStep implements Step
 
     public function id(): string
     {
-        return 'spc-build';
+        return "spc-build-{$this->config->md5}";
     }
 
     public function name(): string
@@ -40,13 +40,6 @@ class SpcBuildStep implements Step
 
     public function done(Runner $runner): bool
     {
-        return $this->locked() && is_file($this->config->phpPath('buildroot/bin/php'));
-    }
-
-    public function locked(): bool
-    {
-        $lockPath = $this->config->lockPath();
-
-        return is_file($lockPath) && file_get_contents($lockPath) === $this->config->checksum();
+        return is_file($this->config->phpPath('buildroot/bin/php'));
     }
 }

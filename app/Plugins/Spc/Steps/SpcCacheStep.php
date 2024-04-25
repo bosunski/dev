@@ -24,7 +24,7 @@ class SpcCacheStep implements Step
 
     public function run(Runner $runner): bool
     {
-        return file_put_contents($this->config->lockPath(), $this->config->checksum()) > 0;
+        return true;
     }
 
     public function done(Runner $runner): bool
