@@ -39,8 +39,7 @@ class CreateDatabaseStep implements Step
         })->toArray();
 
         $command = sprintf(
-            'docker exec -i dev-mysql mysql -h%s -u%s -e "%s"',
-            self::Host,
+            'docker exec -i dev-mysql mysql -u%s -e "%s"',
             self::User,
             implode(' ', $commands)
         );
@@ -58,8 +57,7 @@ class CreateDatabaseStep implements Step
     {
         $databases = is_array($this->databases) ? $this->databases : [$this->databases];
         $command = sprintf(
-            'docker exec dev-mysql mysql -h%s -u%s -e "SHOW DATABASES;"',
-            self::Host,
+            'docker exec dev-mysql mysql -u%s -e "SHOW DATABASES;"',
             self::User
         );
 

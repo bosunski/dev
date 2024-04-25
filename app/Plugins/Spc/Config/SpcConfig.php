@@ -77,7 +77,7 @@ class SpcConfig implements Config
     public readonly string $phpVersion;
 
     /**
-     * @var PhpConfig['extensions']
+     * @var string[]
      */
     public readonly array $extensions;
 

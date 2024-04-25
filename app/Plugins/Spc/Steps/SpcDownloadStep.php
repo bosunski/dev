@@ -31,7 +31,7 @@ class SpcDownloadStep implements Step
             mkdir($spcGlobalPath, recursive: true);
         }
 
-        $command = "$spc download --with-php={$this->config->phpVersion}";
+        $command = "$spc download --debug --with-php={$this->config->phpVersion}";
         foreach ($this->config->sources as $extensionOrLib => $url) {
             $command .= " -U '$extensionOrLib:$url'";
         }

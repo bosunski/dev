@@ -18,6 +18,8 @@ class Env
      */
     protected array $prompted = [];
 
+    protected bool $envWasPrompted = false;
+
     /**
      * @param Collection<string, string> $env
      * @param array<string, string> $substitutions
@@ -64,9 +66,15 @@ class Env
         $resolved = $value->resolve(collect($this->substitutions));
 
         if ($value->wasPrompted()) {
+            $this->envWasPrompted = true;
             $this->prompted[$key] = $resolved;
         }
 
         return $resolved;
+    }
+
+    public function wasPrompted(): bool
+    {
+        return $this->envWasPrompted;
     }
 }

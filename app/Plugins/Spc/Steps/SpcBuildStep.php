@@ -24,11 +24,18 @@ class SpcBuildStep implements Step
 
     public function run(Runner $runner): bool
     {
+        $this->ensureCMakeIsInstalled($runner);
+
         $extensions = implode(',', $this->config->extensions);
 
-        $command = "{$this->config->bin()} build --no-strip --build-micro --build-cli --with-micro-fake-cli '$extensions'";
+        $command = "{$this->config->bin()} build --debug --no-strip --build-micro --build-cli --with-micro-fake-cli '$extensions'";
 
-        return $runner->exec($command, $this->config->phpPath());
+        return $runner->spawn($command, $this->config->phpPath())->wait()->successful();
+    }
+
+    protected function ensureCMakeIsInstalled(Runner $runner): void
+    {
+        $runner->spawn('brew install cmake')->wait()->throw();
     }
 
     public function done(Runner $runner): bool

@@ -298,6 +298,10 @@ class Config
         [$resolved, $prompted] = $this->env->resolve($this->settings['env']);
         $this->settings['env'] = $prompted;
 
+        if (! $this->env->wasPrompted()) {
+            $this->writeSettings();
+        }
+
         return $resolved;
     }
 
