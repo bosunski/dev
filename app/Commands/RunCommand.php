@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Config\Config;
 use App\Dev;
+use App\Exceptions\Project\ProjectNotFoundException;
 use App\Exceptions\UserException;
 use App\Factory;
 use LaravelZero\Framework\Commands\Command;
@@ -57,7 +58,7 @@ class RunCommand extends Command
             return Factory::create($oldDev->io(), Config::fromProjectName($project, $oldDev->config->path()));
         }
 
-        throw new UserException("Depedency project `$project` not found in this project config. Are you sure it is registered in dev.yml and enabled?");
+        throw new ProjectNotFoundException($project);
     }
 
     private function registerAvailableCommands(Config $config): void

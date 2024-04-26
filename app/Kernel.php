@@ -2,14 +2,18 @@
 
 namespace App;
 
+use App\Bootstrap\ConfiguresDev;
 use App\Cmd\ConfigCommand;
 use App\Config\Config;
 use App\IO\StdIO;
 use App\Plugin\Capability\CommandProvider;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Collection;
 use LaravelZero\Framework\Commands\Command;
+use LaravelZero\Framework\Contracts\BoostrapperContract;
 use LaravelZero\Framework\Kernel as LaravelZeroKernel;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,16 +27,14 @@ class Kernel extends LaravelZeroKernel
 {
     protected Dev $dev;
 
-    public function __construct(
-        \Illuminate\Contracts\Foundation\Application $app,
-        \Illuminate\Contracts\Events\Dispatcher $events
-    ) {
+    public function __construct(Application $app, Dispatcher $events)
+    {
         parent::__construct($app, $events);
 
         $this->dev = $this->resolveDev();
     }
 
-    public function handle($input, $output = null)
+    public function handle($input, $output = null): int
     {
         return parent::handle($input, $output);
     }
@@ -109,5 +111,13 @@ class Kernel extends LaravelZeroKernel
         });
 
         $artisan->resolveCommands($commands->toArray());
+    }
+
+    /**
+     * @return array<class-string<BoostrapperContract>>
+     */
+    protected function bootstrappers(): array
+    {
+        return array_merge(parent::bootstrappers(), [ConfiguresDev::class]);
     }
 }

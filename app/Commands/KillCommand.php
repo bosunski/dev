@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Config\Config;
 use App\Dev;
+use App\Exceptions\Project\ProjectNotFoundException;
 use App\Exceptions\UserException;
 use LaravelZero\Framework\Commands\Command;
 
@@ -33,7 +34,7 @@ class KillCommand extends Command
             if ($config->projects()->contains($project)) {
                 $config = Config::fromProjectName($project);
             } else {
-                throw new UserException("Service $project not found in this project. Are you sure it is registered?");
+                throw new ProjectNotFoundException($project);
             }
         }
 
