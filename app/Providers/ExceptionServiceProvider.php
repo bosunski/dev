@@ -9,8 +9,6 @@ use Illuminate\Support\ServiceProvider;
 
 class ExceptionServiceProvider extends ServiceProvider
 {
-    protected bool $defer = true;
-
     public function boot(): void
     {
         //
