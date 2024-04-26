@@ -59,12 +59,5 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "bin": ["dev"],
-    "extra": {
-        "laravel": {
-            "dont-discover": [
-                "nunomaduro/collision"
-            ]
-        }
-    }
+    "bin": ["dev"]
 }
