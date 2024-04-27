@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/phpsandbox/dev/compare/v0.0.2...v0.0.3) (2024-04-27)
+
+
+### Miscellaneous Chores
+
+* release 0.0.3 ([a1bc99d](https://github.com/phpsandbox/dev/commit/a1bc99dd87315ab386be0f8b8bd171eee06149d1))
+
 ## [0.0.2](https://github.com/phpsandbox/dev/compare/v0.0.1...v0.0.2) (2024-04-27)
 
 
