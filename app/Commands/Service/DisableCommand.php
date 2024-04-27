@@ -39,14 +39,14 @@ class DisableCommand extends Command
         }
 
         if (! $projects->contains($project)) {
-            $this->error("Service $project not found in configuration");
+            $this->error("Project $project not found in configuration");
 
             return self::INVALID;
         }
 
         $disabledProjects = $this->dev->config->settings['disabled'] ?? [];
         if (in_array($project, $disabledProjects)) {
-            $this->info("Service $project is already disabled");
+            $this->info("Project $project is already disabled");
 
             return self::SUCCESS;
         }
@@ -54,7 +54,7 @@ class DisableCommand extends Command
         $this->dev->config->settings['disabled'][] = $project;
         $this->dev->config->writeSettings();
 
-        $this->info("Service $project disabled");
+        $this->info("Project $project disabled");
 
         return self::SUCCESS;
     }

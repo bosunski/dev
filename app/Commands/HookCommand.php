@@ -29,7 +29,7 @@ class HookCommand extends Command
 
         if ($message = $this->trackedFilesHaveChanged($dev->config)) {
             $message = "\e[90m" . $message . "\e[0m";
-            $dev->io()->write($prefix . ' ' . $message . PHP_EOL);
+            $dev->io()->write(PHP_EOL . $prefix . ' ' . $message . PHP_EOL);
         }
 
         return 0;
