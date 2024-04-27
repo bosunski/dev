@@ -2,7 +2,6 @@ name: dev
 
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
-  PROCF: "${PWD}/Procfile"
 
 steps:
   - spc:
