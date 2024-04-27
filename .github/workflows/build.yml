@@ -54,3 +54,16 @@ jobs:
 
       - name: Run Tests
         run: vendor/bin/pest --coverage -vv
+  
+  release:
+    needs: tests
+    runs-on: macos-latest
+    steps:
+      - uses: CupOfTea696/gh-action-auto-release@v1.0.0
+        with:
+          title: "Release: $version"
+          tag: "v$semver"
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
