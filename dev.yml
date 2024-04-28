@@ -9,7 +9,7 @@ steps:
         input: builds/dev.phar
         output: builds/dev
       php:
-        version: 8.2
+        version: 8.3
         preset: common
         extensions:
           - swoole
@@ -23,6 +23,41 @@ steps:
   - script:
       desc: Create output.txt
       run: echo "Hello World $(date)" > output.txt
+  - valet:
+      php:
+        version: 8.2
+        extensions:
+          pcov:
+            before: |
+              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
+          swoole-5.1.1:
+            before: |
+              ln -sf $(pcre2-config --prefix)/include/pcre2.h $PHP_DIR/include/php/ext/pcre/pcre2.h
+            options:
+              enable-sockets: "yes"
+              enable-openssl: "yes --with-openssl-dir=`find /opt/homebrew/Cellar | grep \"openssl@3/3.*.*$\" | head -n 1`"
+              enable-http2: "yes"
+              enable-brotli: "yes"
+              enable-mysqlnd: "no"
+              enable-swoole-json: "no"
+              enable-swoole-curl: "yes"
+              enable-cares: "no"
+          redis:
+            options:
+              enable-redis-igbinary: no
+              enable-redis-lzf: no
+              enable-redis-zstd: no
+              enable-redis-msgpack: no
+              enable-redis-lz4: no
+              with-liblz4: yes
+      sites:
+        - proxy: http://127.0.0.1:6001
+          host: echo.phpsandbox
+        - proxy: http://localhost:3000
+          host: vite.phpsandbox
+        - proxy: http://127.0.0.1:8006
+          host: cy.phpsandbox
+        - phpsandbox
 
 commands:
   build:
@@ -47,7 +82,7 @@ commands:
     desc: Fix PHP code style
     run: pint
   analyse:
-    desc: Check PHP version
+    desc: PHPStan Analyse
     run: ./vendor/bin/phpstan analyse --memory-limit=2G
   test:
     desc: Run PHP tests

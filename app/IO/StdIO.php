@@ -34,6 +34,16 @@ class StdIO implements IOInterface
     {
     }
 
+    public function getInput(): InputInterface
+    {
+        return $this->input;
+    }
+
+    public function getOutput(): OutputInterface
+    {
+        return $this->output;
+    }
+
     public function text(string $label, string $placeholder = '', string $default = '', bool|string $required = false, mixed $validate = null, string $hint = ''): string
     {
         return text($label, $placeholder, $default, $required, $validate, $hint);

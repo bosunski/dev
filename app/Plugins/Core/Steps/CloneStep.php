@@ -8,6 +8,7 @@ use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Webmozart\Assert\Assert;
 
 class CloneStep implements Step
 {
@@ -20,7 +21,7 @@ class CloneStep implements Step
     private readonly string $repo;
 
     /**
-     * @param string $repoFullName
+     * @param non-empty-string $repoFullName
      * @param string $host
      * @param string[] $args
      * @param null|string $root
@@ -115,12 +116,14 @@ class CloneStep implements Step
     }
 
     /**
-     * @return array{string, string}
-     *
+     * @param non-empty-string $service
+     * @return array{non-empty-string, non-empty-string}
      * @throws UserException
      */
     protected static function parseService(string $service): array
     {
+        /** @var array{non-empty-string, non-empty-string} $details */
+        $details = [];
         if (self::isUrl($service)) {
             preg_match("/^(https?:\/\/)?(www\.)?github\.com\/(?<owner>[a-zA-Z0-9-]+)\/(?<repo>[a-zA-Z0-9-]+)(\.git)?$/", $service, $matches);
 
@@ -128,8 +131,10 @@ class CloneStep implements Step
                 throw new UserException('Invalid GitHub repository URL');
             }
 
-            $details = [$matches['owner'], $matches['repo']];
+            Assert::notEmpty($matches['owner']);
+            Assert::notEmpty($matches['repo']);
 
+            $details = [$matches['owner'], $matches['repo']];
             $service = self::parseUrl($service);
         }
 
@@ -141,19 +146,35 @@ class CloneStep implements Step
             throw new UserException('Invalid repository');
         }
 
+        // @phpstan-ignore-next-line
         return $details;
     }
 
+    /**
+     * @param non-empty-string $url
+     * @return non-empty-string
+     */
     private static function parseUrl(string $url): string
     {
         preg_match(self::GIT_URL_REGEX, $url, $matches);
 
+        Assert::notEmpty($matches[5]);
+
         return $matches[5];
     }
 
+    /**
+     * @param non-empty-string $path
+     * @return non-empty-string[]
+     */
     private static function parsePath(string $path): array
     {
-        return explode('/', $path);
+        [$owner, $repo] = explode('/', $path, 2);
+
+        Assert::notEmpty($owner);
+        Assert::notEmpty($repo);
+
+        return [$owner, $repo];
     }
 
     private static function isUrl(string $service): bool

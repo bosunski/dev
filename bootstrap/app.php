@@ -11,6 +11,7 @@
 |
 */
 
+use App\IO\IOInterface;
 use App\Kernel;
 
 $app = new LaravelZero\Framework\Application(
@@ -36,6 +37,15 @@ $app->singleton(
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
     Illuminate\Foundation\Exceptions\Handler::class
+);
+
+/**
+ * Static analyzer breaks without the binding for IOInterface
+ * so, we will bind it here first before the Kernel is booted.
+ */
+$app->singleton(
+    IOInterface::class,
+    fn () => new App\IO\StdIO(new Symfony\Component\Console\Input\ArgvInput(), new Symfony\Component\Console\Output\ConsoleOutput())
 );
 
 /*

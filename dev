@@ -4,6 +4,9 @@
 /**
  * Used to be Sek, Garm, and now DEV
  */
+
+use App\IO\IOInterface;
+
 define('LARAVEL_START', microtime(true));
 
 /**
@@ -60,11 +63,9 @@ $lastError = null;
 \Swoole\Coroutine\run(function () use (&$status, &$lastError, $app): void {
     try {
         $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+        $io = $app->make(IOInterface::class);
 
-        $status = $kernel->handle(
-            $input = new Symfony\Component\Console\Input\ArgvInput,
-            new Symfony\Component\Console\Output\ConsoleOutput
-        );
+        $status = $kernel->handle($input = $io->getInput(), $io->getOutput());
     
         /*
         |--------------------------------------------------------------------------

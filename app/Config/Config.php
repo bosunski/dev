@@ -2,6 +2,7 @@
 
 namespace App\Config;
 
+use App\Exceptions\Config\InvalidConfigException;
 use App\Exceptions\UserException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -101,8 +102,13 @@ class Config
     {
         $jsonConfig = ['disabled' => []];
         $jsonPath = $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . 'config.json');
-        if (file_exists($jsonPath)) {
-            $jsonConfig = array_merge($jsonConfig, json_decode(file_get_contents($jsonPath), true));
+        if (file_exists($jsonPath) && $content = @file_get_contents($jsonPath)) {
+            $config = json_decode($content, true);
+            if ($config === null || ! is_array($config)) {
+                throw new UserException("Failed to parse $jsonPath. Please check the file for syntax errors.");
+            }
+
+            $jsonConfig = array_merge($jsonConfig, $config);
         }
 
         $this->settings = array_merge($this->settings, $jsonConfig);
@@ -172,7 +178,7 @@ class Config
 
     public function path(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR));
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
     public function servicePath(?string $path = null): string
@@ -269,7 +275,7 @@ class Config
         try {
             return Yaml::parseFile(self::fullPath($path));
         } catch (ParseException $e) {
-            throw new UserException($e->getMessage());
+            throw new InvalidConfigException($e);
         }
     }
 

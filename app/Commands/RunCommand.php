@@ -7,6 +7,7 @@ use App\Dev;
 use App\Exceptions\Project\ProjectNotFoundException;
 use App\Exceptions\UserException;
 use App\Factory;
+use App\IO\IOInterface;
 use LaravelZero\Framework\Commands\Command;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 
@@ -36,10 +37,12 @@ class RunCommand extends Command
             throw new UserException('No commands found');
         }
 
-        if (! $name = $this->argument('name')) {
-            $this->registerAvailableCommands($dev->config);
-
+        if ($commands->isEmpty()) {
             return $this->call('list');
+        }
+
+        if (! $name = $this->argument('name')) {
+            $name = $this->selectCommand($dev->config, $dev->io());
         }
 
         if (! $command = $commands->get($name)) {
@@ -50,6 +53,15 @@ class RunCommand extends Command
             ->spawn($command['run'], $dev->config->cwd())
             ->wait()
             ->exitCode() ?? 0;
+    }
+
+    protected function selectCommand(Config $config, IOInterface $io): string
+    {
+        return $io->select(
+            'Which command do you want to run?',
+            $config->commands()->map(fn ($command, $name) => $command['desc'] ?? $name),
+            hint: 'Commands are defined under `commands` in dev.yml'
+        );
     }
 
     protected function resolveDev(Dev $oldDev, string $project): Dev

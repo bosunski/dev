@@ -5,15 +5,26 @@ namespace App\Plugins\Valet\Steps;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Config\ValetConfig;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use Throwable;
 
+/**
+ * @phpstan-import-type RawValetEnvironment from ValetConfig
+ * @phpstan-import-type RawExtensionConfig from ValetConfig
+*/
 class ExtensionInstallStep implements Step
 {
-    public function __construct(protected readonly string $name, protected readonly array $environment, protected readonly array $config = [])
+    /**
+     * @param string $name
+     * @param RawValetEnvironment $environment
+     * @param RawExtensionConfig|true $config
+     * @return void
+     */
+    public function __construct(protected readonly string $name, protected readonly array $environment, protected readonly array|true $config)
     {
     }
 
@@ -43,7 +54,7 @@ class ExtensionInstallStep implements Step
 
     private function getOptions(): string
     {
-        if (empty($this->config) || empty($this->config['options'] ?? [])) {
+        if (! is_array($this->config) || empty($this->config['options'] ?? [])) {
             return '';
         }
 
@@ -66,7 +77,7 @@ class ExtensionInstallStep implements Step
 
         $name = Str::before($this->name, '-');
 
-        return @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
+        return (bool) @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
     }
 
     private function ensureIniDirectoryExists(Runner $runner): void

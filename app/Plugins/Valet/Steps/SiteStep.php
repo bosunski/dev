@@ -21,7 +21,7 @@ class SiteStep implements Step
     /**
      * @throws Exception
      */
-    public function command(): ?string
+    public function command(): string
     {
         return match ($this->site->type) {
             'link'  => "{$this->herBinary()} link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
@@ -38,14 +38,6 @@ class SiteStep implements Step
     /**
      * @throws Exception
      */
-    public function checkCommand(): ?string
-    {
-        return $this->command();
-    }
-
-    /**
-     * @throws Exception
-     */
     public function run(Runner $runner): bool
     {
         return $runner->exec($this->command());
@@ -56,7 +48,7 @@ class SiteStep implements Step
      */
     public function done(Runner $runner): bool
     {
-        return $runner->exec($this->checkCommand());
+        return false;
     }
 
     public function id(): string

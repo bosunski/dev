@@ -5,10 +5,16 @@ namespace App\IO;
 use Closure;
 use Illuminate\Support\Collection;
 use Laravel\Prompts\Progress;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 interface IOInterface
 {
     public function write(string $data): void;
+
+    public function getInput(): InputInterface;
+
+    public function getOutput(): OutputInterface;
 
     public function writeln(string $data): void;
 

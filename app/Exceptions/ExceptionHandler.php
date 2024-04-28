@@ -5,7 +5,8 @@ namespace App\Exceptions;
 use App\Contracts\Exception\Printable;
 use App\Contracts\Solution\ProvidesSolution;
 use App\Contracts\Solution\Solution;
-use App\Dev;
+use App\Exceptions\Config\InvalidConfigException;
+use App\IO\IOInterface;
 use Illuminate\Contracts\Debug\ExceptionHandler as DebugExceptionHandler;
 use Swoole\ExitException;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,7 @@ use Throwable;
 
 class ExceptionHandler implements DebugExceptionHandler
 {
-    public function __construct(protected DebugExceptionHandler $defaultHandler, protected Dev $dev)
+    public function __construct(protected DebugExceptionHandler $defaultHandler, protected IOInterface $io)
     {
     }
 
@@ -36,8 +37,7 @@ class ExceptionHandler implements DebugExceptionHandler
     {
         try {
             if ($e instanceof UserException) {
-                $message = $e instanceof Printable ? $e->print() : $e->getMessage();
-                $this->write("<bg=red;options=bold> DEV </> $message");
+                $this->processUserExceptions($e);
 
                 return;
             }
@@ -53,6 +53,16 @@ class ExceptionHandler implements DebugExceptionHandler
             if ($e instanceof ProvidesSolution) {
                 $this->renderSolution($e->solution());
             }
+        }
+    }
+
+    protected function processUserExceptions(UserException $e): void
+    {
+        $message = $e instanceof Printable ? $e->print() : $e->getMessage();
+        $this->write("<bg=red;options=bold> DEV </> $message");
+
+        if ($e instanceof InvalidConfigException) {
+            $this->write($e->getSourceHighlight());
         }
     }
 
@@ -77,10 +87,10 @@ class ExceptionHandler implements DebugExceptionHandler
     private function write(string $message, bool $break = true): self
     {
         if ($break) {
-            $this->dev->io()->writeln('');
+            $this->io->writeln('');
         }
 
-        $this->dev->io()->writeln("$message");
+        $this->io->writeln($message);
 
         return $this;
     }

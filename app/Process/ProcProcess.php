@@ -126,7 +126,7 @@ class ProcProcess
 
         $this->updateStatus();
 
-        return $this->info['running'];
+        return $this->info['running'] === true;
     }
 
     public function signal(int $signal): bool

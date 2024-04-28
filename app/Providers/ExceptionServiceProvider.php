@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Dev;
 use App\Exceptions\ExceptionHandler;
+use App\IO\IOInterface;
 use Illuminate\Contracts\Debug\ExceptionHandler as DebugExceptionHandler;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,7 +24,7 @@ class ExceptionServiceProvider extends ServiceProvider
         $defaultHandler = $this->app->make(DebugExceptionHandler::class);
         $this->app->singleton(
             DebugExceptionHandler::class,
-            fn () => new ExceptionHandler($defaultHandler, $this->app->make(Dev::class))
+            fn () => new ExceptionHandler($defaultHandler, $this->app->make(IOInterface::class))
         );
     }
 }
