@@ -35,5 +35,8 @@ jobs:
       - name: Check code styles
         run: vendor/bin/pint --test -v
 
+      - name: PHPStan Analyze
+        run: ./vendor/bin/phpstan analyse --memory-limit=2G
+
       - name: Run tests
         run: vendor/bin/pest --coverage -vv
