@@ -19,9 +19,18 @@ class ProcProcess
     protected $process = null;
 
     /**
-     * @var null|array{command: string, pid: int, running: bool, signaled: bool, stopped: bool, exitcode: int, termsig: int, stopsig: int}
+     * @var array{command: string, pid: int, running: bool, signaled: bool, stopped: bool, exitcode: int, termsig: int, stopsig: int}
      */
-    protected ?array $info = null;
+    protected array $info = [
+        'command'  => '',
+        'pid'      => 0,
+        'running'  => false,
+        'signaled' => false,
+        'stopped'  => false,
+        'exitcode' => -1,
+        'termsig'  => 0,
+        'stopsig'  => 0,
+    ];
 
     /**
      * @var resource[]

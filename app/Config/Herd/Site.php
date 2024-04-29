@@ -4,6 +4,9 @@ namespace App\Config\Herd;
 
 use Illuminate\Support\Str;
 
+/**
+ * @phpstan-import-type RawSiteConfig from HerdConfig
+ */
 class Site
 {
     public readonly string $type;
@@ -14,6 +17,9 @@ class Site
 
     public readonly bool $secure;
 
+    /**
+     * @param RawSiteConfig|string $site
+     */
     public function __construct(array|string $site)
     {
         if (is_array($site)) {

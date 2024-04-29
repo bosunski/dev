@@ -31,24 +31,17 @@ class PhpConfig implements Config
     {
         $steps = [];
         foreach ($this->config as $name => $config) {
-            $steps[] = $this->makeStep($name, $config);
+            if ($name === 'version') {
+                $steps[] = new LockPhpStep($config, $this->environment);
+                continue;
+            }
+
+            if ($name === 'extensions') {
+                $steps[] = new ExtensionConfig($config, $this->environment);
+                continue;
+            }
         }
 
         return $steps;
-    }
-
-    /**
-     * @template T of key-of<RawPhpConfig>
-     * @param T $name
-     * @param RawPhpConfig[T] $value
-     * @throws Exception
-     */
-    private function makeStep(string $name, mixed $value): Step|Config
-    {
-        return match ($name) {
-            'version'    => new LockPhpStep($value, $this->environment),
-            'extensions' => new ExtensionConfig($value, $this->environment),
-            default      => throw new Exception("Unknown step: $name"),
-        };
     }
 }

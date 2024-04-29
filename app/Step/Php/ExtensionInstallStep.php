@@ -2,6 +2,7 @@
 
 namespace App\Step\Php;
 
+use App\Config\Herd\HerdConfig;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Step\StepInterface;
@@ -11,9 +12,19 @@ use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 use Throwable;
 
+/**
+ * @phpstan-import-type RawHerdEnvironment from HerdConfig
+ * @phpstan-import-type RawExtensionConfig from HerdConfig
+*/
 class ExtensionInstallStep implements StepInterface
 {
-    public function __construct(protected readonly string $name, protected readonly array $environment, protected readonly array $config = [])
+    /**
+     * @param string $name
+     * @param RawHerdEnvironment $environment
+     * @param RawExtensionConfig|true $config
+     * @return void
+     */
+    public function __construct(protected readonly string $name, protected readonly array $environment, protected readonly array|true $config)
     {
     }
 
@@ -66,7 +77,7 @@ class ExtensionInstallStep implements StepInterface
 
         $name = Str::before($this->name, '-');
 
-        return @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
+        return (bool) @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
     }
 
     private function ensureIniDirectoryExists(Runner $runner): void

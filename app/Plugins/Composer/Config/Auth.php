@@ -6,13 +6,7 @@ use App\Utils\Value;
 
 /**
  * @phpstan-import-type PromptArgs from Value
- * @phpstan-type RawAuth array{
- *      host: string,
- *      username?: string,
- *      password?: string|PromptArgs,
- *      token?: string|PromptArgs,
- *      type?: 'basic'
- * }
+ * @phpstan-import-type RawAuth from ComposerConfig
  */
 class Auth
 {

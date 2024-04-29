@@ -57,9 +57,9 @@ class RunCommand extends Command
 
     protected function selectCommand(Config $config, IOInterface $io): string
     {
-        return $io->select(
+        return (string) $io->select(
             'Which command do you want to run?',
-            $config->commands()->map(fn ($command, $name) => $command['desc'] ?? $name),
+            $config->commands()->map(fn (array $command, string $name) => $command['desc'] ?? $name)->all(),
             hint: 'Commands are defined under `commands` in dev.yml'
         );
     }
@@ -71,20 +71,5 @@ class RunCommand extends Command
         }
 
         throw new ProjectNotFoundException($project);
-    }
-
-    private function registerAvailableCommands(Config $config): void
-    {
-        $commands = $config->commands();
-        foreach ($commands as $name => $command) {
-            $cmd = new \Illuminate\Console\Command();
-
-            $cmd->setName($name)
-                ->setDescription($command['desc'] ?? '')
-                ->setAliases([])
-                ->setLaravel($this->getLaravel());
-
-            $this->getApplication()?->add($cmd);
-        }
     }
 }

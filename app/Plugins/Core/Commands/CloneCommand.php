@@ -47,6 +47,12 @@ class CloneCommand extends Command
 
         assert(is_string($fullName = $this->argument('repo')), new InvalidArgumentException('Repository full name must be a string'));
 
+        if (empty($fullName)) {
+            $this->components->error('Repository full name cannot be empty');
+
+            return 1;
+        }
+
         return $dev->runner->execute([
             new CloneStep($fullName, $source = self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('args')),
             new CdStep($this->argument('repo'), $source),

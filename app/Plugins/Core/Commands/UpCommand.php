@@ -75,6 +75,7 @@ class UpCommand extends Command
     }
 
     /**
+     * @param non-empty-string $projectName
      * @throws UserException
      * @throws Exception
      */

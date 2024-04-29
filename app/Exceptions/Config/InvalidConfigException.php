@@ -2,7 +2,6 @@
 
 namespace App\Exceptions\Config;
 
-use App\Config\Config;
 use App\Exceptions\UserException;
 use NunoMaduro\Collision\Highlighter;
 use Symfony\Component\Yaml\Exception\ParseException;
@@ -24,7 +23,7 @@ class InvalidConfigException extends UserException
     public function getSourceHighlight(): string
     {
         return $this->highlighter->highlight(
-            (string) file_get_contents(Config::FileName),
+            (string) file_get_contents($this->exception->getParsedFile()),
             $this->exception->getParsedLine()
         );
     }

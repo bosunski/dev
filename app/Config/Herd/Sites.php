@@ -2,14 +2,17 @@
 
 namespace App\Config\Herd;
 
-use App\Contracts\ConfigInterface;
+use App\Plugin\Contracts\Config;
+use App\Plugin\Contracts\Step;
 use App\Step\Herd\SiteStep;
-use App\Step\StepInterface;
 
-class Sites implements ConfigInterface
+/**
+ * @phpstan-import-type RawSiteConfig from HerdConfig
+ */
+class Sites implements Config
 {
     /**
-     * @param  array<int,mixed>  $sites
+     * @param array<RawSiteConfig|string> $sites
      */
     public function __construct(private readonly array $sites)
     {
@@ -17,10 +20,14 @@ class Sites implements ConfigInterface
 
     public function steps(): array
     {
-        return collect($this->sites)->map(fn ($site) => $this->makeStep($site))->toArray();
+        return array_map(fn (string|array $site) => $this->makeStep($site), $this->sites);
     }
 
-    private function makeStep(array|string $site): StepInterface
+    /**
+     * @param RawSiteConfig|string $site
+     * @return Step
+     */
+    private function makeStep(array|string $site): Step
     {
         return new SiteStep(new Site($site));
     }

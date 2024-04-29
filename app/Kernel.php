@@ -13,7 +13,6 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Collection;
 use LaravelZero\Framework\Commands\Command;
-use LaravelZero\Framework\Contracts\BoostrapperContract;
 use LaravelZero\Framework\Kernel as LaravelZeroKernel;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -110,7 +109,7 @@ class Kernel extends LaravelZeroKernel
     }
 
     /**
-     * @return array<class-string<BoostrapperContract>>
+     * @return array<class-string>
      */
     protected function bootstrappers(): array
     {

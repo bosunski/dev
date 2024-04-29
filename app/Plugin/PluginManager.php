@@ -12,6 +12,7 @@ use App\Plugins\Spc\SpcPlugin;
 use App\Plugins\Valet\ValetPlugin;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use RuntimeException;
+use UnexpectedValueException;
 
 class PluginManager
 {
@@ -69,10 +70,11 @@ class PluginManager
     }
 
     /**
+     * @template T of Capability
      * @param PluginInterface $plugin
-     * @param class-string<Capability> $capabilityClassName
+     * @param class-string<T> $capabilityClassName
      * @param array<string, mixed> $ctorArgs
-     * @return null|Capability
+     * @return null|T
      * @throws RuntimeException
      * @throws BindingResolutionException
      */
@@ -102,7 +104,7 @@ class PluginManager
     /**
      * @param PluginInterface $plugin
      * @param class-string<Capability> $capability
-     * @throws \RuntimeException On empty or non-string implementation class name value
+     * @throws RuntimeException On empty or non-string implementation class name value
      * @return null|string       The fully qualified class of the implementation or null if Plugin is not of Capable type or does not provide it
      */
     protected function getCapabilityImplementationClassName(PluginInterface $plugin, string $capability): ?string
@@ -112,16 +114,15 @@ class PluginManager
         }
 
         $capabilities = $plugin->capabilities();
-
-        if (! empty($capabilities[$capability]) && is_string($capabilities[$capability]) && trim($capabilities[$capability])) {
+        if (! empty($capabilities[$capability]) && trim($capabilities[$capability])) {
             return trim($capabilities[$capability]);
         }
 
         if (
             array_key_exists($capability, $capabilities)
-            && (empty($capabilities[$capability]) || ! is_string($capabilities[$capability]) || ! trim($capabilities[$capability]))
+            && (empty($capabilities[$capability]) || ! trim($capabilities[$capability]))
         ) {
-            throw new \UnexpectedValueException('Plugin ' . get_class($plugin) . ' provided invalid capability class name(s), got ' . var_export($capabilities[$capability], true));
+            throw new UnexpectedValueException('Plugin ' . get_class($plugin) . ' provided invalid capability class name(s), got ' . var_export($capabilities[$capability], true));
         }
 
         return null;

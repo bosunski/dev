@@ -7,6 +7,14 @@ use Humbug\SelfUpdate\Updater;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
+/**
+ * @phpstan-type RawRelease array{
+ *   tag_name: string,
+ *   assets: array{url: string, name: string}[]
+ * }
+ *
+ * @phpstan-type RawAsset array{url: string, name: string}
+ */
 class PrivateGitHubReleaseStrategy extends GithubStrategy
 {
     protected string $baseUrl = 'https://api.github.com/repos/phpsandbox/dev';
@@ -19,8 +27,14 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
         'Darwin' => 'macOS',
     ];
 
+    /**
+     * @var null|RawAsset
+     */
     protected ?array $asset = null;
 
+    /**
+     * @var null|RawRelease
+     */
     protected ?array $release = null;
 
     protected function buildAssetName(string $version): string
@@ -47,25 +61,43 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
         return $this->baseUrl . '/releases/latest';
     }
 
+    /**
+     * @return RawRelease
+     */
+    protected function getLatestReleaseFromGitHub(): array
+    {
+        if ($this->release) {
+            return $this->release;
+        }
+
+        $token = env('GITHUB_TOKEN');
+        if (! $token || ! is_string($token)) {
+            throw new RuntimeException('GITHUB_TOKEN must be set and be a string');
+        }
+
+        // Trusting GitHub blindly here
+        // @phpstan-ignore-next-line
+        return $this->release = Http::asJson()->withHeaders([
+            'Authorization'        => "Bearer $token",
+            'X-GitHub-Api-Version' => '2022-11-28',
+        ])->get($this->getLatestReleaseUrl())->throw()->json();
+    }
+
+    /**
+     * @return RawAsset
+     */
     protected function getLatestReleaseDetailsFromGitHub(): array
     {
         if ($this->asset) {
             return $this->asset;
         }
 
-        $token = env('GITHUB_TOKEN');
-        if (! $token) {
-            throw new RuntimeException('GITHUB_TOKEN is not set');
+        if (! $this->release) {
+            $this->release = $this->getLatestReleaseFromGitHub();
         }
 
-        $this->release = Http::asJson()->withHeaders([
-            'Authorization'        => "Bearer $token",
-            'X-GitHub-Api-Version' => '2022-11-28',
-        ])->get($this->getLatestReleaseUrl())->throw()->json();
-
-        $assets = $this->release['assets'] ?? [];
-        $version = $this->release['tag_name'] ?? null;
-
+        $assets = $this->release['assets'];
+        $version = $this->release['tag_name'];
         if (! $version) {
             throw new RuntimeException('Failed to get the latest release version');
         }
@@ -83,8 +115,8 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
     protected function downloadAsset(string $url, string $path): void
     {
         $token = env('GITHUB_TOKEN');
-        if (! $token) {
-            throw new RuntimeException('GITHUB_TOKEN is not set');
+        if (! $token || ! is_string($token)) {
+            throw new RuntimeException('GITHUB_TOKEN must be set and be a string');
         }
 
         Http::sink($path)->withHeaders([
@@ -101,7 +133,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
     public function getCurrentRemoteVersion(Updater $updater): string
     {
         if (! $this->release) {
-            $this->getLatestReleaseDetailsFromGitHub();
+            $this->release = $this->getLatestReleaseFromGitHub();
         }
 
         return $this->release['tag_name'];
@@ -109,6 +141,10 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
 
     public function download(Updater $updater): void
     {
+        if (! $this->asset) {
+            $this->asset = $this->getLatestReleaseDetailsFromGitHub();
+        }
+
         $this->downloadAsset($this->asset['url'], $updater->getTempPharFile());
     }
 }

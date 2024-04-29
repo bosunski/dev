@@ -32,13 +32,14 @@ class ConfigCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $inputs = $this->hasSignature ? array_merge($input->getArguments(), $input->getOptions()) : $input->getArgument('args');
+        $inputs = array_filter((array) $inputs, fn ($value) => is_string($value));
 
         $command = $this->command['run'];
         foreach ($inputs as $key => $value) {
             $command = str_replace("[\$$key]", $value, $command);
         }
 
-        return $this->dev->runner->spawn($command, $this->dev->config->cwd())
+        return (int) $this->dev->runner->spawn($command, $this->dev->config->cwd())
             ->wait()
             ->exitCode();
     }
