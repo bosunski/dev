@@ -15,7 +15,7 @@ class SiteStep implements Step
 
     public function name(): string
     {
-        return "Creating Herd site: {$this->site->host}";
+        return "Creating Valet site: {$this->site->host}";
     }
 
     /**
@@ -53,6 +53,6 @@ class SiteStep implements Step
 
     public function id(): string
     {
-        return "herd.site.{$this->site->host}";
+        return "valet.site.{$this->site->host}";
     }
 }
