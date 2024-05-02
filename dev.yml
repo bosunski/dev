@@ -9,7 +9,7 @@ steps:
         input: builds/dev.phar
         output: builds/dev
       php:
-        version: 8.2
+        version: 8.3
         preset: common
         extensions:
           - swoole
@@ -47,7 +47,7 @@ commands:
     desc: Fix PHP code style
     run: pint
   analyse:
-    desc: Check PHP version
+    desc: PHPStan Analyse
     run: ./vendor/bin/phpstan analyse --memory-limit=2G
   test:
     desc: Run PHP tests

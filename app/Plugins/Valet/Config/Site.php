@@ -4,6 +4,9 @@ namespace App\Plugins\Valet\Config;
 
 use Illuminate\Support\Str;
 
+/**
+ * @phpstan-import-type RawSiteConfig from ValetConfig
+ */
 class Site
 {
     public readonly string $type;
@@ -14,7 +17,10 @@ class Site
 
     public readonly bool $secure;
 
-    public function __construct(array|string $site)
+    /**
+     * @param RawSiteConfig|string $site
+     */
+    public function __construct(array | string $site)
     {
         if (is_array($site)) {
             $this->type = isset($site['proxy']) ? 'proxy' : 'link';

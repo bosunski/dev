@@ -2,47 +2,48 @@
 
 namespace App\Plugins\Valet\Concerns;
 
+use App\Plugins\Valet\Config\ValetConfig;
 use App\Plugins\Valet\ValetStepResolver;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\Exceptions\ProcessTimedOutException;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use RuntimeException;
 
+/**
+ * @phpstan-import-type RawValetEnvironment from ValetConfig
+ * @phpstan-import-type RawValetConfig from ValetConfig
+ */
 trait ResolvesEnvironment
 {
     /**
-     * @param array{
-     *      php: array{version?: string} | string
-     * } $config
-     * @return array{
-     *      php: array{bin: string, pecl: string, dir: string, version: string, extensionPath: string, cwd: string, home: string}
-     * }
+     * @param RawValetConfig $config
+     * @return RawValetEnvironment
      * @throws ProcessFailedException
      * @throws ProcessTimedOutException
      * @throws RuntimeException
      */
     private function resolveEnvironmentSettings(array $config): array
     {
-        $environment = ['php' => []];
-        $configVersion = (string) Arr::get($config, 'php.version', Arr::get($config, 'php', ''));
+        $configVersion = '8.3';
+        if (isset($config['php'])) {
+            $configVersion = is_string($config['php'])
+                ? $config['php']
+                : $config['php']['version'];
+        }
+
         $bin = self::phpPath($configVersion) ?: trim(`which php` ?? '');
 
-        $environment = [
-            'php' => [
-                'bin'           => $bin ?: trim(`which php` ?? ''),
-                'pecl'          => dirname($bin) . '/pecl',
-                'dir'           => dirname($bin, 2),
-                'extensionPath' => $this->currentPhpExtensionPath($bin),
-                'version'       => ValetStepResolver::PHP_VERSION_MAP[$configVersion] ?? $configVersion,
-                'cwd'           => $this->dev->config->cwd(),
-                'home'          => $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null,
-            ],
+        return [
+            'bin'           => $bin ?: trim(`which php` ?? ''),
+            'pecl'          => dirname($bin) . '/pecl',
+            'dir'           => dirname($bin, 2),
+            'extensionPath' => $this->currentPhpExtensionPath($bin),
+            'version'       => ValetStepResolver::PHP_VERSION_MAP[$configVersion] ?? $configVersion,
+            'cwd'           => $this->dev->config->cwd(),
+            'home'          => $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null,
         ];
-
-        return $environment;
     }
 
     protected static function phpPath(string $version): string
@@ -67,7 +68,13 @@ trait ResolvesEnvironment
         }
 
         $latest = $versions->keys()->first();
-        $versions->each(function ($path, $version) use (&$latest): void {
+        if (! is_string($latest)) {
+            // The PHP version is not found and probaly because the version is not installed
+            // in this case, there should be a step to install the PHP version before we get here
+            return '';
+        }
+
+        $versions->each(function (string $path, string $version) use (&$latest): void {
             if (version_compare($version, $latest, '>')) {
                 $latest = $version;
             }

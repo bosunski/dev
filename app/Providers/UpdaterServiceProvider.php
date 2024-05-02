@@ -28,20 +28,27 @@ class UpdaterServiceProvider extends ServiceProvider
 
         $this->app->singleton(Updater::class, function () use ($build) {
             $updater = new PharUpdater($build->getPath(), false, PharUpdater::STRATEGY_GITHUB);
-
-            $composer = json_decode(file_get_contents(base_path('composer.json')), true);
-            $name = $composer['name'];
-
-            $strategy = $this->app['config']->get('updater.strategy', GithubStrategy::class);
-
-            $updater->setStrategyObject($this->app->make($strategy));
-
-            if ($updater->getStrategy() instanceof StrategyInterface) {
-                $updater->getStrategy()->setPackageName($name);
+            $composerJsonContent = file_get_contents(base_path('composer.json'));
+            if ($composerJsonContent === false) {
+                throw new \RuntimeException('composer.json not found');
             }
 
-            if (method_exists($updater->getStrategy(), 'setCurrentLocalVersion')) {
-                $updater->getStrategy()->setCurrentLocalVersion(config('app.version'));
+            $composer = json_decode($composerJsonContent, true);
+            if ($composer === null || ! is_array($composer) || ! isset($composer['name'])) {
+                throw new \RuntimeException('composer.json is not valid');
+            }
+
+            $name = $composer['name'];
+            /** @var string $strategy */
+            $strategy = $this->app->make('config')->get('updater.strategy', GithubStrategy::class);
+            $updater->setStrategyObject($this->app->make($strategy));
+
+            if (($stg = $updater->getStrategy()) instanceof StrategyInterface) {
+                $stg->setPackageName($name);
+
+                if (method_exists($stg, 'setCurrentLocalVersion')) {
+                    $updater->getStrategy()->setCurrentLocalVersion(config('app.version'));
+                }
             }
 
             return new Updater($updater);

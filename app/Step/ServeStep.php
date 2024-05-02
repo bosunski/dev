@@ -54,7 +54,7 @@ class ServeStep implements StepInterface
         try {
             $ps = $project->getServe();
             $shouldPrefixProjectName = $ps->count() > 1;
-            $processes = $ps->values()->flatMap(fn ($commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
+            $processes = $ps->values()->flatMap(fn (array $commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
                 $name = $shouldPrefixProjectName ? $process['project'] . ':' . $process['name'] : $process['name'];
                 $color = $this->generateRandomColor($index);
 
@@ -112,15 +112,15 @@ class ServeStep implements StepInterface
     private function trapSignals(): void
     {
         $this->trapIds = [
-            Coroutine::create(function (): void {
+            go(function (): void {
                 Coroutine::waitSignal(SIGINT);
                 $this->signal();
             }),
-            Coroutine::create(function (): void {
+            go(function (): void {
                 Coroutine::waitSignal(SIGTERM);
                 $this->signal();
             }),
-            Coroutine::create(function (): void {
+            go(function (): void {
                 Coroutine::waitSignal(SIGHUP);
                 $this->signal();
             }),

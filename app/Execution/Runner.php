@@ -123,7 +123,7 @@ class Runner
     }
 
     /**
-     * @param array<string, string|null> $env
+     * @param array<string, string> $env
      * @return array<string, string|null>
      * @throws InvalidArgumentException
      */
@@ -172,7 +172,7 @@ class Runner
     /**
      * @param string[]|string $command
      * @param null|string $path
-     * @param array<string, string|null> $env
+     * @param array<string, string> $env
      * @return SymfonyProcess
      * @throws InvalidArgumentException
      */
@@ -184,7 +184,7 @@ class Runner
     /**
      * @param string[]|string $command
      * @param null|string $path
-     * @param array<string, string|null> $env
+     * @param array<string, string> $env
      * @return ProcProcess
      * @throws InvalidArgumentException
      */

@@ -2,11 +2,13 @@
 
 namespace App\Config;
 
+use App\Exceptions\Config\InvalidConfigException;
 use App\Exceptions\UserException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
+use Webmozart\Assert\Assert;
 
 /**
  * @phpstan-type Command array{
@@ -40,7 +42,7 @@ use Symfony\Component\Yaml\Yaml;
  *      serve?: array<string, Serve>|string,
  *      sites?: array<string, string>,
  *      env?: array<string, string>,
- *      projects: non-empty-string[]
+ *      projects?: non-empty-string[]
  * }
  */
 class Config
@@ -64,7 +66,7 @@ class Config
 
     /**
      * @var array{
-     *      disabled?: string[],
+     *      disabled: string[],
      *      locks: array<string, string>,
      *      env: array<string, string>,
      * }
@@ -99,13 +101,16 @@ class Config
 
     private function readSettings(): void
     {
-        $jsonConfig = ['disabled' => []];
         $jsonPath = $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . 'config.json');
-        if (file_exists($jsonPath)) {
-            $jsonConfig = array_merge($jsonConfig, json_decode(file_get_contents($jsonPath), true));
-        }
+        if (file_exists($jsonPath) && $content = @file_get_contents($jsonPath)) {
+            $config = json_decode($content, true);
+            if ($config === null || ! is_array($config)) {
+                throw new UserException("Failed to parse $jsonPath. Please check the file for syntax errors.");
+            }
 
-        $this->settings = array_merge($this->settings, $jsonConfig);
+            // @phpstan-ignore-next-line
+            $this->settings = array_replace_recursive($this->settings, $config);
+        }
     }
 
     public function writeSettings(): void
@@ -128,17 +133,23 @@ class Config
 
     /**
      * @param bool $all
-     * @return Collection<int, string>
+     * @return Collection<int, non-empty-string>
      */
     public function projects(bool $all = false): Collection
     {
-        return collect($this->config['projects'] ?? [])->filter(fn ($service) => $all || ! in_array($service, $this->settings['disabled']))->map(function (string $service) {
-            if ($service === $this->projectName()) {
-                throw new UserException('You cannot reference the current project in its own config!');
-            }
+        // @phpstan-ignore-next-line
+        return collect($this->config['projects'] ?? [])
+            ->filter(fn (string $project) => $all || ! in_array($project, $this->settings['disabled']))
+                /** @return non-empty-string */
+            ->map(function (string $project): string {
+                if ($project === $this->projectName()) {
+                    throw new UserException('You cannot reference the current project in its own config!');
+                }
 
-            return $service;
-        })->unique();
+                Assert::notEmpty($project);
+
+                return $project;
+            })->unique();
     }
 
     /**
@@ -172,7 +183,7 @@ class Config
 
     public function path(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR));
+        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
     public function servicePath(?string $path = null): string
@@ -267,9 +278,9 @@ class Config
         }
 
         try {
-            return Yaml::parseFile(self::fullPath($path));
+            return (array) Yaml::parseFile(self::fullPath($path));
         } catch (ParseException $e) {
-            throw new UserException($e->getMessage());
+            throw new InvalidConfigException($e);
         }
     }
 

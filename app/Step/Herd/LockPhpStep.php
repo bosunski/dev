@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 
 class LockPhpStep implements StepInterface
 {
-    public readonly string|float $id;
+    public readonly string $id;
 
     public function __construct(protected readonly string|float $version)
     {

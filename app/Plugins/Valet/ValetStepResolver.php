@@ -7,6 +7,7 @@ use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
 use App\Plugins\Valet\Config\ValetConfig;
+use InvalidArgumentException;
 
 class ValetStepResolver implements StepResolverInterface
 {
@@ -20,8 +21,6 @@ class ValetStepResolver implements StepResolverInterface
         '7.4' => 'php@7.4',
     ];
 
-    protected array $config = [];
-
     public function __construct(protected readonly Dev $dev)
     {
     }
@@ -32,6 +31,10 @@ class ValetStepResolver implements StepResolverInterface
      */
     public function resolve(mixed $args): Config | Step
     {
+        if (! is_array($args)) {
+            throw new InvalidArgumentException('Valet configuration should be an array');
+        }
+
         /**
          * Consoder resolving enviroment and injecting envs before
          * this resolver is called. For example, because this resolve function
@@ -41,9 +44,6 @@ class ValetStepResolver implements StepResolverInterface
          * We should be able to inject the environment variables, anytime environment
          * variables are needed.
          */
-        $environment = $this->resolveEnvironmentSettings($args);
-        $this->config = array_merge($this->config, $args, ['environment' => $environment]);
-
-        return new ValetConfig($args, $environment);
+        return new ValetConfig($args, $this->resolveEnvironmentSettings($args));
     }
 }

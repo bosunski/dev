@@ -2,12 +2,10 @@
 
 namespace Tests\Unit\Utils;
 
-use App\IO\StdIO;
+use App\IO\IOInterface;
 use App\Utils\Value;
 use Laravel\Prompts\Key;
-use Laravel\Prompts\Output\ConsoleOutput;
 use Laravel\Prompts\Prompt;
-use Symfony\Component\Console\Input\ArrayInput;
 use Tests\TestCase;
 
 class ValueTest extends TestCase
@@ -91,7 +89,7 @@ class ValueTest extends TestCase
             Key::ENTER,
         ]);
 
-        $io = new StdIO(new ArrayInput([]), new ConsoleOutput());
+        $io = app(IOInterface::class);
         Value::setIO($io);
 
         $value = new Value('$PROMPT(password: Please enter your BAR key)');

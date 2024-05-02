@@ -36,8 +36,14 @@ class ProcessOutput
         $this->writeOutput($process, sprintf("\033[0;31m%s\033[0m\n", $output));
     }
 
+    /**
+     * @param string $string
+     * @return string[]
+     */
     protected function outputToLines(string $string): array
     {
-        return preg_split("/(?<=\r\n|\n|\r)/", $string);
+        $lines = preg_split("/(?<=\r\n|\n|\r)/", $string);
+
+        return $lines === false ? [] : $lines;
     }
 }

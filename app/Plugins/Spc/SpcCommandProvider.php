@@ -6,6 +6,9 @@ use App\Dev;
 use App\Plugin\Capability\CommandProvider;
 use App\Plugins\Spc\Config\SpcConfig;
 
+/**
+ * @phpstan-import-type RawSpcConfig from SpcConfig
+ */
 class SpcCommandProvider implements CommandProvider
 {
     public function __construct(protected Dev $dev)
@@ -22,6 +25,7 @@ class SpcCommandProvider implements CommandProvider
 
     public function getConfigCommands(): array
     {
+        /** @var RawSpcConfig|array{} $rawSpcConfig */
         $rawSpcConfig = $this->dev->config->up()->get(SpcConfig::Name) ?? [];
         if (empty($rawSpcConfig)) {
             return [];

@@ -4,10 +4,18 @@ namespace App\Plugins\Composer\Steps;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Composer\Config\ComposerConfig;
 use Exception;
 
+/**
+ * @phpstan-import-type RawComposerConfig from ComposerConfig
+ */
 class PackagesStep implements Step
 {
+    /**
+     * @param RawComposerConfig['packages'] $packages
+     * @return void
+     */
     public function __construct(private readonly array $packages)
     {
     }
@@ -36,27 +44,19 @@ class PackagesStep implements Step
                     return $package;
                 }
 
-                throw new Exception("Unknown package format: $package");
+                $var = var_export($package, true);
+
+                throw new Exception("Unknown package format: $var");
             })->join($glue);
-    }
-
-    public function command(): ?string
-    {
-        return "composer global require {$this->formatPackages()}";
-    }
-
-    public function checkCommand(): ?string
-    {
-        return $this->command();
     }
 
     public function run(Runner $runner): bool
     {
-        return $runner->exec($this->command());
+        return $runner->exec("composer global require {$this->formatPackages()}");
     }
 
     public function done(Runner $runner): bool
     {
-        return $runner->exec($this->checkCommand());
+        return false;
     }
 }

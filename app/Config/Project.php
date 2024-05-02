@@ -7,16 +7,16 @@ use App\Exceptions\UserException;
 use App\Factory;
 use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Contracts\Step;
+use App\Process\ProcProcess;
 use Dotenv\Dotenv;
 use Dotenv\Exception\InvalidFileException;
 use Exception;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use RuntimeException;
-use Symfony\Component\Process\Process;
 
 /**
- * @phpstan-type ServeConfig array{name: string, project: string, instance: Process}
+ * @phpstan-type ServeConfig array{name: string, project: string, instance: ProcProcess}
  * @phpstan-import-type Serve from Config
  */
 class Project
@@ -122,7 +122,7 @@ class Project
      * Get envs from a .env.* file
      *
      * @param string|false $file
-     * @return array<string, string|null>
+     * @return array<string, string>
      * @throws UserException
      */
     private function getEnv(string|false $file = '.env'): array
@@ -148,7 +148,7 @@ class Project
                 throw new RuntimeException("Unable to retrieve file at $path");
             }
 
-            return Dotenv::parse($content);
+            return array_filter(Dotenv::parse($content));
         } catch (InvalidFileException) {
             throw new UserException("Failed to parse $file. Please check the file for syntax errors.");
         }

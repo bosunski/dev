@@ -4,7 +4,11 @@ namespace App\Plugins\Valet;
 
 use App\Dev;
 use App\Plugin\Capability\PathProvider;
+use App\Plugins\Valet\Config\ValetConfig;
 
+/**
+ * @phpstan-import-type RawValetConfig from ValetConfig
+ */
 class ValetPathProvider implements PathProvider
 {
     use Concerns\ResolvesEnvironment;
@@ -15,6 +19,7 @@ class ValetPathProvider implements PathProvider
 
     public function paths(): array
     {
+        /** @var RawValetConfig $config */
         $config = $this->dev->config->up()->get(ValetPlugin::NAME) ?? [];
         if (empty($config)) {
             return [];
@@ -22,8 +27,6 @@ class ValetPathProvider implements PathProvider
 
         $environment = $this->resolveEnvironmentSettings($config);
 
-        return [
-            dirname($environment['php']['bin']),
-        ];
+        return [dirname($environment['bin'])];
     }
 }

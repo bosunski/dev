@@ -4,12 +4,14 @@ namespace App\Plugins\Valet\Steps;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Config\ValetConfig;
 use Illuminate\Support\Str;
 
+/**
+ * @phpstan-import-type RawValetEnvironment from ValetConfig
+*/
 class LockPhpStep implements Step
 {
-    public readonly string $id;
-
     private const PHP_VERSION_MAP = [
         '8.3' => 'php',
         '8.2' => 'php@8.2',
@@ -18,34 +20,23 @@ class LockPhpStep implements Step
         '7.4' => 'php@7.4',
     ];
 
-    public function __construct(protected readonly string $version, protected readonly array $environment = [])
+    /**
+     * @param string $version
+     * @param RawValetEnvironment $environment
+     * @return void
+     */
+    public function __construct(protected readonly string $version, protected readonly array $environment)
     {
-        $this->id = Str::random(10);
     }
 
     public function id(): string
     {
-        return $this->id;
-    }
-
-    public function priority(): int
-    {
-        return Step::PRIORITY_HIGH;
+        return Str::random(10);
     }
 
     public function name(): string
     {
         return 'Lock PHP version';
-    }
-
-    public function command(): ?string
-    {
-        return null;
-    }
-
-    public function checkCommand(): ?string
-    {
-        return null;
     }
 
     public function run(Runner $runner): bool
