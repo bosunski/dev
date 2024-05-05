@@ -28,9 +28,9 @@ trait ResolvesEnvironment
     {
         $configVersion = '8.3';
         if (isset($config['php'])) {
-            $configVersion = is_string($config['php'])
-                ? $config['php']
-                : $config['php']['version'];
+            $configVersion = is_array($config['php'])
+                ? $config['php']['version']
+                : $config['php'];
         }
 
         $bin = self::phpPath($configVersion) ?: trim(`which php` ?? '');

@@ -6,6 +6,7 @@ use App\Config\Config;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use Dotenv\Dotenv;
+use Dotenv\Exception\InvalidFileException;
 
 class EnvSubstituteStep implements Step
 {
@@ -33,9 +34,8 @@ class EnvSubstituteStep implements Step
         $envContent = $envContent === false ? '' : $envContent;
         $sampleEnvContent = $sampleEnvContent === false ? '' : $sampleEnvContent;
 
-        // ToDo: Handle errors when parsing .env files
-        $sampleEnvs = $sampleEnvContent ? Dotenv::parse($sampleEnvContent) : [];
-        $currentEnvs = $envContent ? Dotenv::parse($envContent) : [];
+        $sampleEnvs = $sampleEnvContent ? $this->parseEnv($sampleEnvContent) : [];
+        $currentEnvs = $envContent ? $this->parseEnv($envContent) : [];
 
         /**
          * If the .env file doesn't end with a new line, we want to add one before adding
@@ -92,12 +92,11 @@ class EnvSubstituteStep implements Step
          */
         foreach ($runner->config()->envs() as $key => $value) {
             $insert = "$key=\"$value\"";
-
-            if (! preg_match("/$key=(.*)/m", $envContent)) {
+            if (! preg_match("/^$key=(.*)/m", $envContent)) {
                 $envContent .= $insert;
                 $envWasAdded = true;
             } else {
-                $replace = preg_replace("/$key=(.*)/m", $insert, $envContent);
+                $replace = preg_replace("/^$key=(.*)/m", $insert, $envContent);
                 if ($replace) {
                     $envContent = $replace;
                     $envWasAdded = true;
@@ -119,6 +118,22 @@ class EnvSubstituteStep implements Step
         }
 
         return true;
+    }
+
+    /**
+     * Parse the content of an env file.
+     *
+     * @param string $content
+     *
+     * @return array<string,string|null>
+     */
+    protected function parseEnv(string $content): array
+    {
+        try {
+            return Dotenv::parse($content);
+        } catch (InvalidFileException) {
+            return [];
+        }
     }
 
     private function shouldCopyEnv(Config $config): bool

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "616b10102706dc99ae6c6f01da53dc2e",
+    "content-hash": "49918ee00ae739dad2fe9980ce7d5f0e",
     "packages": [
         {
             "name": "brick/math",
@@ -896,6 +896,153 @@
                 }
             ],
             "time": "2023-12-03T19:50:20+00:00"
+        },
+        {
+            "name": "hyperf/engine",
+            "version": "v2.11.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hyperf/engine.git",
+                "reference": "26e0b65fc2a63a00266e7124e221c6f3fb2c8e95"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/hyperf/engine/zipball/26e0b65fc2a63a00266e7124e221c6f3fb2c8e95",
+                "reference": "26e0b65fc2a63a00266e7124e221c6f3fb2c8e95",
+                "shasum": ""
+            },
+            "require": {
+                "hyperf/engine-contract": "~1.10.0",
+                "php": ">=8.0"
+            },
+            "conflict": {
+                "ext-swoole": "<5.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "hyperf/guzzle": "^3.0",
+                "hyperf/http-message": "^3.0",
+                "mockery/mockery": "^1.5",
+                "phpstan/phpstan": "^1.0",
+                "phpunit/phpunit": "^9.4",
+                "swoole/ide-helper": "5.*"
+            },
+            "suggest": {
+                "ext-sockets": "*",
+                "ext-swoole": ">=5.0",
+                "hyperf/http-message": "Required to use ResponseEmitter.",
+                "psr/http-message": "Required to use WebSocket Frame."
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.11-dev"
+                },
+                "hyperf": {
+                    "config": "Hyperf\\Engine\\ConfigProvider"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/Functions.php"
+                ],
+                "psr-4": {
+                    "Hyperf\\Engine\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Coroutine engine provided by swoole.",
+            "keywords": [
+                "engine",
+                "hyperf",
+                "php",
+                "swoole"
+            ],
+            "support": {
+                "issues": "https://github.com/hyperf/engine/issues",
+                "source": "https://github.com/hyperf/engine/tree/v2.11.0"
+            },
+            "funding": [
+                {
+                    "url": "https://hyperf.wiki/#/zh-cn/donate",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://opencollective.com/hyperf",
+                    "type": "open_collective"
+                }
+            ],
+            "time": "2024-04-17T13:36:28+00:00"
+        },
+        {
+            "name": "hyperf/engine-contract",
+            "version": "v1.10.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/hyperf/engine-contract.git",
+                "reference": "2714a8ba6d6b916e5bd373ff680df9569a4c9eef"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/hyperf/engine-contract/zipball/2714a8ba6d6b916e5bd373ff680df9569a4c9eef",
+                "reference": "2714a8ba6d6b916e5bd373ff680df9569a4c9eef",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.0",
+                "mockery/mockery": "^1.0",
+                "phpstan/phpstan": "^1.0",
+                "phpunit/phpunit": ">=7.0",
+                "psr/http-message": "^1.0",
+                "swoole/ide-helper": "^4.5"
+            },
+            "suggest": {
+                "psr/http-message": "Required to use WebSocket Frame."
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.9-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Hyperf\\Engine\\Contract\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Contract for Coroutine Engine",
+            "keywords": [
+                "contract",
+                "coroutine",
+                "engine",
+                "hyperf",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/hyperf/engine-contract/issues",
+                "source": "https://github.com/hyperf/engine-contract/tree/v1.10.1"
+            },
+            "funding": [
+                {
+                    "url": "https://hyperf.wiki/#/zh-cn/donate",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://opencollective.com/hyperf",
+                    "type": "open_collective"
+                }
+            ],
+            "time": "2024-04-17T13:34:51+00:00"
         },
         {
             "name": "illuminate/bus",

@@ -4,25 +4,29 @@ namespace App\Step;
 
 use App\Config\Project;
 use App\Dev;
-use App\Execution\Runner;
 use App\Process\Process as AppProcessProcess;
 use App\Process\ProcessOutput;
 use Exception;
+use Hyperf\Engine\Channel;
+use Hyperf\Engine\Coroutine;
+use Hyperf\Engine\Signal;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
-use Swoole\Coroutine;
-use Swoole\Coroutine\Channel;
+use Swoole\Coroutine as SwooleCoroutine;
 use Swoole\Coroutine\WaitGroup;
 use Swoole\Timer;
 
-class ServeStep implements StepInterface
+class ServeStep
 {
     /**
      * @var Collection<int, AppProcessProcess>
      */
     protected Collection $processes;
 
+    /**
+     * @var Channel<bool>
+     */
     protected Channel $interrupted;
 
     /**
@@ -36,15 +40,10 @@ class ServeStep implements StepInterface
         $this->interrupted = new Channel();
     }
 
-    public function name(): ?string
-    {
-        return null;
-    }
-
     /**
      * @throws Exception
      */
-    public function run(Runner $runner): bool
+    public function run(): bool
     {
         $output = new ProcessOutput();
         $project = new Project($this->dev);
@@ -67,6 +66,7 @@ class ServeStep implements StepInterface
             });
 
             $wg = new WaitGroup();
+            /** @var Channel<bool> $done */
             $done = new Channel($processes->count());
 
             $processes->each(function (AppProcessProcess $process) use ($done, $wg): void {
@@ -85,7 +85,7 @@ class ServeStep implements StepInterface
 
             $wg->wait();
             foreach ($this->trapIds as $id) {
-                Coroutine::cancel($id);
+                SwooleCoroutine::cancel($id);
             }
 
             return true;
@@ -106,24 +106,24 @@ class ServeStep implements StepInterface
             throw new RuntimeException('DEV was unable to retrieve process ID for persistence.');
         }
 
-        File::put($this->dev->config->path($name = $this->dev->name), (string) $pid);
+        File::put($this->dev->config->path($this->dev->name), (string) $pid);
     }
 
     private function trapSignals(): void
     {
         $this->trapIds = [
-            go(function (): void {
-                Coroutine::waitSignal(SIGINT);
+            Coroutine::create(function (): void {
+                Signal::wait(SIGINT);
                 $this->signal();
-            }),
-            go(function (): void {
-                Coroutine::waitSignal(SIGTERM);
+            })->getId(),
+            Coroutine::create(function (): void {
+                Signal::wait(SIGTERM);
                 $this->signal();
-            }),
-            go(function (): void {
-                Coroutine::waitSignal(SIGHUP);
+            })->getId(),
+            Coroutine::create(function (): void {
+                Signal::wait(SIGHUP);
                 $this->signal();
-            }),
+            })->getId(),
         ];
     }
 
@@ -132,11 +132,6 @@ class ServeStep implements StepInterface
         $colors = [2, 3, 4, 5, 6, 42, 130, 103, 129, 108];
 
         return $colors[$index % count($colors)];
-    }
-
-    public function done(Runner $runner): bool
-    {
-        return false;
     }
 
     public function id(): string
@@ -149,6 +144,10 @@ class ServeStep implements StepInterface
         $this->interrupted->push(true);
     }
 
+    /**
+     * @param Channel<bool> $done
+     * @return void
+     */
     protected function waitForExit(Channel $done): void
     {
         $this->waitForDoneOrInterrupt($done);
@@ -177,6 +176,10 @@ class ServeStep implements StepInterface
         $done->close();
     }
 
+    /**
+     * @param Channel<bool> $done
+     * @return void
+     */
     protected function waitForDoneOrInterrupt(Channel $done): void
     {
         $finished = new Channel();

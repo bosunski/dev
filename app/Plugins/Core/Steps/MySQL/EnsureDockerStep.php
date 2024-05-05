@@ -90,11 +90,11 @@ class EnsureDockerStep implements Step
          * - If OrbStack is running
          * - If the current docker engine is powered by OrbStack
          */
-        if ($this->isOrbStackPowered($runner)) {
-            $this->markAllCompleted();
+        // if ($this->isOrbStackPowered($runner)) {
+        //     $this->markAllCompleted();
 
-            return true;
-        }
+        //     return true;
+        // }
 
         $orbstackInstalled = $this->orbStackInstalled = ($result = $runner->process('orbctl version')->run())->successful();
         if (! $orbstackInstalled) {

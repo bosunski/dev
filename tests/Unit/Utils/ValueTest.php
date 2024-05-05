@@ -95,4 +95,25 @@ class ValueTest extends TestCase
         $value = new Value('$PROMPT(password: Please enter your BAR key)');
         $this->assertEquals('Hello World', $value->resolve());
     }
+
+    /**
+     * @test
+     */
+    public function promptWithArrayValue(): void
+    {
+        Prompt::fake([
+            'Hello World',
+            Key::ENTER,
+        ]);
+
+        $io = app(IOInterface::class);
+        Value::setIO($io);
+
+        $value = new Value([
+            'prompt' => 'Please enter your BAR key',
+            'type'   => 'password',
+        ]);
+
+        $this->assertEquals('Hello World', $value->resolve());
+    }
 }
