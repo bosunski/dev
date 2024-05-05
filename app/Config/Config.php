@@ -174,7 +174,7 @@ class Config
     }
 
     /**
-     * @return Steps 
+     * @return Steps
      */
     public function steps(): array
     {
