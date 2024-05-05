@@ -11,12 +11,12 @@ use Exception;
 use Illuminate\Support\Collection;
 
 /**
- * @phpstan-import-type Up from DevConfig
+ * @phpstan-import-type Steps from DevConfig
  */
 class UpConfig implements Config
 {
     /**
-     * @param Up $steps
+     * @param Steps $steps
      * @return void
      */
     public function __construct(protected array $steps = [])
