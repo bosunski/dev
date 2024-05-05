@@ -32,12 +32,12 @@ use Webmozart\Assert\Assert;
  *
  * @phpstan-type Step array<string, mixed> | Script
  *
- * @phpstan-type Up array<int, array<string | "script", Step>>
+ * @phpstan-type Steps array<int, array<string | "script", Step>>
  *
  * @phpstan-type RawConfig array{
  *      name?: string,
- *      up?: Up,
- *      steps?: Up,
+ *      up?: Steps,
+ *      steps?: Steps,
  *      commands?: array<string, Command>,
  *      serve?: array<string, Serve>|string,
  *      sites?: array<string, string>,
@@ -174,11 +174,11 @@ class Config
     }
 
     /**
-     * @return RawConfig['up']|array{}
+     * @return Steps
      */
     public function steps(): array
     {
-        return $this->config['up'] ?? [];
+        return $this->config['steps'] ?? [];
     }
 
     public function path(?string $path = null): string

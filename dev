@@ -6,6 +6,7 @@
  */
 
 use App\IO\IOInterface;
+use Swoole\Coroutine;
 
 define('LARAVEL_START', microtime(true));
 
@@ -61,6 +62,10 @@ $lastError = null;
 
 // @phpstan-ignore-next-line
 \Swoole\Coroutine\run(function () use (&$status, &$lastError, $app): void {
+    Coroutine::set([
+        'log_level' => SWOOLE_LOG_ERROR,
+    ]);
+
     try {
         $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
         $io = $app->make(IOInterface::class);

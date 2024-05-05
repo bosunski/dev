@@ -124,7 +124,7 @@ class EnsureDockerStep implements Step
             return false;
         }
 
-        return data_get($info, 'ClientInfo.Context') === 'orbstack';
+        return ! empty(data_get($info, 'ID')) && data_get($info, 'ClientInfo.Context') === 'orbstack';
     }
 
     protected function markAllCompleted(): void
