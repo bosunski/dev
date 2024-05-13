@@ -14,7 +14,7 @@ class Sites implements Config
     /**
      * @param array<int, RawSiteConfig|string> $sites
      */
-    public function __construct(private readonly array $sites)
+    public function __construct(private readonly array $sites, protected string $valetBinary = 'valet')
     {
     }
 
@@ -29,6 +29,6 @@ class Sites implements Config
      */
     private function makeStep(array|string $site): Step
     {
-        return new SiteStep(new Site($site));
+        return new SiteStep(new Site($site, $this->valetBinary));
     }
 }

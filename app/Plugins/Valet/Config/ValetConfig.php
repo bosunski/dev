@@ -4,6 +4,7 @@ namespace App\Plugins\Valet\Config;
 
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Steps\InstallValetStep;
 use App\Plugins\Valet\Steps\LockPhpStep;
 use Exception;
 
@@ -36,7 +37,9 @@ use Exception;
  *      extensionPath: string,
  *      cwd: string,
  *      home: string,
- *      pecl: string
+ *      pecl: string,
+ *      valet: string,
+ *      composer: string
  * }
  */
 class ValetConfig implements Config
@@ -57,14 +60,14 @@ class ValetConfig implements Config
      */
     public function steps(): array
     {
-        $steps = [];
+        $steps = [new InstallValetStep($this->environment['composer'], $this->environment['valet'])];
         if (isset($this->config['php'])) {
             $config = $this->config['php'];
             $steps[] = is_array($config) ? new PhpConfig($config, $this->environment) : new LockPhpStep($config, $this->environment);
         }
 
         if (isset($this->config['sites'])) {
-            $steps[] = new Sites($this->config['sites']);
+            $steps[] = new Sites($this->config['sites'], $this->environment['valet']);
         }
 
         return $steps;
