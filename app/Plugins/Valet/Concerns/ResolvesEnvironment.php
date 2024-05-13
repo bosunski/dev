@@ -43,6 +43,8 @@ trait ResolvesEnvironment
             'version'       => ValetStepResolver::PHP_VERSION_MAP[$configVersion] ?? $configVersion,
             'cwd'           => $this->dev->config->cwd(),
             'home'          => $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null,
+            'composer'      => $composer = $this->composerBinPath(),
+            'valet'         => $this->valetBinPath($composer),
         ];
     }
 
@@ -83,6 +85,23 @@ trait ResolvesEnvironment
         return $versions->get($latest);
     }
 
+    protected function valetBinPath(string $composer): string
+    {
+        $composerHome = trim(self::runCommand("$composer global config home")->output());
+
+        return $composerHome . '/vendor/bin/valet';
+    }
+
+    protected function composerBinPath(): string
+    {
+        $valetPath = `which composer`;
+        if ($valetPath) {
+            return trim($valetPath);
+        }
+
+        return 'composer';
+    }
+
     protected function currentPhpExtensionPath(?string $phpBin = null): string
     {
         $phpBin ??= self::runCommand('which php')->output();
@@ -99,17 +118,6 @@ trait ResolvesEnvironment
 
     protected static function runCommand(string $command): ProcessResult
     {
-        try {
-            return Process::timeout(3)->command($command)->run()->throw();
-        } catch (ProcessFailedException $exception) {
-            // TODO: Fix this
-            // For weird reasons, the command is returning exit code -1 and causing the exception to be thrown
-            // This is a temporary fix to return the result instead of throwing the exception
-            if ($exception->result->exitCode() == -1) {
-                return $exception->result;
-            }
-
-            throw $exception;
-        }
+        return Process::timeout(3)->command($command)->run()->throw();
     }
 }

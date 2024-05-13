@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Valet\Steps;
 
+use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Config\Site;
@@ -9,7 +10,7 @@ use Exception;
 
 class SiteStep implements Step
 {
-    public function __construct(private readonly Site $site)
+    public function __construct(private readonly Site $site, protected string $valetBinary)
     {
     }
 
@@ -21,26 +22,15 @@ class SiteStep implements Step
     /**
      * @throws Exception
      */
-    public function command(): string
-    {
-        return match ($this->site->type) {
-            'link'  => "{$this->herBinary()} link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
-            'proxy' => "{$this->herBinary()} proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
-            default => throw new Exception("Unknown site type: {$this->site->type}"),
-        };
-    }
-
-    private function herBinary(): string
-    {
-        return 'valet';
-    }
-
-    /**
-     * @throws Exception
-     */
     public function run(Runner $runner): bool
     {
-        return $runner->exec($this->command());
+        $command = match ($this->site->type) {
+            'link'  => "{$this->valetBinary} link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
+            'proxy' => "{$this->valetBinary} proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
+            default => throw new UserException("Unknown site type: {$this->site->type}"),
+        };
+
+        return $runner->exec($command);
     }
 
     /**

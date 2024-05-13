@@ -19,6 +19,9 @@ steps:
   - script:
       desc: Install composer dependencies
       run: composer install
+  - valet:
+      sites:
+        - dev
 
   - script:
       desc: Create output.txt

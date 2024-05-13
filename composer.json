@@ -27,7 +27,6 @@
         "ext-pcntl": "*",
         "ext-posix": "*",
         "ext-session": "*",
-        "ext-swoole": "*",
         "guzzlehttp/guzzle": "^7.5",
         "hyperf/engine": "^2.11",
         "illuminate/http": "^10.0",
