@@ -29,6 +29,6 @@ class Sites implements Config
      */
     private function makeStep(array|string $site): Step
     {
-        return new SiteStep(new Site($site, $this->valetBinary));
+        return new SiteStep(new Site($site), $this->valetBinary);
     }
 }

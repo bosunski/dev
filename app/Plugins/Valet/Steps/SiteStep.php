@@ -10,7 +10,7 @@ use Exception;
 
 class SiteStep implements Step
 {
-    public function __construct(private readonly Site $site, protected string $valetBinary = 'valet')
+    public function __construct(private readonly Site $site, protected string $valetBinary)
     {
     }
 
