@@ -4,7 +4,6 @@ namespace App\Plugins\Valet\Steps;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
-use Exception;
 
 class InstallValetStep implements Step
 {
@@ -17,17 +16,11 @@ class InstallValetStep implements Step
         return 'Install Laravel Valet';
     }
 
-    /**
-     * @throws Exception
-     */
     public function run(Runner $runner): bool
     {
         return $runner->exec("$this->composerBinary global require laravel/valet");
     }
 
-    /**
-     * @throws Exception
-     */
     public function done(Runner $runner): bool
     {
         return is_file($this->valetBinary);

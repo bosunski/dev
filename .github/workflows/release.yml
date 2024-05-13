@@ -57,7 +57,7 @@ jobs:
             composer-${{ github.repository }}-${{ runner.os }}-php-
 
       - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
-        run: composer install
+        run: composer install --no-dev --no-suggest
 
       - name: Resolve Variables
         id: vars
