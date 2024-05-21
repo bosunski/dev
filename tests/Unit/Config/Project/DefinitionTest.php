@@ -1,6 +1,7 @@
 <?php
 
 use App\Config\Project\Definition;
+use App\Exceptions\UserException;
 
 it('parses project definition', function (string $project, string $fullName, string $cloneUrl, ?string $ref, string $source = 'github.com'): void {
     $definition = new Definition($project);
@@ -58,3 +59,19 @@ it('parses project definition', function (string $project, string $fullName, str
         'example.com',
     ],
 ]);
+
+it('throws an exception when project definition is empty', function (): void {
+    expect(fn () => new Definition(''))->toThrow(new UserException('Cannot provide an empty project name'));
+});
+
+it('throws an exception when project definition is malformed', function (): void {
+    expect(fn () => new Definition('http://'))->toThrow(new UserException('Malformed project URL http:// cannot be parsed'));
+});
+
+it('throws an exception when path is missing in project definition', function (): void {
+    expect(fn () => new Definition('http://example.com'))->toThrow(new UserException('Malformed project URL http://example.com cannot be parsed'));
+});
+
+it('throws an exception when project definition has more than two parts', function (): void {
+    expect(fn () => new Definition('http://example.com/foo/bar/baz'))->toThrow(new UserException('Malformed project URL http://example.com/foo/bar/baz cannot be parsed'));
+});

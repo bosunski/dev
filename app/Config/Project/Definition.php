@@ -50,37 +50,28 @@ class Definition implements Stringable
             throw new UserException("Malformed project URL $projectUrl cannot be parsed");
         }
 
-        // Extract path and user/repo from URL
         $path = $parsedUrl['path'];
         $userRepo = explode('/', trim($path, '/'));
-        // Check for .git suffix
-        if (isset($userRepo[2]) && $userRepo[2] === '.git') {
-            unset($userRepo[2]);
+
+        if (count($userRepo) != 2) {
+            throw new UserException("Malformed project URL $projectUrl cannot be parsed");
         }
-        // Check for ref (branch, tag, commit)
+
         $ref = null;
         if (isset($parsedUrl['fragment'])) {
             $ref = $parsedUrl['fragment'];
-        } elseif (strpos($path, '#') !== false) {
-            $parts = explode('#', $path);
-            $path = $parts[0];
-            $ref = $parts[1];
         }
-        // Build full name (user/repo)
+
         $fullName = implode('/', $userRepo);
         $scheme = $parsedUrl['scheme'] ?? 'https';
-        // Build clone URL (use https if not provided)
         $cloneUrl = "$scheme://";
         if (isset($parsedUrl['host'])) {
             $cloneUrl .= $parsedUrl['host'];
         } else {
             $cloneUrl .= $this->host;
         }
-        $cloneUrl .= '/' . implode('/', $userRepo);
-        // Add .git suffix if not provided
-        if (! isset($userRepo[2])) {
-            $cloneUrl .= '.git';
-        }
+
+        $cloneUrl .= '/' . $fullName . '.git';
 
         return [$ref, $fullName, $cloneUrl, $parsedUrl['host'] ?? $this->host];
     }
