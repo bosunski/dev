@@ -4,6 +4,7 @@ namespace App\Plugins\Core\Commands;
 
 use App\Config\Config;
 use App\Config\Project;
+use App\Config\Project\Definition;
 use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
@@ -46,9 +47,13 @@ class UpCommand extends Command
      */
     public function handle(Dev $dev): int
     {
+        if (! $dev->initialized()) {
+            throw new UserException('DEV is not initialized for this project. Run `dev init` to initialize DEV.');
+        }
+
         if (! $this->option('self') && $dev->config->projects()->count() > 0) {
             $this->info("🚀 Project contains {$dev->config->projects()->count()} dependency projects. Resolving all dependency projects...");
-            $this->config->projects()->each(fn (string $project) => $this->resolveProject($project, $this->config->path()));
+            $this->config->projects()->each(fn (Definition $project) => $this->resolveProject($project, $this->config->path()));
         }
 
         $this->repository->addProject($rootProject = new Project($dev));
@@ -75,18 +80,18 @@ class UpCommand extends Command
     }
 
     /**
-     * @param non-empty-string $projectName
+     * @param Definition $projectDefinition
      * @throws UserException
      * @throws Exception
      */
-    private function resolveProject(string $projectName, string $root): Project
+    private function resolveProject(Definition $projectDefinition, string $root): Project
     {
         /**
          * First we check if the project is already in the repository.
          * If, so, this means its already been cloned, and we can just return it.
          * This will also eventually prevent infinite loops caused by circular dependencies.
          */
-        if ($project = $this->repository->getProject($projectName)) {
+        if ($project = $this->repository->getProject($projectDefinition)) {
             return $project;
         }
 
@@ -95,17 +100,23 @@ class UpCommand extends Command
          * We also need to resolve any dependencies it has.
          * ToDo: Handle error if the project does not exist or not clonable
          */
-        if ($this->runner->execute([new CloneStep($projectName, 'github.com', ['--depth=1'], $root, true)]) !== 0) {
-            throw new UserException("Failed to clone $projectName");
+        if ($this->runner->execute([new CloneStep($projectDefinition, ['--depth=1'], $root, true)]) !== 0) {
+            throw new UserException("Failed to clone $projectDefinition");
         }
 
-        $config = Config::fromProjectName($projectName, $root);
+        $config = Config::fromProjectName($projectDefinition, $root);
         if ($config->projects()->isNotEmpty()) {
-            $config->projects()->each(fn (string $project) => $this->resolveProject($project, $root));
+            $config->projects()->each(fn (Definition $project) => $this->resolveProject($project, $root));
         }
 
         $dev = Factory::create($this->runner->io(), $config);
-        $this->repository->addProject($project = new Project($dev));
+        $project = new Project($dev);
+        /**
+         * We don't want to add the project to the queue if it's not using DEV.
+         */
+        if ($dev->initialized()) {
+            $this->repository->addProject($project);
+        }
 
         return $project;
     }

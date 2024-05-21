@@ -19,9 +19,6 @@ steps:
   - script:
       desc: Install composer dependencies
       run: composer install
-  - valet:
-      sites:
-        - dev
 
   - script:
       desc: Create output.txt
@@ -54,7 +51,7 @@ commands:
     run: ./vendor/bin/phpstan analyse --memory-limit=2G
   test:
     desc: Run PHP tests
-    run: php -d zend_extension=/opt/homebrew/lib/php/pecl/20220829/xdebug.so -d memory_limit=-1 vendor/bin/pest --coverage
+    run: php vendor/bin/pest
   pro:
     desc: PRO
     run: echo $PSB_DIR

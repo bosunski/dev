@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Core\Commands;
 
+use App\Config\Project\Definition;
 use App\Dev;
 use App\Plugins\Core\Steps\CdStep;
 use App\Plugins\Core\Steps\CloneStep;
@@ -53,9 +54,11 @@ class CloneCommand extends Command
             return 1;
         }
 
+        $definition = new Definition($fullName, self::KNOWN_SOURCES[$source] ?? 'github.com');
+
         return $dev->runner->execute([
-            new CloneStep($fullName, $source = self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('args')),
-            new CdStep($this->argument('repo'), $source),
+            new CloneStep($definition, $this->argument('args')),
+            new CdStep($definition),
         ]);
     }
 }

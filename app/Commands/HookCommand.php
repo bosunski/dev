@@ -20,7 +20,7 @@ class HookCommand extends Command
 
     public function handle(Dev $dev): int
     {
-        if (! $dev->activated()) {
+        if (! $dev->initialized()) {
             return 0;
         }
 
