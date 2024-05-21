@@ -1,6 +1,4 @@
 name: dev
-projects:
-  - bosunski/website#draft/nice-hamilton
 
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
