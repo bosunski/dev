@@ -265,6 +265,16 @@ class Config
     }
 
     /**
+     * @throws UserException
+     */
+    public static function fromProjectDefinition(Definition $project, ?string $root = null): Config
+    {
+        $root = $root ?? sprintf('%s/%s', getcwd(), self::OP_PATH);
+
+        return static::read(static::sourcePath($project->repo, root: $root), $root);
+    }
+
+    /**
      * @return RawConfig|array{}
      * @throws UserException
      */

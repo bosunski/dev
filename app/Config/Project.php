@@ -2,6 +2,7 @@
 
 namespace App\Config;
 
+use App\Config\Project\Definition;
 use App\Dev;
 use App\Exceptions\UserException;
 use App\Factory;
@@ -42,12 +43,12 @@ class Project
      */
     protected function projects(?string $root = null): Collection
     {
-        return $this->config->projects()->unique()->map(function (string $service) use ($root): Project {
-            if ($service === $this->config->projectName()) {
+        return $this->config->projects()->map(function (Definition $service) use ($root): Project {
+            if ($service->repo === $this->config->projectName()) {
                 throw new UserException('You cannot reference the current service in its own config!');
             }
 
-            return new Project(Factory::create($this->dev->io(), Config::fromProjectName($service, $root)));
+            return new Project(Factory::create($this->dev->io(), Config::fromProjectDefinition($service, $root)));
         });
     }
 
