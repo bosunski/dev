@@ -2,13 +2,13 @@
 
 namespace App\Config;
 
+use App\Config\Project\Definition;
 use App\Exceptions\Config\InvalidConfigException;
 use App\Exceptions\UserException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
-use Webmozart\Assert\Assert;
 
 /**
  * @phpstan-type Command array{
@@ -133,20 +133,17 @@ class Config
 
     /**
      * @param bool $all
-     * @return Collection<int, non-empty-string>
+     * @return Collection<int, Definition>
      */
     public function projects(bool $all = false): Collection
     {
-        // @phpstan-ignore-next-line
         return collect($this->config['projects'] ?? [])
-            ->filter(fn (string $project) => $all || ! in_array($project, $this->settings['disabled']))
-                /** @return non-empty-string */
-            ->map(function (string $project): string {
-                if ($project === $this->projectName()) {
+            ->map(fn (string $project) => new Definition($project))
+            ->filter(fn (Definition $project) => $all || ! in_array($project->repo, $this->settings['disabled']))
+            ->map(function (Definition $project): Definition {
+                if ($project->repo === $this->projectName()) {
                     throw new UserException('You cannot reference the current project in its own config!');
                 }
-
-                Assert::notEmpty($project);
 
                 return $project;
             })->unique();

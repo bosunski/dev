@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Core\Commands;
 
+use App\Config\Project\Definition;
 use App\Dev;
 use App\Plugins\Core\Steps\CdStep;
 use Exception;
@@ -42,8 +43,8 @@ class CdCommand extends Command
             return 1;
         }
 
-        return $dev->runner->execute([
-            new CdStep($this->argument('repo'), self::KNOWN_SOURCES[$source] ?? 'github.com'),
-        ]);
+        $project = new Definition($this->argument('repo'), self::KNOWN_SOURCES[$source] ?? 'github.com');
+
+        return $dev->runner->execute([new CdStep($project)]);
     }
 }
