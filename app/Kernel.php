@@ -4,7 +4,7 @@ namespace App;
 
 use App\Bootstrap\ConfiguresDev;
 use App\Cmd\ConfigCommand;
-use App\Config\Config;
+use App\Contracts\Command\ResolvesOwnArgs;
 use App\IO\IOInterface;
 use App\Plugin\Capability\CommandProvider;
 use Illuminate\Console\Application as Artisan;
@@ -14,6 +14,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Collection;
 use LaravelZero\Framework\Commands\Command;
 use LaravelZero\Framework\Kernel as LaravelZeroKernel;
+use Symfony\Component\Console\Exception\CommandNotFoundException;
+use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use UnexpectedValueException;
@@ -32,7 +34,39 @@ class Kernel extends LaravelZeroKernel
 
     public function handle($input, $output = null): int
     {
-        return parent::handle($input, $output);
+        return parent::handle($this->ensureRunCommand($input), $output);
+    }
+
+    public function ensureRunCommand(InputInterface $input): InputInterface
+    {
+        $this->bootstrap();
+        $application = $this->getArtisan();
+
+        try {
+            $commandName = $input->getFirstArgument();
+            if (! $commandName) {
+                return $input;
+            }
+
+            $command = $application->find($commandName);
+            if (! $command instanceof ResolvesOwnArgs) {
+                return $input;
+            }
+
+            /**
+             * If command wants to resolve its own arguments,
+             * we will return a new ArgvInput instance with
+             * the command name only.
+             *
+             * We will pass an empty string as the first argument
+             * because ArgvInput will remove the first argument
+             * as it is assumed to be the input file name.
+             */
+            return new ArgvInput(['', $commandName], $application->getDefinition());
+        } catch(CommandNotFoundException $e) {
+            // if command is not found, we will pass
+            return $input;
+        }
     }
 
     protected function resolveDev(?InputInterface $input = null, ?OutputInterface $output = null): Dev
@@ -99,8 +133,9 @@ class Kernel extends LaravelZeroKernel
         $commands = $commands->map(function (array $command, string $name) use ($dev): ConfigCommand {
             $signature = $command['signature'] ?? null;
             $hasSignature = $signature !== null;
-            $signature = $hasSignature ? "$name $signature" : "$name {args?*}";
+            $signature = $hasSignature ? "$name $signature" : $name;
             $command['signature'] = $signature;
+            $command['name'] = $name;
 
             return new ConfigCommand($command, $hasSignature, $dev);
         });

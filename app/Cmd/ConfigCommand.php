@@ -2,15 +2,17 @@
 
 namespace App\Cmd;
 
+use App\Contracts\Command\ResolvesOwnArgs;
 use App\Dev;
 use Illuminate\Console\Command;
 use InvalidArgumentException;
 use Symfony\Component\Console\Exception\InvalidArgumentException as ExceptionInvalidArgumentException;
 use Symfony\Component\Console\Exception\LogicException;
+use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class ConfigCommand extends Command
+class ConfigCommand extends Command implements ResolvesOwnArgs
 {
     /**
      * @param string[] $command
@@ -31,13 +33,9 @@ class ConfigCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $inputs = $this->hasSignature ? array_merge($input->getArguments(), $input->getOptions()) : $input->getArgument('args');
-        $inputs = array_filter((array) $inputs, fn ($value) => is_string($value));
-
-        $command = $this->command['run'];
-        foreach ($inputs as $key => $value) {
-            $command = str_replace("[\$$key]", $value, $command);
-        }
+        $argString = (new ArgvInput())->__toString();
+        $argString = str_replace("{$this->command['name']} ", '', $argString);
+        $command = str_replace('@1', $argString, $this->command['run']);
 
         return (int) $this->dev->runner->spawn($command, $this->dev->config->cwd())
             ->wait()

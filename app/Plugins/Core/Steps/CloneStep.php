@@ -13,7 +13,7 @@ class CloneStep implements Step
 {
     /**
      * @param Definition $project
-     * @param string[] $args
+     * @param string|string[] $args
      * @param null|string $root
      * @param bool $update
      * @return void
@@ -21,7 +21,7 @@ class CloneStep implements Step
      */
     public function __construct(
         protected Definition $project,
-        private readonly array $args = [],
+        private readonly array|string $args = [],
         private readonly ?string $root = null,
         private readonly bool $update = false,
     ) {
@@ -49,7 +49,12 @@ class CloneStep implements Step
         File::makeDirectory($clonePath, recursive: true);
         $gitArgs = '';
         if (! empty($this->args)) {
-            $gitArgs = ' ' . implode(' ', $this->args);
+            $gitArgs = ' ';
+            if (\is_array($this->args)) {
+                $gitArgs .= implode(' ', $this->args);
+            } else {
+                $gitArgs .= $this->args;
+            }
         }
 
         if ($this->project->ref) {

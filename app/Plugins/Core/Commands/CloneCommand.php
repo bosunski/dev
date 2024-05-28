@@ -3,27 +3,24 @@
 namespace App\Plugins\Core\Commands;
 
 use App\Config\Project\Definition;
+use App\Contracts\Command\ResolvesOwnArgs;
 use App\Dev;
+use App\Exceptions\UserException;
 use App\Plugins\Core\Steps\CdStep;
 use App\Plugins\Core\Steps\CloneStep;
 use Exception;
 use InvalidArgumentException;
 use LaravelZero\Framework\Commands\Command;
+use Symfony\Component\Console\Input\ArgvInput;
 
-class CloneCommand extends Command
+class CloneCommand extends Command implements ResolvesOwnArgs
 {
-    private const KNOWN_SOURCES = [
-        'github'    => 'github.com',
-        'gitlab'    => 'gitlab.com',
-        'bitbucket' => 'bitbucket.org',
-    ];
-
     /**
      * The signature of the command.
      *
      * @var string
      */
-    protected $signature = 'clone {repo} {args?*} {--source=}';
+    protected $signature = 'clone';
 
     /**
      * The description of the command.
@@ -39,25 +36,25 @@ class CloneCommand extends Command
      */
     public function handle(Dev $dev): int
     {
-        $source = $this->option('source');
-        if ($source && ! in_array($source, self::KNOWN_SOURCES)) {
-            $this->line("Unknown source $source, please use one of: " . implode(', ', array_keys(self::KNOWN_SOURCES)));
+        $argv = $_SERVER['argv'] ?? [];
+        $fullName = $argv[2] ?? null;
 
-            return 1;
+        if (! $fullName) {
+            throw new UserException('Repository full name or URL must be provided');
         }
 
-        assert(is_string($fullName = $this->argument('repo')), new InvalidArgumentException('Repository full name must be a string'));
+        /**
+         * Let's get everything after the command and repo
+         * name and pass it to the next command.
+         */
+        $args = array_slice($argv, 3);
+        $argString = (new ArgvInput(['', ...$args]))->__toString();
+        assert(is_string($fullName), new InvalidArgumentException('Repository full name must be a string'));
 
-        if (empty($fullName)) {
-            $this->components->error('Repository full name cannot be empty');
-
-            return 1;
-        }
-
-        $definition = new Definition($fullName, self::KNOWN_SOURCES[$source] ?? 'github.com');
+        $definition = new Definition($fullName);
 
         return $dev->runner->execute([
-            new CloneStep($definition, $this->argument('args')),
+            new CloneStep($definition, $argString),
             new CdStep($definition),
         ]);
     }
