@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.0](https://github.com/phpsandbox/dev/compare/v0.0.3...v0.1.0) (2024-05-29)
+
+
+### Features
+
+* Allow full URL and branch for project cloning ([34d7f0f](https://github.com/phpsandbox/dev/commit/34d7f0f403e4321ae6ce2f33a610b1293d5fee3c))
+
+
+### Miscellaneous Chores
+
+* fix analysis error, display error for invalid dev.yml file ([4d38c42](https://github.com/phpsandbox/dev/commit/4d38c42dec6daac5d0afeec2b819e0b0e2b6a4b5))
+
 ## [0.0.3](https://github.com/phpsandbox/dev/compare/v0.0.2...v0.0.3) (2024-04-27)
 
 
