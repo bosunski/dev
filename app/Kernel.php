@@ -4,6 +4,7 @@ namespace App;
 
 use App\Bootstrap\ConfiguresDev;
 use App\Cmd\ConfigCommand;
+use App\Config\Config;
 use App\Contracts\Command\ResolvesOwnArgs;
 use App\IO\IOInterface;
 use App\Plugin\Capability\CommandProvider;
