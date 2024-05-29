@@ -65,13 +65,13 @@ it('throws an exception when project definition is empty', function (): void {
 });
 
 it('throws an exception when project definition is malformed', function (): void {
-    expect(fn () => new Definition('http://'))->toThrow(new UserException('Malformed project URL http:// cannot be parsed'));
+    expect(fn () => new Definition('http://'))->toThrow(new UserException('Malformed project repo URL http:// cannot be parsed'));
 });
 
 it('throws an exception when path is missing in project definition', function (): void {
-    expect(fn () => new Definition('http://example.com'))->toThrow(new UserException('Malformed project URL http://example.com cannot be parsed'));
+    expect(fn () => new Definition('http://example.com'))->toThrow(new UserException('Malformed project repo URL http://example.com cannot be parsed'));
 });
 
 it('throws an exception when project definition has more than two parts', function (): void {
-    expect(fn () => new Definition('http://example.com/foo/bar/baz'))->toThrow(new UserException('Malformed project URL http://example.com/foo/bar/baz cannot be parsed'));
+    expect(fn () => new Definition('http://example.com/foo/bar/baz'))->toThrow(new UserException('Malformed project repo URL http://example.com/foo/bar/baz cannot be parsed'));
 });

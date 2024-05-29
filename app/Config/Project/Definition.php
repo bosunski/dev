@@ -43,18 +43,18 @@ class Definition implements Stringable
         $projectUrl = str_replace('.git', '', $projectUrl);
         $parsedUrl = parse_url($projectUrl);
         if ($parsedUrl === false) {
-            throw new UserException("Malformed project URL $projectUrl cannot be parsed");
+            throw new UserException("Malformed project repo URL $projectUrl cannot be parsed");
         }
 
         if (! isset($parsedUrl['path'])) {
-            throw new UserException("Malformed project URL $projectUrl cannot be parsed");
+            throw new UserException("Malformed project repo URL $projectUrl cannot be parsed");
         }
 
         $path = $parsedUrl['path'];
         $userRepo = explode('/', trim($path, '/'));
 
         if (count($userRepo) != 2) {
-            throw new UserException("Malformed project URL $projectUrl cannot be parsed");
+            throw new UserException("Malformed project repo URL $projectUrl cannot be parsed");
         }
 
         $ref = null;
