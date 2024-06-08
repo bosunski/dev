@@ -77,7 +77,7 @@ When `dev up` runs, it ensures that all projects defined as a dependency are clo
 ```yaml
 name: org/frontend
 projects:
-	- org/backend
+    - org/backend
 ```
 
 As you can see, projects are defined by their repository names as in `owner/repo` or `org/repo` so as to inform DEV where to source the project when it is missing locally.
@@ -89,8 +89,8 @@ The current project is resolved last and will be provisioned last since it depen
 ```yaml
 name: org/frontend
 projects:
-	- org/payments # depends on org/websocket
-	- org/backend
+    - org/payments # depends on org/websocket
+    - org/backend
 ```
 
 Will end up being resolved in this order:
@@ -104,7 +104,7 @@ Sometimes, you may want to keep utility commands that are specific to the projec
 
 ```yaml
 commands:
-	style: prettier 
+    style: prettier 
 ```
 
 The command, once defined, can now be run using dev as `dev style`  or `dev run style` .  
