@@ -15,14 +15,6 @@ steps:
           - swoole
           - ffi
   - script:
-      desc: Build PCOV
-      run: |
-        cd $DEV_PROJECT_ROOT/krakjoe/pcov && \
-        phpize && \
-        ./configure --enable-pcov && \
-        make && \
-        make test
-  - script:
       desc: Install composer dependencies
       run: composer install
 
