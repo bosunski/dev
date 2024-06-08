@@ -92,7 +92,35 @@ class ValueTest extends TestCase
         $io = app(IOInterface::class);
         Value::setIO($io);
 
+        $value = new Value('$PROMPT(text: Please enter your BAR key)');
+        $this->assertEquals('Hello World', $value->resolve());
+    }
+
+    public function parseAPasswordPrompts(): void
+    {
+        Prompt::fake([
+            'Hello World',
+            Key::ENTER,
+        ]);
+
+        $io = app(IOInterface::class);
+        Value::setIO($io);
+
         $value = new Value('$PROMPT(password: Please enter your BAR key)');
+        $this->assertEquals('Hello World', $value->resolve());
+    }
+
+    public function parseAPasswordPromptsWithDefault(): void
+    {
+        Prompt::fake([
+            'Hello World',
+            Key::ENTER,
+        ]);
+
+        $io = app(IOInterface::class);
+        Value::setIO($io);
+
+        $value = new Value('$PROMPT(password: Please enter your BAR key, default: Hello World)');
         $this->assertEquals('Hello World', $value->resolve());
     }
 

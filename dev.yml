@@ -1,9 +1,14 @@
 name: dev
 
+projects:
+  - https://github.com/krakjoe/pcov
+
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
 
 steps:
+  - brew:
+      - php
   - spc:
       combine:
         input: builds/dev.phar
@@ -16,6 +21,15 @@ steps:
           - ffi
         sources:
           swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
+      xdebug: 3.3.2
+  - script:
+      desc: Build PCOV
+      run: |
+        cd $DEV_PROJECT_ROOT/krakjoe/pcov && \
+        phpize && \
+        ./configure --enable-pcov && \
+        make && \
+        make test
   - script:
       desc: Install composer dependencies
       run: composer install
