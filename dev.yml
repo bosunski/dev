@@ -1,14 +1,9 @@
 name: dev
 
-projects:
-  - https://github.com/krakjoe/pcov
-
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
 
 steps:
-  - brew:
-      - php
   - spc:
       combine:
         input: builds/dev.phar
@@ -19,9 +14,6 @@ steps:
         extensions:
           - swoole
           - ffi
-        sources:
-          swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
-      xdebug: 3.3.2
   - script:
       desc: Build PCOV
       run: |
