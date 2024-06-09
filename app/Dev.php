@@ -53,10 +53,10 @@ class Dev implements EnvResolver
         }
 
         return $this->config->envs()->merge($envs)->merge([
-            'DEV_PATH'     => $this->config->devPath(),
-            'DEV'          => '1',
-            'SOURCE_ROOT'  => Config::sourcePath(),
-            'SERVICE_ROOT' => $this->config->servicePath(),
+            'DEV_PATH'         => $this->config->devPath(),
+            'DEV'              => '1',
+            'DEV_SOURCE_ROOT'  => Config::sourcePath(),
+            'DEV_PROJECT_ROOT' => $this->config->projectPath(),
         ]);
     }
 

@@ -47,11 +47,11 @@ use Symfony\Component\Yaml\Yaml;
  */
 class Config
 {
-    public const OP_PATH = '.dev';
+    public const DevDir = '.dev';
 
-    private const REPO_LOCATION = 'src';
+    public const SrcDir = 'src';
 
-    private const DEFAULT_SOURCE_HOST = 'github.com';
+    public const DefaultSource = 'github.com';
 
     public const FileName = 'dev.yml';
 
@@ -83,25 +83,25 @@ class Config
 
     /**
      * @param string $path
-     * @param RawConfig|array{} $config
+     * @param RawConfig|array{} $raw
      * @param bool $isRoot
      * @return void
      */
     public function __construct(
         protected readonly string $path,
-        protected array $config,
+        protected readonly array $raw,
         public bool $isRoot = false,
         public readonly ?string $root = null,
     ) {
         $this->readSettings();
 
-        $this->up = new UpConfig($config['steps'] ?? $config['up'] ?? []);
-        $this->env = new Env(collect($this->config['env'] ?? []), getenv());
+        $this->up = new UpConfig($raw['steps'] ?? $raw['up'] ?? []);
+        $this->env = new Env(collect($this->raw['env'] ?? []), getenv());
     }
 
     private function readSettings(): void
     {
-        $jsonPath = $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . 'config.json');
+        $jsonPath = $this->cwd(self::DevDir . DIRECTORY_SEPARATOR . 'config.json');
         if (file_exists($jsonPath) && $content = @file_get_contents($jsonPath)) {
             $config = json_decode($content, true);
             if ($config === null || ! is_array($config)) {
@@ -115,20 +115,13 @@ class Config
 
     public function writeSettings(): void
     {
-        $jsonPath = $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . 'config.json');
+        $jsonPath = $this->cwd(self::DevDir . DIRECTORY_SEPARATOR . 'config.json');
         file_put_contents($jsonPath, json_encode($this->settings, JSON_PRETTY_PRINT));
-    }
-
-    public function root(bool $isRoot = true): Config
-    {
-        $this->isRoot = $isRoot;
-
-        return $this;
     }
 
     public function getName(): string
     {
-        return $this->config['name'] ?? '';
+        return $this->raw['name'] ?? '';
     }
 
     /**
@@ -137,7 +130,7 @@ class Config
      */
     public function projects(bool $all = false): Collection
     {
-        return collect($this->config['projects'] ?? [])
+        return collect($this->raw['projects'] ?? [])
             ->map(fn (string $project) => new Definition($project))
             ->filter(fn (Definition $project) => $all || ! in_array($project->repo, $this->settings['disabled']))
             ->map(function (Definition $project): Definition {
@@ -154,7 +147,7 @@ class Config
      */
     public function sites(): Collection
     {
-        return collect($this->config['sites'] ?? []);
+        return collect($this->raw['sites'] ?? []);
     }
 
     /**
@@ -162,7 +155,7 @@ class Config
      */
     public function commands(): Collection
     {
-        return collect($this->config['commands'] ?? []);
+        return collect($this->raw['commands'] ?? []);
     }
 
     public function up(): UpConfig
@@ -175,22 +168,22 @@ class Config
      */
     public function steps(): array
     {
-        return $this->config['steps'] ?? [];
+        return $this->raw['steps'] ?? [];
     }
 
     public function path(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . ltrim($path ?? '', DIRECTORY_SEPARATOR));
+        return $this->cwd(self::DevDir . DIRECTORY_SEPARATOR . ltrim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
-    public function servicePath(?string $path = null): string
+    public function projectPath(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . self::REPO_LOCATION . DIRECTORY_SEPARATOR . self::DEFAULT_SOURCE_HOST . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
+        return $this->cwd(self::DevDir . DIRECTORY_SEPARATOR . self::SrcDir . DIRECTORY_SEPARATOR . self::DefaultSource . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
     public function devPath(?string $path = null): string
     {
-        return $this->cwd(self::OP_PATH . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
+        return $this->cwd(self::DevDir . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
     public function cwd(?string $path = null): string
@@ -204,7 +197,7 @@ class Config
 
     public function globalPath(?string $path = null): string
     {
-        $home = $this->home() . DIRECTORY_SEPARATOR . self::OP_PATH;
+        $home = $this->home() . DIRECTORY_SEPARATOR . self::DevDir;
         if ($path) {
             return $home . DIRECTORY_SEPARATOR . trim($path, DIRECTORY_SEPARATOR);
         }
@@ -219,7 +212,7 @@ class Config
 
     public static function sourcePath(?string $path = null, ?string $source = null, ?string $root = null): string
     {
-        $sourceDir = sprintf('%s/%s/%s', rtrim($root ?? self::home(), DIRECTORY_SEPARATOR), self::REPO_LOCATION, $source ?? self::DEFAULT_SOURCE_HOST);
+        $sourceDir = sprintf('%s/%s/%s', rtrim($root ?? self::home(), DIRECTORY_SEPARATOR), self::SrcDir, $source ?? self::DefaultSource);
 
         if ($path) {
             return $sourceDir . DIRECTORY_SEPARATOR . ltrim($path, '/');
@@ -235,7 +228,7 @@ class Config
 
     public function isDevProject(): bool
     {
-        return ! empty($this->config);
+        return ! empty($this->raw);
     }
 
     /**
@@ -259,7 +252,7 @@ class Config
      */
     public static function fromProjectName(string $path, ?string $root = null): Config
     {
-        $root = $root ?? sprintf('%s/%s', getcwd(), self::OP_PATH);
+        $root = $root ?? sprintf('%s/%s', getcwd(), self::DevDir);
 
         return static::read(static::sourcePath($path, root: $root), $root);
     }
@@ -269,7 +262,7 @@ class Config
      */
     public static function fromProjectDefinition(Definition $project, ?string $root = null): Config
     {
-        $root = $root ?? sprintf('%s/%s', getcwd(), self::OP_PATH);
+        $root = $root ?? sprintf('%s/%s', getcwd(), self::DevDir);
 
         return static::read(static::sourcePath($project->repo, root: $root), $root);
     }
@@ -287,6 +280,8 @@ class Config
         try {
             return (array) Yaml::parseFile(self::fullPath($path));
         } catch (ParseException $e) {
+            $e->setParsedFile(self::fullPath($path));
+
             throw new InvalidConfigException($e);
         }
     }
@@ -301,11 +296,11 @@ class Config
      */
     public function getServe(): array|string
     {
-        if (! isset($this->config['serve'])) {
+        if (! isset($this->raw['serve'])) {
             return [];
         }
 
-        return $this->config['serve'];
+        return $this->raw['serve'];
     }
 
     /**
@@ -330,5 +325,13 @@ class Config
     public function isDebug(): bool
     {
         return false;
+    }
+
+    /**
+     * @return RawConfig|array{}
+     */
+    public function raw(): array
+    {
+        return $this->raw;
     }
 }

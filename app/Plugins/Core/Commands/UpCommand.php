@@ -20,7 +20,8 @@ class UpCommand extends Command
     /**
      * @var string
      */
-    protected $signature = 'up {--self : Skip dependency projects}';
+    protected $signature = 'up  {--self : Skip dependency projects}
+                                {--force : Force the execution of steps}';
 
     /**
      * @var string
@@ -66,7 +67,7 @@ class UpCommand extends Command
             }
 
             $this->info("🚀 Running steps for $project->id...");
-            if ($project->dev->runner->execute($steps->all()) !== 0) {
+            if ($project->dev->runner->execute($steps->all(), force: $this->option('force')) !== 0) {
                 $this->error("⛔️ Failed to run steps for $project->id");
 
                 return self::FAILURE;

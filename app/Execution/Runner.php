@@ -40,7 +40,7 @@ class Runner
      *
      * @throws Exception
      */
-    public function execute(array|Step $steps = [], bool $throw = false): int
+    public function execute(array|Step $steps = [], bool $throw = false, bool $force = false): int
     {
         try {
             if (! is_array($steps)) {
@@ -54,7 +54,7 @@ class Runner
                 }
 
                 $this->stepRepository->steps[$id] = $step;
-                $this->executeStep($step);
+                $this->executeStep($step, $force);
             }
 
             return Cmd::SUCCESS;
@@ -70,9 +70,9 @@ class Runner
     /**
      * @throws UserException
      */
-    private function executeStep(Step $step): void
+    private function executeStep(Step $step, bool $force = false): void
     {
-        if ($step->done($this)) {
+        if (! $force && $step->done($this)) {
             return;
         }
 

@@ -14,8 +14,6 @@ steps:
         extensions:
           - swoole
           - ffi
-        sources:
-          swoole: https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz
   - script:
       desc: Install composer dependencies
       run: composer install

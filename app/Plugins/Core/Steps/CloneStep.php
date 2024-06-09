@@ -50,11 +50,7 @@ class CloneStep implements Step
         $gitArgs = '';
         if (! empty($this->args)) {
             $gitArgs = ' ';
-            if (\is_array($this->args)) {
-                $gitArgs .= implode(' ', $this->args);
-            } else {
-                $gitArgs .= $this->args;
-            }
+            $gitArgs .= is_array($this->args) ? implode(' ', $this->args) : $this->args;
         }
 
         if ($this->project->ref) {

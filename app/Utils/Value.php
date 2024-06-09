@@ -2,6 +2,7 @@
 
 namespace App\Utils;
 
+use App\Exceptions\UserException;
 use App\IO\IOInterface;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Collection;
@@ -179,14 +180,18 @@ class Value
         preg_match_all('/^\$PROMPT\(([^)]*)\)$/', $this->value, $matches);
         foreach ($matches[1] ?? [] as $match) {
             $args = explode(':', $match);
+            if ($args[0] !== 'password' && $args[0] !== 'text') {
+                throw new UserException("Unknown prompt type: {$args[0]}");
+            }
+
             $args = [
-                'prompt'      => $args[0],
-                'label'       => $args[1] ?? '',
-                'placeholder' => $args[2] ?? '',
-                'default'     => $args[3] ?? '',
-                'required'    => (bool) ($args[4] ?? false),
-                'validate'    => isset($args[5]) ? [$args[5]] : [],
-                'hint'        => $args[6] ?? '',
+                'type'         => $args[0],
+                'prompt'       => $args[1] ?? '',
+                'placeholder'  => $args[2] ?? '',
+                'default'      => $args[3] ?? '',
+                'required'     => (bool) ($args[4] ?? false),
+                'validate'     => isset($args[5]) ? [$args[5]] : [],
+                'hint'         => $args[6] ?? '',
             ];
 
             $this->value = str_replace("\$PROMPT($match)", $this->prompt($args), $this->value);
