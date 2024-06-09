@@ -98,6 +98,7 @@ Will end up being resolved in this order:
 - `org/websocket`
 - `org/backend`
 - `org/frontend`
+
 As a result, the provisioning will also happen in that order when `dev up` runs.
 #### commands
 Sometimes, you may want to keep utility commands that are specific to the project to help perform tasks around your project. You can define these commands using the `commands` top-level attribute. For example, if we want to add a command that formats the code, we can add a `style` command like this:
