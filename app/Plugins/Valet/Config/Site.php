@@ -22,7 +22,7 @@ class Site
     /**
      * @param RawSiteConfig|string $site
      */
-    public function __construct(array | string $site, string $tld)
+    public function __construct(array | string $site, protected string $tld)
     {
         if (is_array($site)) {
             $this->type = isset($site['proxy']) ? 'proxy' : 'link';
@@ -41,11 +41,6 @@ class Site
 
     private function createHost(string $host): string
     {
-        return Str::of($host)->before('.test')->toString();
-    }
-
-    public function virtualHost(): string
-    {
-        return "{$this->host}.test";
+        return Str::of($host)->before(".$this->tld")->toString();
     }
 }
