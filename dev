@@ -71,7 +71,7 @@ $lastError = null;
         $io = $app->make(IOInterface::class);
 
         $status = $kernel->handle($input = $io->getInput(), $io->getOutput());
-    
+
         /*
         |--------------------------------------------------------------------------
         | Shutdown The Application

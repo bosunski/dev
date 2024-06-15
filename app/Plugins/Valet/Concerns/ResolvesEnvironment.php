@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use RuntimeException;
 
+use function Illuminate\Filesystem\join_paths;
+
 /**
  * @phpstan-import-type RawValetEnvironment from ValetConfig
  * @phpstan-import-type RawValetConfig from ValetConfig
@@ -44,7 +46,11 @@ trait ResolvesEnvironment
             'cwd'           => $this->dev->config->cwd(),
             'home'          => $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null,
             'composer'      => $composer = $this->composerBinPath(),
-            'valet'         => $this->valetBinPath($composer),
+            'valet'         => [
+                'bin'           => $this->valetBinPath($composer),
+                'nginxPath'     => join_paths($_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? '', '.config/valet/Nginx'),
+                'path'          => join_paths($_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? '', '.config/valet'),
+            ],
         ];
     }
 

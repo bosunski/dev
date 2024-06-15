@@ -4,7 +4,7 @@ namespace App\Plugins\Valet\Config;
 
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
-use App\Plugins\Valet\Steps\LockPhpStep;
+use App\Plugins\Valet\Steps\LinkPhpStep;
 use Exception;
 
 /**
@@ -32,7 +32,7 @@ class PhpConfig implements Config
         $steps = [];
         foreach ($this->config as $name => $config) {
             if ($name === 'version') {
-                $steps[] = new LockPhpStep($config, $this->environment);
+                $steps[] = new LinkPhpStep($config, $this->environment);
                 continue;
             }
 

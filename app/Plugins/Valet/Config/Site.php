@@ -39,4 +39,9 @@ class Site
     {
         return Str::of($host)->before('.test')->toString();
     }
+
+    public function virtualHost(): string
+    {
+        return "{$this->host}.test";
+    }
 }
