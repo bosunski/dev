@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/bosunski/dev/compare/v0.1.0...v0.1.1) (2024-06-15)
+
+
+### Miscellaneous Chores
+
+* update release please ([47e6ee1](https://github.com/bosunski/dev/commit/47e6ee125c9c19648dd0f551df23b87b0df0d439))
+* Update workflows ([bbf2f4a](https://github.com/bosunski/dev/commit/bbf2f4ae7cb92ae6f083ca3632b174db8671bf6e))
+
 ## [0.1.0](https://github.com/phpsandbox/dev/compare/v0.0.3...v0.1.0) (2024-05-29)
 
 
