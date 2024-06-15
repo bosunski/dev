@@ -16,11 +16,6 @@ class PostUpStep implements Deferred, Step
     {
     }
 
-    public function id(): string
-    {
-        return 'valet-post-up';
-    }
-
     public function name(): string
     {
         return 'Post Valet Run';
@@ -45,5 +40,10 @@ class PostUpStep implements Deferred, Step
     public function done(Runner $runner): bool
     {
         return false;
+    }
+
+    public function id(): string
+    {
+        return 'valet.post-up';
     }
 }
