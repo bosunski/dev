@@ -7,22 +7,28 @@ use LaravelZero\Framework\Commands\Command;
 
 class InitCommand extends Command
 {
+    protected const SupportedShells = ['zsh', 'bash', 'fish'];
+
     /**
      * @var string
      */
-    protected $signature = 'init {shell=zsh}';
+    protected $signature = 'init {shell=zsh : The shell to initialize the hook for. Supported shells are: zsh, bash, fish}';
 
-    protected $description = 'Initializes preeexec hook for BASH or ZSH';
+    protected $description = 'Initializes preeexec hook for BASH, FISH or ZSH';
 
     public function handle(): int
     {
-        if ($this->argument('shell') !== 'zsh') {
-            throw new UserException('Only ZSH is supported');
+        $shell = $this->argument('shell');
+        if (! in_array($shell, self::SupportedShells)) {
+            throw new UserException('Unsupported shell. Supported shells are: ' . implode(', ', self::SupportedShells));
         }
 
-        echo view('init.dev-zsh', [
-            'self' => '/usr/local/bin/dev',
-        ]);
+        $self = $_SERVER['PHP_SELF'];
+        if (! is_string($self) || ! is_file($self)) {
+            throw new UserException('Could not determine the path to the DEV executable.');
+        }
+
+        echo view("init.$shell", ['self' => $self]);
 
         return 0;
     }

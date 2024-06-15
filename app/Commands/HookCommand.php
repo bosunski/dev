@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Config\Config;
 use App\Dev;
+use Illuminate\Support\Carbon;
 use LaravelZero\Framework\Commands\Command;
 
 class HookCommand extends Command
@@ -20,7 +21,7 @@ class HookCommand extends Command
 
     public function handle(Dev $dev): int
     {
-        if (! $dev->initialized()) {
+        if (! $dev->initialized() || ! $this->shoudldShowMessage($dev->config)) {
             return 0;
         }
 
@@ -32,7 +33,18 @@ class HookCommand extends Command
             $dev->io()->write(PHP_EOL . $prefix . ' ' . $message . PHP_EOL);
         }
 
+        $this->updateLastMessageAt($dev->config);
+
         return 0;
+    }
+
+    protected function shoudldShowMessage(Config $config): bool
+    {
+        if (! $lastMessageAt = @file_get_contents($config->path('.last-hook'))) {
+            return true;
+        }
+
+        return now()->diffInMinutes(Carbon::parse($lastMessageAt)) > 5;
     }
 
     protected function trackedFilesHaveChanged(Config $config): string|false
@@ -47,5 +59,10 @@ class HookCommand extends Command
         }
 
         return false;
+    }
+
+    protected function updateLastMessageAt(Config $config): void
+    {
+        file_put_contents($config->path('.last-hook'), now());
     }
 }
