@@ -9,8 +9,6 @@ use App\Plugins\Valet\Config\Site;
 use App\Plugins\Valet\Config\ValetConfig;
 use Exception;
 
-use function Illuminate\Filesystem\join_paths;
-
 /**
  * @phpstan-import-type RawValetEnvironment from ValetConfig
  */
@@ -20,17 +18,17 @@ class SiteStep implements Step
 
     /**
      * @param Site $site
-     * @param RawValetEnvironment['valet'] $valetEnv
+     * @param ValetConfig $config
      * @return void
      */
-    public function __construct(private readonly Site $site, protected array $valetEnv)
+    public function __construct(private readonly Site $site, protected ValetConfig $config)
     {
-        $this->valetBinary = $valetEnv['bin'];
+        $this->valetBinary = $config->bin();
     }
 
     public function name(): string
     {
-        return "Creating Valet site: {$this->site->host}";
+        return "Creating Valet site: {$this->site->virtualHost}";
     }
 
     /**
@@ -52,12 +50,12 @@ class SiteStep implements Step
      */
     public function done(Runner $runner): bool
     {
-        $nginxPath = join_paths($this->valetEnv['nginxPath'], $this->site->virtualHost());
+        $nginxPath = $this->config->nginxPath($this->site->virtualHost);
         if (! is_file($nginxPath)) {
             return false;
         }
 
-        $md5Path = $runner->config()->globalPath("valet/sites/{$this->site->virtualHost()}.md5");
+        $md5Path = $runner->config()->globalPath("valet/sites/{$this->site->virtualHost}.md5");
         if (! is_file($md5Path)) {
             return false;
         }

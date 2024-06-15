@@ -43,7 +43,7 @@ use function Illuminate\Filesystem\join_paths;
  *      cwd: string,
  *      home: string,
  *      pecl: string,
- *      valet: array{bin: string, path: string, nginxPath: string},
+ *      valet: array{bin: string, path: string, tld: string},
  *      composer: string
  * }
  */
@@ -75,10 +75,8 @@ class ValetConfig implements Config
             $steps[] = is_array($config) ? new PhpConfig($config, $this->environment) : new LinkPhpStep($config, $this->environment);
         }
 
-        if (isset($this->config['sites'])) {
-            foreach ($this->config['sites'] as $site) {
-                $steps[] = $this->makeSiteStep($site);
-            }
+        foreach ($this->sites() as $site) {
+            $steps[] = new SiteStep($site, $this);
         }
 
         $steps[] = new PostUpStep($this);
@@ -87,20 +85,11 @@ class ValetConfig implements Config
     }
 
     /**
-     * @param RawSiteConfig|string $site
-     * @return Step
-     */
-    private function makeSiteStep(array|string $site): Step
-    {
-        return new SiteStep(new Site($site), $this->environment['valet']);
-    }
-
-    /**
      * @return Site[]
      */
     public function sites(): array
     {
-        return array_map(fn (array|string $site): Site => new Site($site), $this->config['sites'] ?? []);
+        return array_map(fn (array|string $site): Site => new Site($site, $this->environment['valet']['tld']), $this->config['sites'] ?? []);
     }
 
     public function path(string $path = ''): string
@@ -119,5 +108,10 @@ class ValetConfig implements Config
         }
 
         return $this->path('Nginx' . DIRECTORY_SEPARATOR . $path);
+    }
+
+    public function bin(): string
+    {
+        return $this->environment['valet']['bin'];
     }
 }

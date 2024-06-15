@@ -17,10 +17,12 @@ class Site
 
     public readonly bool $secure;
 
+    public readonly string $virtualHost;
+
     /**
      * @param RawSiteConfig|string $site
      */
-    public function __construct(array | string $site)
+    public function __construct(array | string $site, string $tld)
     {
         if (is_array($site)) {
             $this->type = isset($site['proxy']) ? 'proxy' : 'link';
@@ -33,6 +35,8 @@ class Site
             $this->proxy = null;
             $this->secure = true;
         }
+
+        $this->virtualHost = "$this->host.$tld";
     }
 
     private function createHost(string $host): string
