@@ -6,17 +6,29 @@ use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Config\Site;
+use App\Plugins\Valet\Config\ValetConfig;
 use Exception;
 
+/**
+ * @phpstan-import-type RawValetEnvironment from ValetConfig
+ */
 class SiteStep implements Step
 {
-    public function __construct(private readonly Site $site, protected string $valetBinary)
+    private string $valetBinary = 'valet';
+
+    /**
+     * @param Site $site
+     * @param ValetConfig $config
+     * @return void
+     */
+    public function __construct(private readonly Site $site, protected ValetConfig $config)
     {
+        $this->valetBinary = $config->bin();
     }
 
     public function name(): string
     {
-        return "Creating Valet site: {$this->site->host}";
+        return "Creating Valet site: {$this->site->virtualHost}";
     }
 
     /**
@@ -38,7 +50,22 @@ class SiteStep implements Step
      */
     public function done(Runner $runner): bool
     {
-        return false;
+        $nginxPath = $this->config->nginxPath($this->site->virtualHost);
+        if (! is_file($nginxPath)) {
+            return false;
+        }
+
+        $md5Path = $runner->config()->globalPath("valet/sites/{$this->site->virtualHost}.md5");
+        if (! is_file($md5Path)) {
+            return false;
+        }
+
+        $md5 = md5_file($nginxPath);
+        if (! $md5) {
+            return false;
+        }
+
+        return $md5 === file_get_contents($md5Path);
     }
 
     public function id(): string

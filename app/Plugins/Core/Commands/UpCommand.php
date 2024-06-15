@@ -9,6 +9,8 @@ use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Factory;
+use App\Plugin\Contracts\Step;
+use App\Plugin\Contracts\Step\Deferred;
 use App\Plugins\Core\Steps\CacheFilesStep;
 use App\Plugins\Core\Steps\CloneStep;
 use App\Repository\Repository;
@@ -60,6 +62,10 @@ class UpCommand extends Command
         $this->repository->addProject($rootProject = new Project($dev));
 
         $projects = $this->repository->getProjects();
+        $force = $this->option('force');
+
+        /** @var array{Project, Step}[] */
+        $deferred = [];
         foreach ($projects as $project) {
             $steps = $project->steps();
             if ($steps->count() === 0) {
@@ -67,17 +73,42 @@ class UpCommand extends Command
             }
 
             $this->info("🚀 Running steps for $project->id...");
-            if ($project->dev->runner->execute($steps->all(), force: $this->option('force')) !== 0) {
-                $this->error("⛔️ Failed to run steps for $project->id");
+            foreach ($steps as $step) {
+                if ($step instanceof Deferred) {
+                    $deferred[] = [$project, $step];
+                    continue;
+                }
+
+                if ($project->dev->runner->execute($step, force: $force) !== self::SUCCESS) {
+                    $this->error("⛔️ Failed to run steps for $project->id");
+
+                    return self::FAILURE;
+                }
+            }
+        }
+
+        $deferred[] = [$rootProject, new CacheFilesStep($dev)];
+        $result = $this->runDeferred($deferred, $force);
+        $dev->config->writeSettings();
+
+        return $result;
+    }
+
+    /**
+     * @param array{Project, Step}[] $deferred
+     * @throws Exception
+     */
+    protected function runDeferred(array $deferred, bool $force): int
+    {
+        foreach ($deferred as [$project, $step]) {
+            if ($project->dev->runner->execute($step, force: $force) !== self::SUCCESS) {
+                $this->error("⛔️ Failed to run deferred steps for $project->id");
 
                 return self::FAILURE;
             }
         }
 
-        $result = $rootProject->dev->runner->execute(new CacheFilesStep($dev));
-        $dev->config->writeSettings();
-
-        return $result;
+        return self::SUCCESS;
     }
 
     /**

@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use RuntimeException;
 
+use function Illuminate\Filesystem\join_paths;
+
 /**
  * @phpstan-import-type RawValetEnvironment from ValetConfig
  * @phpstan-import-type RawValetConfig from ValetConfig
@@ -33,18 +35,22 @@ trait ResolvesEnvironment
                 : $config['php'];
         }
 
-        $bin = self::phpPath($configVersion) ?: trim(`which php` ?? '');
+        $phpBin = self::phpPath($configVersion) ?: trim(`which php` ?? '');
 
         return [
-            'bin'           => $bin ?: trim(`which php` ?? ''),
-            'pecl'          => dirname($bin) . '/pecl',
-            'dir'           => dirname($bin, 2),
-            'extensionPath' => $this->currentPhpExtensionPath($bin),
+            'bin'           => $phpBin ?: trim(`which php` ?? ''),
+            'pecl'          => dirname($phpBin) . '/pecl',
+            'dir'           => dirname($phpBin, 2),
+            'extensionPath' => $this->currentPhpExtensionPath($phpBin),
             'version'       => ValetStepResolver::PHP_VERSION_MAP[$configVersion] ?? $configVersion,
             'cwd'           => $this->dev->config->cwd(),
             'home'          => $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null,
             'composer'      => $composer = $this->composerBinPath(),
-            'valet'         => $this->valetBinPath($composer),
+            'valet'         => [
+                'bin'           => $bin = $this->valetBinPath($composer),
+                'path'          => join_paths($_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? '', '.config/valet'),
+                'tld'           => trim(`$bin tld`) ?: 'test',
+            ],
         ];
     }
 

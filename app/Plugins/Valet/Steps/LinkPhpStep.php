@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 /**
  * @phpstan-import-type RawValetEnvironment from ValetConfig
 */
-class LockPhpStep implements Step
+class LinkPhpStep implements Step
 {
     private const PHP_VERSION_MAP = [
         '8.3' => 'php',
@@ -36,7 +36,7 @@ class LockPhpStep implements Step
 
     public function name(): string
     {
-        return 'Lock PHP version';
+        return 'Link PHP Version';
     }
 
     public function run(Runner $runner): bool

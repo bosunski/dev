@@ -5,8 +5,13 @@ namespace App\Plugins\Valet\Config;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Steps\InstallValetStep;
-use App\Plugins\Valet\Steps\LockPhpStep;
+use App\Plugins\Valet\Steps\LinkPhpStep;
+use App\Plugins\Valet\Steps\PostUpStep;
+use App\Plugins\Valet\Steps\PrepareValetStep;
+use App\Plugins\Valet\Steps\SiteStep;
 use Exception;
+
+use function Illuminate\Filesystem\join_paths;
 
 /**
  * @phpstan-type RawExtensionConfig array{
@@ -38,7 +43,7 @@ use Exception;
  *      cwd: string,
  *      home: string,
  *      pecl: string,
- *      valet: string,
+ *      valet: array{bin: string, path: string, tld: string},
  *      composer: string
  * }
  */
@@ -60,16 +65,53 @@ class ValetConfig implements Config
      */
     public function steps(): array
     {
-        $steps = [new InstallValetStep($this->environment['composer'], $this->environment['valet'])];
+        $steps = [
+            new InstallValetStep($this->environment['composer'], $this->environment['valet']['bin']),
+            new PrepareValetStep(),
+        ];
+
         if (isset($this->config['php'])) {
             $config = $this->config['php'];
-            $steps[] = is_array($config) ? new PhpConfig($config, $this->environment) : new LockPhpStep($config, $this->environment);
+            $steps[] = is_array($config) ? new PhpConfig($config, $this->environment) : new LinkPhpStep($config, $this->environment);
         }
 
-        if (isset($this->config['sites'])) {
-            $steps[] = new Sites($this->config['sites'], $this->environment['valet']);
+        foreach ($this->sites() as $site) {
+            $steps[] = new SiteStep($site, $this);
         }
+
+        $steps[] = new PostUpStep($this);
 
         return $steps;
+    }
+
+    /**
+     * @return Site[]
+     */
+    public function sites(): array
+    {
+        return array_map(fn (array|string $site): Site => new Site($site, $this->environment['valet']['tld']), $this->config['sites'] ?? []);
+    }
+
+    public function path(string $path = ''): string
+    {
+        if (empty($path)) {
+            return join_paths($this->environment['valet']['path']);
+        }
+
+        return join_paths($this->environment['valet']['path'], $path);
+    }
+
+    public function nginxPath(string $path = ''): string
+    {
+        if (empty($path)) {
+            return $this->path('Nginx');
+        }
+
+        return $this->path('Nginx' . DIRECTORY_SEPARATOR . $path);
+    }
+
+    public function bin(): string
+    {
+        return $this->environment['valet']['bin'];
     }
 }
