@@ -18,7 +18,7 @@ jobs:
     name: Build ${{ github.ref_name }} on ${{ matrix.platform }}
     strategy:
       matrix:
-        os: 
+        os:
           - macos-latest
         include:
           - os: macos-latest
@@ -31,7 +31,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@master
         with:
-          php-version: 8.2
+          php-version: 8.3
           extensions: mbstring, bcmath, swoole
           tools: composer:v2
 
@@ -64,7 +64,7 @@ jobs:
         run: |
           SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
           SPC_EXTENSIONS_SHA256=$(echo -n $SPC_EXTENSIONS | shasum -a 256 | awk '{print $1}')
-          PHP_VERSION=8.2
+          PHP_VERSION=8.3
           FILENAME=dev-${{ github.ref_name }}-${{ runner.os }}-${{ matrix.arch }}
 
           echo "SPC_EXTENSIONS=$SPC_EXTENSIONS" >> $GITHUB_OUTPUT
@@ -89,7 +89,7 @@ jobs:
         working-directory: spc
 
       - if: steps.cache-download.outputs.cache-hit != 'true'
-        run: ./bin/spc download -U "swoole:https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz" --with-php=8.2 --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        run: ./bin/spc download --with-php=${{ steps.vars.outputs.PHP_VERSION }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
 
       - if: steps.cache-download.outputs.cache-hit != 'true'

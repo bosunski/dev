@@ -40,11 +40,11 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@master
         with:
-          php-version: 8.2
+          php-version: 8.3
           extensions: mbstring, bcmath, swoole
           tools: composer:v2
           coverage: pcov
-      
+
       - name: Install Composer Dependencies
         run: composer install --no-progress --no-suggest
         if: steps.composer-cache.outputs.cache-hit != 'true'
