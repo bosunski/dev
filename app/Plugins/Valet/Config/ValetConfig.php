@@ -49,6 +49,8 @@ use function Illuminate\Filesystem\join_paths;
  */
 class ValetConfig implements Config
 {
+    public const Tld = 'test';
+
     /**
      * @param RawValetConfig $config
      * @param RawValetEnvironment $environment
