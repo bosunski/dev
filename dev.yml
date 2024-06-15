@@ -14,9 +14,6 @@ steps:
         extensions:
           - swoole
           - ffi
-  - valet:
-      sites:
-        - dev
   - script:
       desc: Install composer dependencies
       run: composer install
