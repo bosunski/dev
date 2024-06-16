@@ -2,34 +2,40 @@
 
 namespace App\Commands;
 
+use App\Config\Config;
+use App\Dev;
 use App\Exceptions\UserException;
 use LaravelZero\Framework\Commands\Command;
 
 class InitCommand extends Command
 {
-    protected const SupportedShells = ['zsh', 'bash', 'fish'];
+    /**
+     * @var string
+     */
+    protected $signature = 'init {path? : The path to the project root}';
 
     /**
      * @var string
      */
-    protected $signature = 'init {shell=zsh : The shell to initialize the hook for. Supported shells are: zsh, bash, fish}';
+    protected $description = 'Create a new dev.yml file in the project root.';
 
-    protected $description = 'Initializes preeexec hook for BASH, FISH or ZSH';
-
-    public function handle(): int
+    public function handle(Dev $dev): int
     {
-        $shell = $this->argument('shell');
-        if (! in_array($shell, self::SupportedShells)) {
-            throw new UserException('Unsupported shell. Supported shells are: ' . implode(', ', self::SupportedShells));
+        $config = $dev->config;
+        if ($this->argument('path')) {
+            $config = Config::fromPath($this->argument('path'));
         }
 
-        $self = $_SERVER['PHP_SELF'];
-        if (! is_string($self) || ! is_file($self)) {
-            throw new UserException('Could not determine the path to the DEV executable.');
+        if (is_file($config->file())) {
+            throw new UserException('DEV is already initialized for this project. See the dev.yml file in the project root.');
         }
 
-        echo view("init.$shell", ['self' => $self]);
+        if (! file_put_contents($config->file(), view('init.yaml')->render())) {
+            throw new UserException('Could not create the dev.yml file.');
+        }
 
-        return 0;
+        $this->components->info("Initialized DEV at {$config->file()}");
+
+        return self::SUCCESS;
     }
 }

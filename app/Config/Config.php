@@ -310,6 +310,11 @@ class Config
         return $this->raw['serve'];
     }
 
+    public function file(): string
+    {
+        return $this->cwd(self::FileName);
+    }
+
     /**
      * @return Collection<string, string>
      */
