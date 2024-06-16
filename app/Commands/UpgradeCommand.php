@@ -7,9 +7,9 @@ use Illuminate\Support\Env;
 use LaravelZero\Framework\Commands\Command;
 use Phar;
 
-class SelfUpdateCommand extends Command
+class UpgradeCommand extends Command
 {
-    protected $name = 'self-update';
+    protected $name = 'upgrade {version? : The version to upgrade to. Only tag names are supported.}';
 
     protected $description = 'Allows to self-update a build application';
 
