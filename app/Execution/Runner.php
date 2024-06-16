@@ -23,11 +23,21 @@ class Runner
 {
     protected ?EnvResolver $envResolver = null;
 
+    protected bool $usingShadowEnv = true;
+
     public function __construct(
         private readonly Config $config,
         private readonly IOInterface $io,
         protected readonly Repository $stepRepository
     ) {
+    }
+
+    public function withoutShadowEnv(): static
+    {
+        $new = clone $this;
+        $new->usingShadowEnv = false;
+
+        return $new;
     }
 
     public function setEnvResolver(EnvResolver $envResolver): void
@@ -81,10 +91,8 @@ class Runner
             $this->io->writeln($name);
         }
 
-        $done = $step->run($this);
-
-        if (! $done) {
-            throw new UserException("Failed to run step: {$step->name()}");
+        if (! $step->run($this)) {
+            throw new UserException("Failed to run step: $name");
         }
     }
 
@@ -159,14 +167,20 @@ class Runner
      */
     protected function createShadowEnvCommand(string|array $command): array
     {
-        $shOptions = 'ec';
+        $options = 'ec';
         if ($this->config->isDebug()) {
-            $shOptions .= 'v';
+            $options .= 'v';
         }
 
-        return is_string($command)
-            ? ['/opt/homebrew/bin/shadowenv', 'exec', '--', '/bin/sh', "-$shOptions", $command]
-            : ['/opt/homebrew/bin/shadowenv', 'exec', '--', ...$command];
+        $shell = getenv('SHELL');
+        if (! $shell) {
+            $shell = '/bin/sh';
+        }
+
+        $commandPrefix = $this->usingShadowEnv ? ['/opt/homebrew/bin/shadowenv', 'exec', '--'] : [];
+        $command = is_string($command) ? $command : implode(' ', $command);
+
+        return array_merge($commandPrefix, [$shell, "-$options", $command]);
     }
 
     /**

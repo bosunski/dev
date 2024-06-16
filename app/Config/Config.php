@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
+use function Illuminate\Filesystem\join_paths;
+
 /**
  * @phpstan-type Command array{
  *    desc?: string,
@@ -205,9 +207,14 @@ class Config
         return $home;
     }
 
-    public static function home(): string
+    public static function home(?string $path = null): string
     {
-        return (string) getenv('HOME');
+        $home = (string) (getenv('HOME') ?: getenv('USERPROFILE'));
+        if (! $path) {
+            return $home;
+        }
+
+        return join_paths($home, $path);
     }
 
     public static function sourcePath(?string $path = null, ?string $source = null, ?string $root = null): string
