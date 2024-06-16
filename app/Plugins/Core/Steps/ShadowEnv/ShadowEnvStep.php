@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Plugins\Core\Steps;
+namespace App\Plugins\Core\Steps\ShadowEnv;
 
 use App\Config\Config;
 use App\Dev;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 
 class ShadowEnvStep implements Step
@@ -33,11 +32,10 @@ class ShadowEnvStep implements Step
 
         if ($this->createDefaultLispFile($runner->config()) && $this->createGitIgnoreFile($runner->config())) {
             /**
-             * We cannot use the Runner::exec() to run this because it uses `shadowenv exec` which
-             * can only be used after the path has been trusted. At this point, the path is not trusted
-             * so, we will run this directly.
+             * we only want to use ShadowEnv in the runner when it's setup. At this
+             * point, that is not the case since we are still setting it up.
              */
-            return Process::path($runner->config()->cwd())->run(['/opt/homebrew/bin/shadowenv', 'trust'])->throw()->successful();
+            return $runner->withoutShadowEnv()->exec(['/opt/homebrew/bin/shadowenv', 'trust']);
         }
 
         return false;
