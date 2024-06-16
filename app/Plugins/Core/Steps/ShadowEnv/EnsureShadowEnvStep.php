@@ -36,12 +36,7 @@ class EnsureShadowEnvStep implements Step
             return true;
         }
 
-        $shell = getenv('SHELL');
-        if (! $shell) {
-            throw new UserException('Unable to determine the current shell. Please setup Shadowenv manually.');
-        }
-
-        [$shellName, $shell, $profile] = $this->resolve($runner->config());
+        [$shellName,, $profile] = $this->resolve($runner->config());
         if (! is_file($profile)) {
             throw new UserException("Unable to find the profile file: $profile. Please setup Shadowenv manually.");
         }
