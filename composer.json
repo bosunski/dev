@@ -9,17 +9,17 @@
         "console",
         "cli"
     ],
-    "homepage": "https://laravel-zero.com",
+    "homepage": "https://dev.egberinde.com",
     "type": "project",
     "license": "MIT",
     "support": {
-        "issues": "https://github.com/laravel-zero/laravel-zero/issues",
-        "source": "https://github.com/laravel-zero/laravel-zero"
+        "issues": "https://github.com/bosunski/dev/issues",
+        "source": "https://github.com/bosunski/dev"
     },
     "authors": [
         {
-            "name": "Nuno Maduro",
-            "email": "enunomaduro@gmail.com"
+            "name": "Bosun Egberinde",
+            "email": "bosunski@gmail.com"
         }
     ],
     "require": {
