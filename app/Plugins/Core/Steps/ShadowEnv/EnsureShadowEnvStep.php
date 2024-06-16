@@ -20,8 +20,11 @@ class EnsureShadowEnvStep implements Step
 
     public function run(Runner $runner): bool
     {
+        /**
+         * We are not sure that ShadowEnv is setup yet,
+         * So, we will configure the runner to not use the ShadowEnv.
+         */
         $runner = $runner->withoutShadowEnv();
-
         if (! $this->installed) {
             $installed = $runner->exec('brew install shadowenv');
             if (! $installed) {
@@ -83,6 +86,13 @@ class EnsureShadowEnvStep implements Step
 
     protected function config(string $shell): string
     {
+        /**
+         * We are adding a new line before the eval command to ensure that it has an empty line before it.
+         * Like this:
+         *
+         * # Shadow Env
+         * eval "$(shadowenv init zsh)"
+         */
         return PHP_EOL . view('shadowenv.eval', ['shell' => $shell])->render();
     }
 
