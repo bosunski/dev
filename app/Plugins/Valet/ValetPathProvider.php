@@ -11,9 +11,7 @@ use App\Plugins\Valet\Config\ValetConfig;
  */
 class ValetPathProvider implements PathProvider
 {
-    use Concerns\ResolvesEnvironment;
-
-    public function __construct(protected Dev $dev)
+    public function __construct(protected Dev $dev, protected ValetPlugin $plugin)
     {
     }
 
@@ -25,7 +23,7 @@ class ValetPathProvider implements PathProvider
             return [];
         }
 
-        $environment = $this->resolveEnvironmentSettings($config);
+        $environment = $this->plugin->environment($this->dev->config);
 
         return [dirname($environment['bin'])];
     }

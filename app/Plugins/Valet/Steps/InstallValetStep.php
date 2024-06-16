@@ -18,7 +18,7 @@ class InstallValetStep implements Step
 
     public function run(Runner $runner): bool
     {
-        return $runner->exec("$this->composerBinary global require laravel/valet");
+        return $runner->exec("$this->composerBinary global require laravel/valet && $this->valetBinary install");
     }
 
     public function done(Runner $runner): bool

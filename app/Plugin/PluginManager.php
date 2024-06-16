@@ -88,10 +88,9 @@ class PluginManager
             $ctorArgs['plugin'] = $plugin;
             $capabilityObj = app()->make($capabilityClass, $ctorArgs);
 
-            // FIXME these could use is_a and do the check *before* instantiating once drop support for php<5.3.9
             if (! $capabilityObj instanceof Capability || ! $capabilityObj instanceof $capabilityClassName) {
                 throw new \RuntimeException(
-                    'Class ' . $capabilityClass . ' must implement both Composer\Plugin\Capability\Capability and ' . $capabilityClassName . '.'
+                    'Class ' . $capabilityClass . ' must implement both App\Plugin\Capability\Capability and ' . $capabilityClassName . '.'
                 );
             }
 

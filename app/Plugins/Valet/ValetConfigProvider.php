@@ -7,7 +7,7 @@ use App\Plugin\Capability\ConfigProvider;
 
 class ValetConfigProvider implements ConfigProvider
 {
-    public function __construct(protected Dev $dev)
+    public function __construct(protected Dev $dev, protected ValetPlugin $plugin)
     {
     }
 
@@ -24,7 +24,10 @@ class ValetConfigProvider implements ConfigProvider
     public function stepResolvers(): array
     {
         return [
-            'valet' => new ValetStepResolver($this->dev),
+            'valet' => new ValetStepResolver(
+                $this->dev,
+                $this->plugin->environment($this->dev->config),
+            ),
         ];
     }
 }
