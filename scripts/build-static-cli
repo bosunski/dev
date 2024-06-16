@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-set -e
-export EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole"
-export SPC="$DEV_PATH"/bin/spc
-
-$SPC download --with-php=8.2 -U "swoole:https://github.com/swoole/swoole-src/archive/refs/heads/master.tar.gz" --for-extensions="$EXTENSIONS"
-$SPC build --build-micro --build-cli --with-micro-fake-cli "$EXTENSIONS"

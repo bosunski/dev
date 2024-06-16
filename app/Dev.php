@@ -72,8 +72,7 @@ class Dev implements EnvResolver
         ];
 
         foreach ($this->pluginManager->getPluginCapabilities(PathProvider::class, ['dev' => $this]) as $capability) {
-            $newPaths = $capability->paths();
-            $paths = array_merge($paths, $newPaths);
+            $paths = array_merge($paths, $capability->paths());
         }
 
         return $paths;
@@ -86,6 +85,6 @@ class Dev implements EnvResolver
 
     public function initialized(): bool
     {
-        return is_file($this->config->cwd('dev.yml'));
+        return is_file($this->config->file());
     }
 }

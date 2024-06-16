@@ -38,9 +38,6 @@ commands:
   php:
     desc: PHP INI_DIR
     run: echo $PHP_DIR
-  build-php:
-    desc: Build PHP
-    run: ./scripts/build-static-cli
   style:
     desc: Fix PHP code style
     run: pint

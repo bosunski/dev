@@ -6,16 +6,16 @@ DEV is a tool for creating a consistent and evolvable project development enviro
 ### Features
 - Cloning
 - Plugins
-- Preset
+- Preset [Upcoming]
 - Custom scripts
-- Procfiles
-- Customisable environment variable using ShadowEnv
-- Project dependencies as services
-- Custom commands
+- Built-in Procfiles support
+- Customisable environment using ShadowEnv
+- Project dependencies
+- Custom project commands
 - Sites
 - Single Binary
-- Environment variable patching
-- File tracking - `composer.json`, `composer.lock`, `package-lock.json`, etc.
+- Environment Variable management
+- Config tracking - `composer.json`, `composer.lock`, `package-lock.json`, etc.
 - MySQL Database
 
 ### ToDo
@@ -160,6 +160,3 @@ dev clone bosunski/dev && dev up
 #### Is Dev stable for use?
 Although I use DEV as a daily driver at this point. I won't consider it stable for use since there are other things
 that affects this stability that are not yet in place.
-
-#### Does DEV replace docker?
-Yes.
