@@ -24,9 +24,8 @@ class EnsureShadowEnvStep implements Step
          * We are not sure that ShadowEnv is setup yet,
          * So, we will configure the runner to not use the ShadowEnv.
          */
-        $runner = $runner->withoutShadowEnv();
         if (! $this->installed) {
-            $installed = $runner->exec('brew install shadowenv');
+            $installed = $runner->withoutShadowEnv()->exec('brew install shadowenv');
             if (! $installed) {
                 return false;
             }
