@@ -2,6 +2,8 @@
 
 namespace App\Commands;
 
+use App\Dev;
+use App\Updater\PharUpdater;
 use App\Updater\Updater;
 use Illuminate\Support\Env;
 use LaravelZero\Framework\Commands\Command;
@@ -9,16 +11,30 @@ use Phar;
 
 class UpgradeCommand extends Command
 {
-    protected $name = 'upgrade {version? : The version to upgrade to. Only tag names are supported.}';
+    protected $signature = 'upgrade {version? : The version to upgrade to. Only tag names are supported.}
+                            {--dry-run : Perform a dry run}';
 
-    protected $description = 'Allows to self-update a build application';
+    protected $description = 'Upgrade the application to the latest version or to a specific version.';
 
-    public function handle(Updater $updater): int
+    protected PharUpdater $updater;
+
+    public function __construct(Updater $updater)
     {
-        if (! Phar::running()) {
-            $this->error('This command is only available in PHAR builds.');
+        parent::__construct();
 
-            return self::FAILURE;
+        $this->updater = $updater->updater;
+    }
+
+    public function handle(Dev $dev): int
+    {
+        $dryRun = ! Phar::running() || $this->option('dry-run');
+        if ($dryRun) {
+            $this->components->warn('Running upgrade in dry-run mode.');
+        }
+
+        $this->updater->dryRun($dryRun);
+        if ($this->argument('version')) {
+            $this->updater->setTag($this->argument('version'));
         }
 
         if (! env('GITHUB_TOKEN')) {
@@ -33,25 +49,31 @@ class UpgradeCommand extends Command
             Env::getRepository()->set('GITHUB_TOKEN', $token);
         }
 
-        $this->output->title('Checking for a new version...');
-        $result = $updater->updater->update();
+        $this->components->info('Checking for a new version...');
+        $result = $this->updater->update();
+
+        [$oldVersion, $newVersion] = [$this->updater->getOldVersion(), $this->updater->getNewVersion()];
+        $isUpgrade = $this->isUpgrade($oldVersion, $newVersion);
+
+        $action = $isUpgrade ? 'Upgraded' : 'Downgraded';
 
         if ($result) {
-            $this->output->success(sprintf(
-                'Updated from version %s to %s.',
-                $updater->updater->getOldVersion(),
-                $updater->updater->getNewVersion()
-            ));
+            $this->components->info("$action from version $oldVersion to $newVersion.");
 
             return self::SUCCESS;
         }
 
-        if (! $updater->updater->getNewVersion()) {
+        if (! $this->updater->getNewVersion()) {
             $this->output->success('There are no stable versions available.');
         } else {
             $this->output->success('You have the latest version installed.');
         }
 
         return self::SUCCESS;
+    }
+
+    protected function isUpgrade(string $currentVersion, string $newVersion): bool
+    {
+        return version_compare($currentVersion, $newVersion, '<');
     }
 }

@@ -42,12 +42,13 @@ class UpdaterServiceProvider extends ServiceProvider
             /** @var string $strategy */
             $strategy = $this->app->make('config')->get('updater.strategy', GithubStrategy::class);
             $updater->setStrategyObject($this->app->make($strategy));
+            $stg = $updater->getStrategy();
 
-            if (($stg = $updater->getStrategy()) instanceof StrategyInterface) {
+            if ($stg instanceof StrategyInterface) {
                 $stg->setPackageName($name);
 
                 if (method_exists($stg, 'setCurrentLocalVersion')) {
-                    $updater->getStrategy()->setCurrentLocalVersion(config('app.version'));
+                    $stg->setCurrentLocalVersion(config('app.version'));
                 }
             }
 

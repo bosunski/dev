@@ -34,7 +34,7 @@ commands:
     desc: Install Dev binary
     run: |
       php dev build && \
-      sudo install builds/dev /usr/local/bin/dev
+      install builds/dev $HOME/.dev/bin/dev
   php:
     desc: PHP INI_DIR
     run: echo $PHP_DIR
@@ -49,7 +49,7 @@ commands:
     run: php vendor/bin/pest
   pro:
     desc: PRO
-    run: echo $PSB_DIR
+    run: echo "@1dada"
 
 serve:
   write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done

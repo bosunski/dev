@@ -6,12 +6,7 @@ use Illuminate\Console\OutputStyle;
 
 class Updater
 {
-    /**
-     * The base updater.
-     *
-     * @var \Humbug\SelfUpdate\Updater
-     */
-    public $updater;
+    public PharUpdater $updater;
 
     /**
      * Updater constructor.

@@ -93,6 +93,8 @@ class ServeStep
             if (is_file($this->dev->config->path($this->dev->name))) {
                 unlink($this->dev->config->path($this->dev->name));
             }
+
+            $output->close();
         }
     }
 

@@ -2,9 +2,38 @@
 
 namespace App\Process;
 
+use Hyperf\Engine\Channel;
+use Hyperf\Engine\Coroutine;
+
 class ProcessOutput
 {
     protected int $maxNameLength = 0;
+
+    /**
+     * @var Channel<string>
+     */
+    protected readonly Channel $channel;
+
+    public function __construct()
+    {
+        $this->channel = new Channel(512);
+
+        $this->start();
+    }
+
+    public function start(): void
+    {
+        Coroutine::create(function (): void {
+            while (true) {
+                $output = $this->channel->pop();
+                if ($output === false) {
+                    break;
+                }
+
+                fwrite(STDOUT, $output);
+            }
+        });
+    }
 
     public function addProcess(Process $process): void
     {
@@ -20,14 +49,14 @@ class ProcessOutput
                 continue;
             }
 
-            fwrite(STDOUT, "\033[{$color}m");
+            $this->channel->push("\033[{$color}m");
 
             $spaces = '';
             foreach (range(strlen($process->name), $this->maxNameLength) as $i) {
                 $spaces .= ' ';
             }
 
-            fwrite(STDOUT, $process->name . $spaces . "\033[0m| " . $line);
+            $this->channel->push($process->name . $spaces . "\033[0m| " . $line);
         }
     }
 
@@ -45,5 +74,10 @@ class ProcessOutput
         $lines = preg_split("/(?<=\r\n|\n|\r)/", $string);
 
         return $lines === false ? [] : $lines;
+    }
+
+    public function close(): void
+    {
+        $this->channel->close();
     }
 }

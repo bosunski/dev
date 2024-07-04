@@ -31,6 +31,8 @@ class PostUpStep implements Deferred, Step
                 continue;
             }
 
+            $runner->io()->writeln("Storing state of $nginxPath");
+
             file_put_contents($md5Path, $md5);
         }
 
@@ -44,6 +46,6 @@ class PostUpStep implements Deferred, Step
 
     public function id(): string
     {
-        return 'valet.post-up';
+        return "valet.post-up.{$this->config->cwd()}";
     }
 }

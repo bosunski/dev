@@ -2,9 +2,12 @@
 
 namespace App\Updater;
 
+use App\Exceptions\UserException;
 use Humbug\SelfUpdate\Strategy\GithubStrategy;
 use Humbug\SelfUpdate\Updater;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use RuntimeException;
 
 /**
@@ -15,9 +18,9 @@ use RuntimeException;
  *
  * @phpstan-type RawAsset array{url: string, name: string}
  */
-class PrivateGitHubReleaseStrategy extends GithubStrategy
+class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInterface
 {
-    protected string $baseUrl = 'https://api.github.com/repos/phpsandbox/dev';
+    protected string $baseUrl = 'https://api.github.com/repos/bosunski/dev';
 
     protected const MACHINE_TYPE_MAP = [
         'arm64' => 'arm64',
@@ -56,15 +59,19 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
         return "dev-$version-$os-$arch";
     }
 
-    protected function getLatestReleaseUrl(): string
+    protected function getLatestReleaseUrl(?string $tag = null): string
     {
-        return $this->baseUrl . '/releases/latest';
+        if (! $tag) {
+            return "$this->baseUrl/releases/latest";
+        }
+
+        return "$this->baseUrl/releases/tags/$tag";
     }
 
     /**
      * @return RawRelease
      */
-    protected function getLatestReleaseFromGitHub(): array
+    protected function getLatestReleaseFromGitHub(?string $tag = null): array
     {
         if ($this->release) {
             return $this->release;
@@ -75,25 +82,33 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
             throw new RuntimeException('GITHUB_TOKEN must be set and be a string');
         }
 
-        // Trusting GitHub blindly here
-        // @phpstan-ignore-next-line
-        return $this->release = Http::asJson()->withHeaders([
-            'Authorization'        => "Bearer $token",
-            'X-GitHub-Api-Version' => '2022-11-28',
-        ])->get($this->getLatestReleaseUrl())->throw()->json();
+        try {
+            // Trusting GitHub blindly here
+            // @phpstan-ignore-next-line
+            return $this->release = Http::asJson()->withHeaders([
+                'Authorization'        => "Bearer $token",
+                'X-GitHub-Api-Version' => '2022-11-28',
+            ])->get($this->getLatestReleaseUrl($tag))->throw()->json();
+        } catch(RequestException $e) {
+            if ($e->response->notFound()) {
+                throw new UserException("Tag $tag not found on GitHub. Please check the tag name and try again.");
+            }
+
+            throw $e;
+        }
     }
 
     /**
      * @return RawAsset
      */
-    protected function getLatestReleaseDetailsFromGitHub(): array
+    protected function getLatestReleaseDetailsFromGitHub(?string $tag = null): array
     {
         if ($this->asset) {
             return $this->asset;
         }
 
         if (! $this->release) {
-            $this->release = $this->getLatestReleaseFromGitHub();
+            $this->release = $this->getLatestReleaseFromGitHub($tag);
         }
 
         $assets = $this->release['assets'];
@@ -132,8 +147,12 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
 
     public function getCurrentRemoteVersion(Updater $updater): string
     {
+        if ($updater instanceof PharUpdater) {
+            $tag = $updater->getTag();
+        }
+
         if (! $this->release) {
-            $this->release = $this->getLatestReleaseFromGitHub();
+            $this->release = $this->getLatestReleaseFromGitHub($tag ?? null);
         }
 
         return $this->release['tag_name'];
@@ -141,10 +160,22 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
 
     public function download(Updater $updater): void
     {
-        if (! $this->asset) {
-            $this->asset = $this->getLatestReleaseDetailsFromGitHub();
+        if ($updater instanceof PharUpdater) {
+            $tag = $updater->getTag();
         }
 
-        $this->downloadAsset($this->asset['url'], $updater->getTempPharFile());
+        if (! $this->asset) {
+            $this->asset = $this->getLatestReleaseDetailsFromGitHub($tag ?? null);
+        }
+
+        try {
+            $this->downloadAsset($this->asset['url'], $updater->getTempPharFile());
+        } catch(RequestException $e) {
+            if (isset($tag) && $e->response->notFound()) {
+                throw new UserException("Tag $tag not found on GitHub. Please check the tag name and try again.");
+            }
+
+            throw $e;
+        }
     }
 }
