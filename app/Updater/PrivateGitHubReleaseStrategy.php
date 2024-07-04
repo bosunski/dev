@@ -7,6 +7,7 @@ use Humbug\SelfUpdate\Strategy\GithubStrategy;
 use Humbug\SelfUpdate\Updater;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use RuntimeException;
 
 /**
@@ -17,7 +18,7 @@ use RuntimeException;
  *
  * @phpstan-type RawAsset array{url: string, name: string}
  */
-class PrivateGitHubReleaseStrategy extends GithubStrategy
+class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInterface
 {
     protected string $baseUrl = 'https://api.github.com/repos/bosunski/dev';
 
@@ -170,7 +171,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy
         try {
             $this->downloadAsset($this->asset['url'], $updater->getTempPharFile());
         } catch(RequestException $e) {
-            if ($e->response->notFound()) {
+            if (isset($tag) && $e->response->notFound()) {
                 throw new UserException("Tag $tag not found on GitHub. Please check the tag name and try again.");
             }
 

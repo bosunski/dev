@@ -4,9 +4,9 @@ namespace App\Providers;
 
 use App\Updater\PharUpdater;
 use App\Updater\Updater;
-use Humbug\SelfUpdate\Strategy\StrategyInterface as StrategyStrategyInterface;
 use Illuminate\Support\ServiceProvider;
 use LaravelZero\Framework\Components\Updater\Strategy\GithubStrategy;
+use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use LaravelZero\Framework\Providers\Build\Build;
 
 class UpdaterServiceProvider extends ServiceProvider
@@ -42,8 +42,9 @@ class UpdaterServiceProvider extends ServiceProvider
             /** @var string $strategy */
             $strategy = $this->app->make('config')->get('updater.strategy', GithubStrategy::class);
             $updater->setStrategyObject($this->app->make($strategy));
+            $stg = $updater->getStrategy();
 
-            if (($stg = $updater->getStrategy()) instanceof StrategyStrategyInterface) {
+            if ($stg instanceof StrategyInterface) {
                 $stg->setPackageName($name);
 
                 if (method_exists($stg, 'setCurrentLocalVersion')) {
