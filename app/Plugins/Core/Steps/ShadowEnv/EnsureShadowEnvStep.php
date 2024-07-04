@@ -6,6 +6,7 @@ use App\Config\Config;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Brew\Steps\BrewStep;
 
 class EnsureShadowEnvStep implements Step
 {
@@ -25,7 +26,7 @@ class EnsureShadowEnvStep implements Step
          * So, we will configure the runner to not use the ShadowEnv.
          */
         if (! $this->installed) {
-            $installed = $runner->withoutShadowEnv()->exec('brew install shadowenv');
+            $installed = $runner->withoutShadowEnv()->execute(new BrewStep(['shadowenv'])) === 0;
             if (! $installed) {
                 return false;
             }

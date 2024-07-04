@@ -116,4 +116,9 @@ class ValetConfig implements Config
     {
         return $this->environment['valet']['bin'];
     }
+
+    public function cwd(): string
+    {
+        return $this->environment['cwd'];
+    }
 }

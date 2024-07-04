@@ -12,7 +12,7 @@ __dev_hook() {
   "{{$self}}" hook "${flags[@]}"
 }
 
-@include('init.hookbook')
+@include('env.hookbook')
   
 __dev_force_run=1
 hookbook_add_hook __dev_hook
