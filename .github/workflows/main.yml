@@ -1,4 +1,4 @@
-name: Build and Release Unstable DEV Binary
+name: Test and Release Unstable
 
 on:
   push:
