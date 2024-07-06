@@ -12,6 +12,7 @@ use App\Factory;
 use App\Plugin\Contracts\Step;
 use App\Plugin\Contracts\Step\Deferred;
 use App\Plugins\Core\Steps\CacheFilesStep;
+use App\Plugins\Core\Steps\CheckUpdateStep;
 use App\Plugins\Core\Steps\CloneStep;
 use App\Repository\Repository;
 use Exception;
@@ -88,6 +89,7 @@ class UpCommand extends Command
         }
 
         $deferred[] = [$rootProject, new CacheFilesStep($dev)];
+        $deferred[] = [$rootProject, new CheckUpdateStep()];
         $result = $this->runDeferred($deferred, $force);
         $dev->config->writeSettings();
 

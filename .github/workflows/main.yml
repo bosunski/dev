@@ -1,12 +1,9 @@
-name: CI on x86_64 macOS
+name: Test and Release Unstable
 
 on:
   push:
     branches:
       - main
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 concurrency:
   group: ${{ github.ref_name }}
@@ -53,4 +50,15 @@ jobs:
         run: vendor/bin/pint --test -v
 
       - name: Run Tests
-        run: vendor/bin/pest --coverage -vv
+        run: vendor/bin/pest --coverage -v
+
+  release:
+    name: Draft an Unstable Release
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          make_latest: false

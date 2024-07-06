@@ -11,6 +11,7 @@ use Symfony\Component\Finder\Finder;
 
 class CdStep implements Step
 {
+    # Use the appropriate shell for the current environment
     public const DEFAULT_SHELL = '/bin/bash';
 
     protected string $path;
