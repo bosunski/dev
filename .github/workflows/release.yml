@@ -25,6 +25,7 @@ jobs:
             arch: arm64
             platform: macOS
             target: darwin-arm64
+            filename: dev-darwin-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -66,18 +67,16 @@ jobs:
           PHP_VERSION=8.3
           SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
           CACHE_KEY=$(echo "${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS" | shasum -a 256 | awk '{print $1}')
-          FILENAME=dev-${{ matrix.target }}
 
           {
             echo "SPC_EXTENSIONS=$SPC_EXTENSIONS"
             echo "PHP_VERSION=$PHP_VERSION"
             echo "SPC_CACHE_KEY=spc-$CACHE_KEY"
-            echo "FILENAME=$FILENAME"
-            echo "FILEPATH=$GITHUB_WORKSPACE/dist/$FILENAME"
+            echo "FILEPATH=$GITHUB_WORKSPACE/dist/${{ matrix.filename }}"
             echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS"
           } >> $GITHUB_OUTPUT
 
-      - name: Restore SPC builds from Cache
+      - name: Cache SPC Downloads and Buildroot
         id: spc-cache
         uses: actions/cache@v4
         with:
@@ -110,12 +109,12 @@ jobs:
       - name: Zip Binary
         working-directory: ${{ github.workspace }}/dist
         run: |
-          zip -r ${{ steps.vars.outputs.FILENAME }}.zip ${{ steps.vars.outputs.FILENAME }}
+          zip -r ${{ matrix.filename }}.zip ${{ matrix.filename }}
 
       - name: "Create Checksums"
         working-directory: ${{ github.workspace }}/dist
         run: |
-          shasum -a 256 ${{ steps.vars.outputs.FILENAME }}.zip > ${{ steps.vars.outputs.CHECKSUMS }}
+          shasum -a 256 ${{ matrix.filename }}.zip > ${{ steps.vars.outputs.CHECKSUMS }}
 
       - name: Upload binaries to release
         uses: softprops/action-gh-release@v2
