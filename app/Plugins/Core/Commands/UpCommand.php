@@ -145,6 +145,7 @@ class UpCommand extends Command
 
         $dev = Factory::create($this->runner->io(), $config);
         $project = new Project($dev);
+
         /**
          * We don't want to add the project to the queue if it's not using DEV.
          */
