@@ -100,8 +100,6 @@ jobs:
           {
             echo "SPC_EXTENSIONS=$SPC_EXTENSIONS"
             echo "SPC_CACHE_KEY=spc-$CACHE_KEY"
-            echo "FILEPATH=$GITHUB_WORKSPACE/dist/${{ matrix.filename }}"
-            echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS"
           } >> $GITHUB_OUTPUT
 
       - name: Cache SPC Downloads and Buildroot
@@ -118,6 +116,7 @@ jobs:
         working-directory: spc
 
       - name: Download SPC files
+        if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/spc download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
         env:
