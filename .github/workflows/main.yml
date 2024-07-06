@@ -117,13 +117,14 @@ jobs:
         run: composer update --no-dev --classmap-authoritative
         working-directory: spc
 
-      - if: steps.spc-cache.outputs.cache-hit != 'true'
+      - name: Download SPC files
         run: ./bin/spc download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - if: steps.spc-cache.outputs.cache-hit != 'true'
+      - name: Build PHP Binaries (Micro and CLI)
+        if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
         working-directory: spc
 
