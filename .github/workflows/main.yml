@@ -1,4 +1,4 @@
-name: Test and Release Unstable
+name: Build, Test and Release
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
 concurrency:
   group: ${{ github.ref_name }}
   cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   tests:
@@ -52,10 +56,79 @@ jobs:
       - name: Run Tests
         run: vendor/bin/pest --coverage -v
 
-  release:
-    name: Draft an Unstable Release
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ github.ref_name }} on ${{ matrix.platform }}
     needs: tests
+    strategy:
+      matrix:
+        os:
+          - macos-latest
+        include:
+          - php-version: 8.3
+          - os: macos-latest
+            arch: arm64
+            platform: macOS
+            target: darwin-arm64
+            filename: dev-darwin-arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@master
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, bcmath, swoole
+          tools: composer:v2
+
+      - name: Checkout crazywhalecc/static-php-cli
+        uses: actions/checkout@v4
+        with:
+          repository: crazywhalecc/static-php-cli
+          path: spc
+
+      - run: |
+          brew install automake gzip
+          echo "SPC_BUILD_OS=${{ matrix.platform }}" >> $GITHUB_ENV
+
+      - name: Resolve Variables
+        id: vars
+        run: |
+          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
+          CACHE_KEY=$(echo "${{ runner.os }}-${{ matrix.arch}}-php-${{ matrix.php-version }}-dependencies-$SPC_EXTENSIONS" | shasum -a 256 | awk '{print $1}')
+
+          {
+            echo "SPC_EXTENSIONS=$SPC_EXTENSIONS"
+            echo "SPC_CACHE_KEY=spc-$CACHE_KEY"
+            echo "FILEPATH=$GITHUB_WORKSPACE/dist/${{ matrix.filename }}"
+            echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS"
+          } >> $GITHUB_OUTPUT
+
+      - name: Cache SPC Downloads and Buildroot
+        id: spc-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            spc/downloads
+            spc/buildroot
+          key: ${{ steps.vars.outputs.SPC_CACHE_KEY }}
+
+      - name: Setup SPC
+        run: composer update --no-dev --classmap-authoritative
+        working-directory: spc
+
+      - if: steps.spc-cache.outputs.cache-hit != 'true'
+        run: ./bin/spc download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        working-directory: spc
+
+      - if: steps.spc-cache.outputs.cache-hit != 'true'
+        run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
+        working-directory: spc
+
+  release:
+    name: Create an Unstable Release
+    runs-on: ubuntu-latest
+    needs: build
     steps:
       - name: Create a Calver Tag
         id: calver
@@ -68,3 +141,13 @@ jobs:
           make_latest: false
           tag_name: ${{ steps.calver.outputs.tag }}
           name: "${{ steps.calver.outputs.tag }} Unstable"
+
+  release-please:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          release-type: php
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
