@@ -62,3 +62,4 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           make_latest: false
+          tag_name: unstable
