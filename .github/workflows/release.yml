@@ -80,8 +80,8 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: Restore SPC builds from Cache
-        id: cache-download
-        uses: actions/cache/restore@v4
+        id: spc-cache
+        uses: actions/cache@v4
         with:
           path: |
             spc/downloads
@@ -94,22 +94,13 @@ jobs:
         run: composer update --no-dev --classmap-authoritative
         working-directory: spc
 
-      - if: steps.cache-download.outputs.cache-hit != 'true'
+      - if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/spc download --with-php=${{ steps.vars.outputs.PHP_VERSION }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
 
-      - if: steps.cache-download.outputs.cache-hit != 'true'
+      - if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
         working-directory: spc
-
-      - if: steps.cache-download.outputs.cache-hit != 'true'
-        name: Cache SPC builds
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            spc/downloads
-            spc/buildroot
-          key: ${{ steps.vars.outputs.CACHE_KEY }}
 
       - name: Build PHAR
         run: php dev app:build dev.phar --build-version=${{ github.ref_name }}
