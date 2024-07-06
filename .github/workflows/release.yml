@@ -63,17 +63,15 @@ jobs:
       - name: Resolve Variables
         id: vars
         run: |
-          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
-          SPC_EXTENSIONS_SHA256=$(echo -n $SPC_EXTENSIONS | shasum -a 256 | awk '{print $1}')
           PHP_VERSION=8.3
+          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
+          CACHE_KEY=$(echo "${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS" | shasum -a 256 | awk '{print $1}')
           FILENAME=dev-${{ matrix.target }}
 
           {
             echo "SPC_EXTENSIONS=$SPC_EXTENSIONS"
-            echo "SPC_EXTENSIONS_SHA256=$SPC_EXTENSIONS_SHA256"
             echo "PHP_VERSION=$PHP_VERSION"
-            echo "SPC_RESTORE_KEY=spc-${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-"
-            echo "CACHE_KEY=spc-${{ runner.os }}-${{ matrix.arch}}-php-$PHP_VERSION-dependencies-$SPC_EXTENSIONS_SHA256"
+            echo "SPC_CACHE_KEY=spc-$CACHE_KEY"
             echo "FILENAME=$FILENAME"
             echo "FILEPATH=$GITHUB_WORKSPACE/dist/$FILENAME"
             echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS"
@@ -86,9 +84,7 @@ jobs:
           path: |
             spc/downloads
             spc/buildroot
-          key: ${{ steps.vars.outputs.CACHE_KEY }}
-          restore-keys: |
-            ${{ steps.vars.outputs.SPC_RESTORE_KEY }}
+          key: ${{ steps.vars.outputs.SPC_CACHE_KEY }}
 
       - name: Setup SPC
         run: composer update --no-dev --classmap-authoritative
