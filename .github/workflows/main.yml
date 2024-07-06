@@ -13,9 +13,6 @@ permissions:
   contents: write
   pull-requests: write
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
   tests:
     name: Test for ${{ matrix.platform }}
@@ -123,6 +120,8 @@ jobs:
       - if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/spc download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
@@ -146,6 +145,7 @@ jobs:
           name: "${{ steps.calver.outputs.tag }} Unstable"
 
   release-please:
+    name: Invoke Release Please
     runs-on: ubuntu-latest
     needs: build
     steps:
