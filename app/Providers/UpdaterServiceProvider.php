@@ -8,20 +8,14 @@ use Illuminate\Support\ServiceProvider;
 use LaravelZero\Framework\Components\Updater\Strategy\GithubStrategy;
 use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use LaravelZero\Framework\Providers\Build\Build;
+use RuntimeException;
 
 class UpdaterServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        //
     }
 
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $build = $this->app->make(Build::class);
@@ -30,12 +24,12 @@ class UpdaterServiceProvider extends ServiceProvider
             $updater = new PharUpdater($build->getPath(), false, PharUpdater::STRATEGY_GITHUB);
             $composerJsonContent = file_get_contents(base_path('composer.json'));
             if ($composerJsonContent === false) {
-                throw new \RuntimeException('composer.json not found');
+                throw new RuntimeException('composer.json not found');
             }
 
             $composer = json_decode($composerJsonContent, true);
             if ($composer === null || ! is_array($composer) || ! isset($composer['name'])) {
-                throw new \RuntimeException('composer.json is not valid');
+                throw new RuntimeException('composer.json is not valid');
             }
 
             $name = $composer['name'];

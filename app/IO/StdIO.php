@@ -148,4 +148,12 @@ class StdIO implements IOInterface
     {
         error($message);
     }
+
+    public function dev(string $message): void
+    {
+        $prefix = ' DEV ';
+        $prefix = "\e[30;107m$prefix\e[0m"; // Black text on white background
+        $message = "\e[90m" . $message . "\e[0m";
+        $this->write(PHP_EOL . $prefix . ' ' . $message . PHP_EOL);
+    }
 }

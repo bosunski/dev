@@ -142,4 +142,12 @@ interface IOInterface
      * @return ($callback is null ? Progress<TSteps> : array<TReturn>)
      */
     public function progress(string $label, iterable|int $steps, ?Closure $callback = null, string $hint = ''): array|Progress;
+
+    /**
+     * Displays a message from DEV
+     *
+     * @param string $message
+     * @return void
+     */
+    public function dev(string $message): void;
 }

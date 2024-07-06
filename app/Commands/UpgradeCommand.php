@@ -45,7 +45,7 @@ class UpgradeCommand extends Command
                 return self::INVALID;
             }
 
-            assert(is_string($token), 'Token must be a string');
+            assert(is_string($token), 'GITHUB_TOKEN must be a string');
             Env::getRepository()->set('GITHUB_TOKEN', $token);
         }
 

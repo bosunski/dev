@@ -207,6 +207,36 @@ class Runner
         return new ProcProcess($this->createShadowEnvCommand($command), $path, $this->environment($env));
     }
 
+    /**
+     * Resolve the current shell, shell name, and profile file.
+     *
+     * @param Config $config
+     * @return array{string, string, string}
+     * @throws UserException
+     */
+    public function shell(): array
+    {
+        $shell = getenv('SHELL');
+        if (! $shell) {
+            throw new UserException('Unable to determine the current shell. Please setup Shadowenv manually.');
+        }
+
+        $shellName = basename($shell);
+        $profile = $this->config->home($this->profile($shellName));
+
+        return [$shellName, $shell, $profile];
+    }
+
+    protected function profile(string $shell): string
+    {
+        return match ($shell) {
+            'bash'  => '.bash_profile',
+            'zsh'   => '.zshrc',
+            'fish'  => 'config.fish',
+            default => throw new UserException("Unknown shell: $shell. Supported shells are: bash, zsh, fish."),
+        };
+    }
+
     public function pool(callable $callback): ProcessPoolResults
     {
         return Process::pool($callback)->start($this->handleOutput(...))->wait();
