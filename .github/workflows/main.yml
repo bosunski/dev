@@ -67,3 +67,4 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           make_latest: false
           tag_name: ${{ steps.calver.outputs.tag }}
+          name: "${{ steps.calver.outputs.tag }} Unstable"
