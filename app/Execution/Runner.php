@@ -210,7 +210,6 @@ class Runner
     /**
      * Resolve the current shell, shell name, and profile file.
      *
-     * @param Config $config
      * @return array{string, string, string}
      * @throws UserException
      */
