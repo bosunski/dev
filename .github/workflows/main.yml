@@ -57,9 +57,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: tests
     steps:
+      - name: Create a Calver Tag
+        id: calver
+        run: echo "tag=v$(date +'%Y%m%d%H%M')" >> $GITHUB_OUTPUT
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           make_latest: false
-          tag_name: unstable
+          tag_name: ${{ steps.calver.outputs.tag }}
