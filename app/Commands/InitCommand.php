@@ -17,7 +17,7 @@ class InitCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Create a new dev.yml file in the project root.';
+    protected $description = 'Create a new dev.yml file in the project root';
 
     public function handle(Dev $dev): int
     {

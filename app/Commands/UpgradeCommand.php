@@ -14,7 +14,7 @@ class UpgradeCommand extends Command
     protected $signature = 'upgrade {version? : The version to upgrade to. Only tag names are supported.}
                             {--dry-run : Perform a dry run}';
 
-    protected $description = 'Upgrade the application to the latest version or to a specific version.';
+    protected $description = 'Upgrade the application to the latest version or to a specific version';
 
     protected PharUpdater $updater;
 
