@@ -135,5 +135,3 @@ jobs:
           files: |
             ${{ steps.vars.outputs.FILEPATH }}.zip
             ${{ steps.vars.outputs.CHECKSUMS }}
-            spc/buildroot/build-extensions.json
-            spc/buildroot/build-libraries.json

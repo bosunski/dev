@@ -3,6 +3,7 @@
 namespace App\Updater;
 
 use Humbug\SelfUpdate\Updater as BaseUpdater;
+use Phar;
 use RuntimeException;
 
 class PharUpdater extends BaseUpdater
@@ -40,12 +41,13 @@ class PharUpdater extends BaseUpdater
             throw new RuntimeException("Unable to get the current mode of the Phar file: $currentPharPath");
         }
 
+        chmod($this->getTempPharFile(), $currentMode);
+
         if ($this->dryRun) {
             return;
         }
 
         rename($this->getTempPharFile(), $this->getLocalPharFile());
-        chmod($this->getLocalPharFile(), $currentMode);
     }
 
     public function dryRun(bool $dryRun = true): static
@@ -65,5 +67,18 @@ class PharUpdater extends BaseUpdater
     public function getTag(): ?string
     {
         return $this->tag;
+    }
+
+    protected function setTempDirectory(): void
+    {
+        if (Phar::running()) {
+            parent::setTempDirectory();
+
+            return;
+        }
+
+        $this->tempDirectory = getcwd() === false
+            ? throw new RuntimeException('Unable to retrieve the current working directory!')
+            : getcwd() . '/dist';
     }
 }

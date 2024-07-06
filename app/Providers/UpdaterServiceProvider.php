@@ -8,6 +8,7 @@ use Illuminate\Support\ServiceProvider;
 use LaravelZero\Framework\Components\Updater\Strategy\GithubStrategy;
 use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use LaravelZero\Framework\Providers\Build\Build;
+use Phar;
 use RuntimeException;
 
 class UpdaterServiceProvider extends ServiceProvider
@@ -42,7 +43,11 @@ class UpdaterServiceProvider extends ServiceProvider
                 $stg->setPackageName($name);
 
                 if (method_exists($stg, 'setCurrentLocalVersion')) {
-                    $stg->setCurrentLocalVersion(config('app.version'));
+                    if (! Phar::running()) {
+                        $version = 'development';
+                    }
+
+                    $stg->setCurrentLocalVersion($version ?? config('app.version'));
                 }
             }
 

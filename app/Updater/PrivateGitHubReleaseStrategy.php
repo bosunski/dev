@@ -6,9 +6,12 @@ use App\Exceptions\UserException;
 use Humbug\SelfUpdate\Strategy\GithubStrategy;
 use Humbug\SelfUpdate\Updater;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use RuntimeException;
+use ZipArchive;
 
 /**
  * @phpstan-type RawRelease array{
@@ -27,7 +30,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
     ];
 
     protected const OS_TYPE_MAP = [
-        'Darwin' => 'macOS',
+        'Darwin' => 'darwin',
     ];
 
     /**
@@ -40,7 +43,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
      */
     protected ?array $release = null;
 
-    protected function buildAssetName(string $version): string
+    protected function buildAssetName(): string
     {
         $machine = php_uname('m');
         $os = php_uname('s');
@@ -56,7 +59,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
         $os = static::OS_TYPE_MAP[$os];
         $arch = static::MACHINE_TYPE_MAP[$machine];
 
-        return "dev-$version-$os-$arch";
+        return Str::of("dev-$os-$arch")->slug();
     }
 
     protected function getLatestReleaseUrl(?string $tag = null): string
@@ -117,7 +120,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
             throw new RuntimeException('Failed to get the latest release version');
         }
 
-        $assetName = $this->buildAssetName($version);
+        $assetName = "{$this->buildAssetName()}.zip";
         $this->asset = collect($assets)->first(fn (array $asset) => $asset['name'] === $assetName);
 
         if (! $this->asset) {
@@ -169,7 +172,30 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
         }
 
         try {
-            $this->downloadAsset($this->asset['url'], $updater->getTempPharFile());
+            $execName = $this->buildAssetName();
+            $tempZipPath = dirname($updater->getTempPharFile()) . DIRECTORY_SEPARATOR . $this->asset['name'];
+            $this->downloadAsset($this->asset['url'], $tempZipPath);
+
+            // Extract the downloaded asset
+            $zip = new ZipArchive();
+            if (! $zip->open($tempZipPath)) {
+                throw new RuntimeException("Failed to open the downloaded asset: $tempZipPath");
+            }
+
+            $exePath = dirname($updater->getLocalPharFile()) . DIRECTORY_SEPARATOR . $execName;
+            if (! $zip->extractTo(dirname($updater->getLocalPharFile()))) {
+                throw new RuntimeException("Failed to extract the downloaded asset: $tempZipPath");
+            }
+
+            @$zip->close();
+
+            // move the extracted files to the correct location
+            if (! File::move($exePath, $updater->getTempPharFile())) {
+                throw new RuntimeException("Failed to move the extracted asset to temp location: {$updater->getTempPharFile()}");
+            }
+
+            // cleanup
+            File::delete($tempZipPath);
         } catch(RequestException $e) {
             if (isset($tag) && $e->response->notFound()) {
                 throw new UserException("Tag $tag not found on GitHub. Please check the tag name and try again.");

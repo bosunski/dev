@@ -27,7 +27,7 @@ commands:
     desc: Build DEV binary
     signature: "{name?} {subcommand?} {--service}"
     run: |
-      php dev app:build --build-version=dev dev.phar && \
+      php dev app:build --build-version=development dev.phar && \
       php dev spc:combine && chmod +x builds/dev && \
       rm builds/dev.phar
   install:
