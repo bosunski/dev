@@ -5,6 +5,10 @@ namespace App\Commands;
 use App\Exceptions\UserException;
 use LaravelZero\Framework\Commands\Command;
 
+/**
+ * This command is based on ShadowEnv's hook command and Hookbook
+ * @see https://github.com/Shopify/shadowenv/blob/main/src/hook.rs
+ */
 class EnvCommand extends Command
 {
     protected const SupportedShells = ['zsh', 'bash', 'fish'];
