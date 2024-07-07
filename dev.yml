@@ -50,6 +50,9 @@ commands:
   test:
     desc: Run PHP tests
     run: php vendor/bin/pest
+  coverage:
+    desc: Run PHP tests
+    run: php -d zend_extension=$PWD/dist/xdebug.so vendor/bin/pest --coverage
   pro:
     desc: PRO
     run: echo "@1dada"
