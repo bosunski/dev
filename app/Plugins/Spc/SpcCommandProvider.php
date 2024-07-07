@@ -34,15 +34,25 @@ class SpcCommandProvider implements CommandProvider
         $config = new SpcConfig($rawSpcConfig, $this->dev->config);
         $combine = $config->combine();
 
-        if (empty($combine)) {
-            return [];
-        }
-
-        return [
-            'spc:combine' => [
-                'desc' => 'Combine micro.sfx and php code together',
-                'run'  => "{$config->bin()} micro:combine -M {$config->sfx()} -O {$combine['output']} {$combine['input']}",
+        $commands = [
+            'spc:rebuild' => [
+                'desc' => 'Rebuild PHP binaries',
+                'run'  => $config->buildCommand(true),
+                'path' => $config->phpPath(),
+            ],
+            'spc:clean' => [
+                'desc' => 'Remove built binaries and downloads',
+                'run'  => ['rm', '-rf', $config->phpPath()],
             ],
         ];
+
+        if (! empty($combine)) {
+            $commands['spc:combine'] = [
+                'desc' => 'Combine micro.sfx and php code together',
+                'run'  => "{$config->bin()} micro:combine -M {$config->sfx()} -O {$combine['output']} {$combine['input']}",
+            ];
+        }
+
+        return $commands;
     }
 }

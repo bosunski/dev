@@ -179,4 +179,31 @@ class SpcConfig implements Config
     {
         return $this->phpPath('buildroot/bin/micro.sfx');
     }
+
+    /**
+     * Genrates a command to build the PHP binaries
+     *
+     * @param bool $rebuild Whether to rebuild the binaries
+     * @return string[]
+     */
+    public function buildCommand(bool $rebuild = false): array
+    {
+        $command = [
+            $this->bin(),
+            'build',
+            '--debug',
+            '--no-strip',
+            '--build-micro',
+            '--build-cli',
+            '--with-micro-fake-cli',
+        ];
+
+        if ($rebuild) {
+            $command[] = '--rebuild';
+        }
+
+        $command[] = implode(',', $this->extensions);
+
+        return $command;
+    }
 }

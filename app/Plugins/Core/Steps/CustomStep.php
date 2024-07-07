@@ -25,7 +25,10 @@ class CustomStep implements Step
         return $this->config['desc'] ?? '';
     }
 
-    public function command(): string
+    /**
+     * @return string|string[]
+     */
+    public function command(): string|array
     {
         return $this->config['run'];
     }
