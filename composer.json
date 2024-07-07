@@ -68,10 +68,5 @@
     "prefer-stable": true,
     "bin": [
         "dev"
-    ],
-    "extra": {
-        "laravel": {
-            "dont-discover": []
-        }
-    }
+    ]
 }
