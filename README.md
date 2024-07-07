@@ -32,38 +32,28 @@ DEV is a tool for creating a consistent and evolvable project development enviro
 ### Trying DEV
 At the moment, DEV works on MacOS as some aspect of the code assumes this. The plan is to support other platforms, too.
 
-To install DEV for the first time, you can follow this process to install the pre-built MacOS binary using [GitHub CLI](https://cli.github.com):
+To install DEV for the first time, you can follow this process to install the pre-built binary:
 
 ```bash
-install_dir="$HOME/.dev/bin"
-dev_bin="$install_dir/dev"
-
-mkdir -p $install_dir
-
-gh release --repo bosunski/dev download --clobber -p "dev-*-macOS-arm64" -O $dev_bin && sudo chmod +x $dev_bin
+curl -fsSL https://raw.githubusercontent.com/bosunski/dev/main/scripts/install.sh | bash
 ```
 
-Once DEV is installed, you should add this to your SHELL profile:
-
-```bash
-# DEV Env
-export DEV_INSTALL="$HOME/.dev"
-export PATH="$DEV_INSTALL/bin:$PATH"
-DEV_BIN="$DEV_INSTALL/dev"
-eval "$($DEV_BIN env zsh)"
-```
-
-This will make it possible for DEV to provide notices when there are changes in your project and you need to run `dev up` command
+The command above will:
+- Install latest version of DEV
+- Include DEV's binary path in `$PATH`
+- Configure hooks that will make it possible for DEV to provide notices when there are changes in your project and you need to run `dev up` command
 
 ### Updating Dev
 If you already have DEV installed, you can run this to update the existing binary to the latest available version:
 
 ```bash
-export GITHUB_TOKEN=your_token_here
 dev upgrade
 ```
+If you want to downgrade/upgrade to a specific version, you can use:
 
-For this, you will need your GITHUB_TOKEN since the repo is currently private.
+```bash
+dev upgrade <desired version>
+```
 
 ### Configuration
 DEV uses a `dev.yml` file at the root of the project to store configurations. So, projects that can be managed using dev must contain this file.
