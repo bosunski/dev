@@ -1,5 +1,8 @@
 <?php
 
+use LaravelZero\Framework\Components\Updater\SelfUpdateCommand;
+use Symfony\Component\Console\Command\CompleteCommand;
+
 return [
 
     /*
@@ -56,7 +59,7 @@ return [
 
     'hidden' => [
         NunoMaduro\LaravelConsoleSummary\SummaryCommand::class,
-        Symfony\Component\Console\Command\DumpCompletionCommand::class,
+        CompleteCommand::class,
         Symfony\Component\Console\Command\HelpCommand::class,
         Illuminate\Console\Scheduling\ScheduleRunCommand::class,
         Illuminate\Console\Scheduling\ScheduleListCommand::class,
@@ -78,6 +81,7 @@ return [
 
     'remove' => [
         // ..
+        SelfUpdateCommand::class,
     ],
 
 ];
