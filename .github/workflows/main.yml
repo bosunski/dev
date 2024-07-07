@@ -78,8 +78,6 @@ jobs:
             filename: dev-darwin-arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Setup PHP
         uses: shivammathur/setup-php@master
         with:

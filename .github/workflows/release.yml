@@ -9,7 +9,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 concurrency:
-  group: release-build
+  group: release-build-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
@@ -44,10 +44,8 @@ jobs:
           path: spc
 
       - run: |
-          brew tap box-project/box
-          brew install automake gzip box
+          brew install automake gzip
           echo "SPC_BUILD_OS=macos" >> $GITHUB_ENV
-          box -v
 
       - name: Cache Composer Dependencies
         id: cache-composer-deps
