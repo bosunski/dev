@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Commands\Service;
+namespace App\Commands\Project;
 
 use App\Dev;
 use App\Exceptions\UserException;
