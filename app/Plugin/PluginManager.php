@@ -14,6 +14,13 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use RuntimeException;
 use UnexpectedValueException;
 
+/**
+ * This class is a simplified version of the PluginManager in Composer.
+ * The plugin architecture is based on Composer's plugin system and as such
+ * you can find similarities in this code and some other parts of the application.
+ *
+ * @see https://github.com/composer/composer/blob/main/src/Composer/Plugin/PluginManager.php
+ */
 class PluginManager
 {
     /**
