@@ -18,18 +18,7 @@ DEV is a tool for creating a consistent and evolvable project development enviro
 - Config tracking - `composer.json`, `composer.lock`, `package-lock.json`, etc.
 - MySQL Database
 
-### ToDo
-- [ ] Plugins
-- [ ] Presets
-- [ ] Automated Tests
-- [ ] Add PHPStan
-- [ ] Add Pint for code styling.
-- [ ] Better CLI UI
-- [ ] Prioritisation of steps
-- [ ] Extend functionality to other OSes.
-- [ ] Documentation
-
-### Trying DEV
+### Installing DEV
 At the moment, DEV works on MacOS as some aspect of the code assumes this. The plan is to support other platforms, too.
 
 To install DEV for the first time, you can follow this process to install the pre-built binary:
@@ -139,6 +128,17 @@ Alternatively, if you have DEV binary already installed, you can use it to set u
 ```shell
 dev clone bosunski/dev && dev up
 ```
+
+### ToDo
+- [ ] Plugins
+- [ ] Presets
+- [ ] Automated Tests
+- [ ] Add PHPStan
+- [ ] Add Pint for code styling.
+- [ ] Better CLI UI
+- [ ] Prioritisation of steps
+- [ ] Extend functionality to other OSes.
+- [ ] Documentation
 
 ### FAQ
 
