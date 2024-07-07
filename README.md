@@ -28,8 +28,8 @@ curl -fsSL https://raw.githubusercontent.com/bosunski/dev/main/scripts/install.s
 ```
 
 The command above will:
-- Install latest version of DEV
-- Include DEV's binary path in `$PATH`
+- Install latest version of DEV inside `$HOME/.dev/bin`
+- Prepend `$HOME/.dev/bin` to `$PATH`
 - Configure hooks that will make it possible for DEV to provide notices when there are changes in your project and you need to run `dev up` command
 
 ### Updating Dev
