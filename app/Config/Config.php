@@ -15,7 +15,7 @@ use function Illuminate\Filesystem\join_paths;
 /**
  * @phpstan-type Command array{
  *    desc?: string,
- *    run: string,
+ *    run: string|string[],
  *    signature?: string,
  * }
  *
@@ -28,7 +28,7 @@ use function Illuminate\Filesystem\join_paths;
  *
  * @phpstan-type Script array{
  *      desc?: string,
- *      run: string,
+ *      run: string|string[],
  *      'met?'?: string
  * }
  *
@@ -81,6 +81,8 @@ class Config
 
     private readonly UpConfig $up;
 
+    protected readonly string $uname;
+
     protected Env $env;
 
     /**
@@ -99,6 +101,8 @@ class Config
 
         $this->up = new UpConfig($raw['steps'] ?? $raw['up'] ?? []);
         $this->env = new Env(collect($this->raw['env'] ?? []), getenv());
+
+        $this->uname = php_uname('s');
     }
 
     private function readSettings(): void
@@ -345,5 +349,20 @@ class Config
     public function raw(): array
     {
         return $this->raw;
+    }
+
+    public function isDarwin(): bool
+    {
+        return $this->uname === 'Darwin';
+    }
+
+    public function isLinux(): bool
+    {
+        return $this->uname === 'Linux';
+    }
+
+    public function isWindows(): bool
+    {
+        return $this->uname === 'Windows';
     }
 }

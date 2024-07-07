@@ -5,6 +5,7 @@ namespace App\Plugins\Spc\Steps;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Spc\Config\SpcConfig;
+use Illuminate\Support\Facades\File;
 
 class SpcDownloadStep implements Step
 {
@@ -37,7 +38,18 @@ class SpcDownloadStep implements Step
 
         $command .= " --for-extensions='" . implode(',', $this->config->extensions) . "'";
 
-        return $runner->exec($command, $spcGlobalPath);
+        $result = $runner->exec($command, $spcGlobalPath);
+        if ($result) {
+            return true;
+        }
+
+        /**
+         * If the download fails, we need to remove the downloads folder so that
+         * the next time `dev up` runs, it will not skip the download.
+         */
+        File::delete($this->config->phpPath('downloads'));
+
+        return false;
     }
 
     public function done(Runner $runner): bool

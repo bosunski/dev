@@ -10,7 +10,6 @@ use App\Plugin\Contracts\Step;
 use App\Process\ProcProcess;
 use App\Repository\Repository;
 use Exception;
-use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Process\ProcessPoolResults;
@@ -105,15 +104,10 @@ class Runner
      */
     public function exec(string|array $command, ?string $path = null, array $env = []): bool
     {
-        try {
-            return $this->process($this->createShadowEnvCommand($command), $path, $env)
-                ->tty()
-                ->run(output: $this->handleOutput(...))
-                ->throw()
-                ->successful();
-        } catch (ProcessFailedException) {
-            return false;
-        }
+        return $this->process($this->createShadowEnvCommand($command), $path, $env)
+            ->tty()
+            ->run(output: $this->handleOutput(...))
+            ->successful();
     }
 
     /**

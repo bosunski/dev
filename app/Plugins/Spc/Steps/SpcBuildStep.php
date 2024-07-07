@@ -5,6 +5,7 @@ namespace App\Plugins\Spc\Steps;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Spc\Config\SpcConfig;
+use Illuminate\Support\Facades\File;
 
 class SpcBuildStep implements Step
 {
@@ -26,15 +27,22 @@ class SpcBuildStep implements Step
     {
         $this->ensureCMakeIsInstalled($runner);
 
-        $extensions = implode(',', $this->config->extensions);
+        $result = $runner->spawn($this->config->buildCommand(), $this->config->phpPath())->wait()->successful();
+        if ($result) {
+            return true;
+        }
 
-        $command = "{$this->config->bin()} build --debug --no-strip --build-micro --build-cli --with-micro-fake-cli '$extensions'";
+        File::deleteDirectory($this->config->phpPath('buildroot'));
 
-        return $runner->spawn($command, $this->config->phpPath())->wait()->successful();
+        return false;
     }
 
     protected function ensureCMakeIsInstalled(Runner $runner): void
     {
+        if (! $runner->config()->isDarwin()) {
+            return;
+        }
+
         $runner->spawn('brew install cmake')->wait()->throw();
     }
 
