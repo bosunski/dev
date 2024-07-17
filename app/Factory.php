@@ -32,7 +32,9 @@ class Factory
         $manager = $factory->createPluginManager($dev, $io);
         $dev->setPluginManager($manager);
 
-        $manager->loadInstalledPlugins();
+        if ($dev->initialized) {
+            $manager->loadInstalledPlugins();
+        }
 
         return $dev;
     }

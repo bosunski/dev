@@ -211,7 +211,7 @@ class Runner
     {
         $shell = getenv('SHELL');
         if (! $shell) {
-            throw new UserException('Unable to determine the current shell. Please setup Shadowenv manually.');
+            throw new UserException('Unable to determine the current shell. Make sure you are using one of the supported shells: bash, zsh, fish.');
         }
 
         $shellName = basename($shell);

@@ -3,6 +3,8 @@
 namespace App\IO;
 
 use Closure;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Console\View\Components\Factory;
 use Illuminate\Support\Collection;
 use Laravel\Prompts\Progress;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,8 +32,11 @@ use function Laravel\Prompts\warning;
 
 class StdIO implements IOInterface
 {
+    protected Factory $components;
+
     public function __construct(private InputInterface $input, private OutputInterface $output)
     {
+        $this->components = new Factory(new OutputStyle($input, $output));
     }
 
     public function getInput(): InputInterface
@@ -155,5 +160,10 @@ class StdIO implements IOInterface
         $prefix = "\e[30;107m$prefix\e[0m"; // Black text on white background
         $message = "\e[90m" . $message . "\e[0m";
         $this->write(PHP_EOL . $prefix . ' ' . $message . PHP_EOL);
+    }
+
+    public function task(string $message, Closure $callback): void
+    {
+        $this->components->task($message, $callback);
     }
 }
