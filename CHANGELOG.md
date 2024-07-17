@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.2](https://github.com/bosunski/dev/compare/v0.0.1...v0.0.2) (2024-07-17)
+
+
+### Miscellaneous Chores
+
+* Fix random issues ([876493a](https://github.com/bosunski/dev/commit/876493a3edcb5e46232e3dbe67b21d379804abb7))
+* Upgrade to Laravel 11 ([cc81981](https://github.com/bosunski/dev/commit/cc819813f687f665308172740028e11e03a07e55))
+
 ## [0.0.1](https://github.com/bosunski/dev/compare/v0.1.1...v0.0.1) (2024-07-07)
 
 
