@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.3](https://github.com/bosunski/dev/compare/v0.0.2...v0.0.3) (2024-07-17)
+
+
+### Miscellaneous Chores
+
+* Fix missing commands ([608feb3](https://github.com/bosunski/dev/commit/608feb30c287419fa5f8e397a8f354d80aff6977))
+* Fix missing commands ([edde8b1](https://github.com/bosunski/dev/commit/edde8b19850078cfc82378d96a36b7b1782bb260))
+
 ## [0.0.2](https://github.com/bosunski/dev/compare/v0.0.1...v0.0.2) (2024-07-17)
 
 
