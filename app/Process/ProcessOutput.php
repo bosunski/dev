@@ -49,14 +49,12 @@ class ProcessOutput
                 continue;
             }
 
-            $this->channel->push("\033[{$color}m");
-
             $spaces = '';
             foreach (range(strlen($process->name), $this->maxNameLength) as $i) {
                 $spaces .= ' ';
             }
 
-            $this->channel->push($process->name . $spaces . "\033[0m| " . $line);
+            $this->channel->push("\033[{$color}m" . $process->name . $spaces . "\033[0m| " . $line);
         }
     }
 

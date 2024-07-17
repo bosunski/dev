@@ -18,10 +18,14 @@ class Dev implements EnvResolver
 
     public readonly string $name;
 
+    public readonly bool $initialized;
+
     public function __construct(public readonly Config $config, public readonly Runner $runner, protected IOInterface $io)
     {
         $this->name = 'dev';
         $this->runner->setEnvResolver($this);
+
+        $this->initialized = is_file($this->config->file());
     }
 
     public function getPluginManager(): PluginManager

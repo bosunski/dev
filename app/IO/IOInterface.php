@@ -150,4 +150,6 @@ interface IOInterface
      * @return void
      */
     public function dev(string $message): void;
+
+    public function task(string $message, Closure $callback): void;
 }

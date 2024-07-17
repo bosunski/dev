@@ -16,9 +16,13 @@ class CdStep implements Step
 
     protected string $path;
 
-    public function __construct(protected Definition $project)
+    public function __construct(protected string $source, protected string $search)
     {
-        $this->path = Config::sourcePath($project->repo, $project->source);
+    }
+
+    public static function fromDefinition(Definition $definition): self
+    {
+        return new self($definition->source, $definition->repo);
     }
 
     public function name(): ?string
@@ -29,7 +33,7 @@ class CdStep implements Step
     public function run(Runner $runner): bool
     {
         if ($this->isSinglePath()) {
-            $in = Config::sourcePath(source: $this->project->source);
+            $in = Config::sourcePath(source: $this->source);
             $finder = Finder::create()
                 ->in($in)
                 ->ignoreVCS(true)
@@ -37,47 +41,44 @@ class CdStep implements Step
                 ->ignoreUnreadableDirs()
                 ->depth(1)
                 ->directories()
-                ->name(["*{$this->project->repo}*", "*{$this->project->repo}", "{$this->project->repo}*"]);
+                ->name(["*$this->search*", "*$this->search", "$this->search*"]);
 
             foreach ($finder as $directory) {
-                $this->path = $directory->getPathname();
-
-                return $this->cd();
+                return $this->cd($runner, $directory->getPathname());
             }
 
-            $runner->io()->error("Unable to find a project matching {$this->project->repo}.");
+            $runner->io()->error("Unable to find a project matching $this->search.");
 
             return false;
         }
 
-        if (! is_dir($this->path)) {
+        $project = new Definition($this->search, $this->source);
+        $path = Config::sourcePath($project->repo, $project->source);
+
+        if (! is_dir($path)) {
             $runner->io()->error('Directory does not exists.');
 
             return false;
         }
 
-        if (getcwd() === $this->path) {
+        if (getcwd() === $path) {
             return true;
         }
 
-        return $this->cd();
+        return $this->cd($runner, $path);
     }
 
-    private function cd(): bool
+    private function cd(Runner $runner, string $path): bool
     {
-        $shell = self::DEFAULT_SHELL;
-        if ($defaultShell = getenv('SHELL')) {
-            $shell = $defaultShell;
-        }
-
-        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($this->path)->run("exec $shell");
+        [, $shell] = $runner->shell();
+        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($path)->run("exec $shell");
 
         return true;
     }
 
     private function isSinglePath(): bool
     {
-        return str($this->project->repo)->explode('/')->filter()->containsOneItem();
+        return str($this->search)->explode('/')->filter()->containsOneItem();
     }
 
     public function done(Runner $runner): bool
@@ -87,6 +88,6 @@ class CdStep implements Step
 
     public function id(): string
     {
-        return "cd-$this->path";
+        return "cd-$this->search";
     }
 }

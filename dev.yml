@@ -1,4 +1,4 @@
-name: dev
+name: bosunski/dev
 
 env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
