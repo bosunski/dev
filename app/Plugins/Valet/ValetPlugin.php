@@ -34,6 +34,10 @@ class ValetPlugin implements Capable, PluginInterface
 
     public function activate(Dev $dev): void
     {
+        if (! $dev->initialized) {
+            return;
+        }
+
         if (! is_dir($path = $dev->config->devPath('php.d'))) {
             mkdir($path, recursive: true);
         }
