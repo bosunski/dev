@@ -24,11 +24,19 @@ class Runner
 
     protected bool $usingShadowEnv = true;
 
+    /**
+     * @var array{name: string, bin: string, profile: string}
+     */
+    public readonly array $shell;
+
     public function __construct(
         private readonly Config $config,
         private readonly IOInterface $io,
         protected readonly Repository $stepRepository
     ) {
+        $this->shell = $this->shell();
+
+        $this->checkShadowEnv();
     }
 
     public function withoutShadowEnv(): static
@@ -178,6 +186,37 @@ class Runner
     }
 
     /**
+     * @return array{bool, bool}
+     */
+    public function checkShadowEnv(bool $force = false): array
+    {
+        /**
+         * We will cache the results of the checks to avoid running them multiple times.
+         */
+        static $hookInstalled = null;
+        static $binaryInstalled = null;
+
+        if (! $force && $hookInstalled !== null && $binaryInstalled !== null) {
+            return [$hookInstalled, $binaryInstalled];
+        }
+
+        $profile = $this->shell['profile'];
+        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process("(source $profile && command -v __shadowenv_hook) >/dev/null 2>&1")->run()->successful();
+
+        /**
+         * It's highly unlikely that the hook will be installed and the binary not be installed.
+         * So, we will return true if the hook is installed to save extra checks.
+         */
+        if ($hookInstalled) {
+            return [$hookInstalled, $binaryInstalled];
+        }
+
+        $binaryInstalled = $this->process(['command', '-v', 'shadowenv'])->run()->successful();
+
+        return [false, $binaryInstalled];
+    }
+
+    /**
      * @param string[]|string $command
      * @param null|string $path
      * @param array<string, string> $env
@@ -204,20 +243,20 @@ class Runner
     /**
      * Resolve the current shell, shell name, and profile file.
      *
-     * @return array{string, string, string}
+     * @return array{name: string, bin: string, profile: string}
      * @throws UserException
      */
     public function shell(): array
     {
-        $shell = getenv('SHELL');
-        if (! $shell) {
+        $bin = getenv('SHELL');
+        if (! $bin) {
             throw new UserException('Unable to determine the current shell. Make sure you are using one of the supported shells: bash, zsh, fish.');
         }
 
-        $shellName = basename($shell);
-        $profile = $this->config->home($this->profile($shellName));
+        $name = basename($bin);
+        $profile = $this->config->home($this->profile($name));
 
-        return [$shellName, $shell, $profile];
+        return compact('name', 'bin', 'profile');
     }
 
     protected function profile(string $shell): string

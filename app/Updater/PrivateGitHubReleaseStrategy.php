@@ -80,16 +80,10 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
             return $this->release;
         }
 
-        $token = env('GITHUB_TOKEN');
-        if (! $token || ! is_string($token)) {
-            throw new RuntimeException('GITHUB_TOKEN must be set and be a string');
-        }
-
         try {
             // Trusting GitHub blindly here
             // @phpstan-ignore-next-line
             return $this->release = Http::asJson()->withHeaders([
-                'Authorization'        => "Bearer $token",
                 'X-GitHub-Api-Version' => '2022-11-28',
             ])->get($this->getLatestReleaseUrl($tag))->throw()->json();
         } catch(RequestException $e) {

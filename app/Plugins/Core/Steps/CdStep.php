@@ -70,8 +70,7 @@ class CdStep implements Step
 
     private function cd(Runner $runner, string $path): bool
     {
-        [, $shell] = $runner->shell();
-        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($path)->run("exec $shell");
+        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($path)->run("exec {$runner->shell['bin']}");
 
         return true;
     }
