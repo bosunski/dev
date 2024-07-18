@@ -32,6 +32,9 @@ jobs:
         run: composer install --no-progress --no-suggest
         if: steps.composer-cache.outputs.cache-hit != 'true'
 
+      - name: Print Shell Environment
+        run: echo $SHELL
+
       - name: Check code styles
         run: vendor/bin/pint --test -v
 
