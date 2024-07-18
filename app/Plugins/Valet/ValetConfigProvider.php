@@ -23,6 +23,10 @@ class ValetConfigProvider implements ConfigProvider
 
     public function stepResolvers(): array
     {
+        if (! $this->plugin->active($this->dev->config)) {
+            return [];
+        }
+
         return [
             'valet' => new ValetStepResolver(
                 $this->dev,

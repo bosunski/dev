@@ -63,6 +63,14 @@ class ValetPlugin implements Capable, PluginInterface
         ];
     }
 
+    public function active(Config $devConfig): bool
+    {
+        /** @var RawValetConfig $config */
+        $config = $devConfig->up()->get(ValetPlugin::NAME) ?? [];
+
+        return ! empty($config);
+    }
+
     /**
      * @return RawValetEnvironment
      * @throws ProcessFailedException
