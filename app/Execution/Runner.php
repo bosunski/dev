@@ -27,7 +27,7 @@ class Runner
     /**
      * @var array{name: string, bin: string, profile: string}|null
      */
-    private readonly ?array $shell = null;
+    private ?array $shell = null;
 
     public function __construct(
         private readonly Config $config,
