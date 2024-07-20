@@ -25,17 +25,15 @@ class Runner
     protected bool $usingShadowEnv = true;
 
     /**
-     * @var array{name: string, bin: string, profile: string}
+     * @var array{name: string, bin: string, profile: string}|null
      */
-    public readonly array $shell;
+    private readonly ?array $shell = null;
 
     public function __construct(
         private readonly Config $config,
         private readonly IOInterface $io,
         protected readonly Repository $stepRepository
     ) {
-        $this->shell = $this->shell();
-
         $this->checkShadowEnv();
     }
 
@@ -200,7 +198,11 @@ class Runner
             return [$hookInstalled, $binaryInstalled];
         }
 
-        $profile = $this->shell['profile'];
+        if (! $shell = $this->shell(null)) {
+            return [false, false];
+        }
+
+        $profile = $shell['profile'];
         $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process("(source $profile && command -v __shadowenv_hook) >/dev/null 2>&1")->run()->successful();
 
         /**
@@ -246,11 +248,15 @@ class Runner
      * @return array{name: string, bin: string, profile: string}
      * @throws UserException
      */
-    private function shell(): array
+    public function shell(?string $default = '/bin/bash'): ?array
     {
-        $bin = getenv('SHELL') ?: trim(shell_exec('echo $SHELL') ?: '');
+        if ($this->shell) {
+            return $this->shell;
+        }
+
+        $bin = getenv('SHELL') ?: $default;
         if (! $bin) {
-            throw new UserException('Unable to determine the current shell. Make sure you are using one of the supported shells: bash, zsh, fish.');
+            return null;
         }
 
         $name = basename($bin);

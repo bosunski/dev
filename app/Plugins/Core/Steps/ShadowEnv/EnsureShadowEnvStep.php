@@ -35,13 +35,18 @@ class EnsureShadowEnvStep implements Step
             return true;
         }
 
-        if (! is_file($runner->shell['profile'])) {
-            throw new UserException("Unable to find the profile file: {$runner->shell['profile']}. Please setup Shadowenv manually.");
+        $shell = $runner->shell(null);
+        if (! $shell) {
+            throw new UserException('Unable to determine the current shell. Make sure you are using one of the supported shells: bash, zsh, fish.');
         }
 
-        $updatedProfile = file_put_contents($runner->shell['profile'], $this->config($runner->shell['name']), FILE_APPEND) !== false;
+        if (! is_file($shell['profile'])) {
+            throw new UserException("Unable to find the profile file: {$shell['profile']}. Please setup Shadowenv manually.");
+        }
+
+        $updatedProfile = file_put_contents($shell['profile'], $this->config($shell['name']), FILE_APPEND) !== false;
         if (! $updatedProfile) {
-            throw new UserException("Unable to update the profile file: {$runner->shell['profile']}. Please setup Shadowenv manually.");
+            throw new UserException("Unable to update the profile file: {$shell['profile']}. Please setup Shadowenv manually.");
         }
 
         return $this->done($runner);
