@@ -246,9 +246,9 @@ class Runner
      * @return array{name: string, bin: string, profile: string}
      * @throws UserException
      */
-    public function shell(): array
+    private function shell(): array
     {
-        $bin = getenv('SHELL');
+        $bin = getenv('SHELL') ?: trim(shell_exec('echo $SHELL'));
         if (! $bin) {
             throw new UserException('Unable to determine the current shell. Make sure you are using one of the supported shells: bash, zsh, fish.');
         }
@@ -259,7 +259,7 @@ class Runner
         return compact('name', 'bin', 'profile');
     }
 
-    protected function profile(string $shell): string
+    private function profile(string $shell): string
     {
         return match ($shell) {
             'bash'  => '.bash_profile',

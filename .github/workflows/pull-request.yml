@@ -41,6 +41,9 @@ jobs:
       - name: Print Shell Environment using PHP(shell_exec)
         run: php -r "echo shell_exec('echo $SHELL');"
 
+      - name: Print Shell Environment using PHP(backticks)
+        run: php -r "echo `echo $SHELL`;"
+
       - name: Check code styles
         run: vendor/bin/pint --test -v
 
