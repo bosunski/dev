@@ -4,6 +4,7 @@ namespace App\Plugins\Core\Steps;
 
 use App\Config\Config;
 use App\Config\Project\Definition;
+use App\Exceptions\UnknownShellException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use Illuminate\Support\Facades\Process;
@@ -70,8 +71,12 @@ class CdStep implements Step
 
     private function cd(Runner $runner, string $path): bool
     {
-        [, $shell] = $runner->shell();
-        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($path)->run("exec $shell");
+        $shell = $runner->shell(null);
+        if (! $shell) {
+            throw new UnknownShellException();
+        }
+
+        Process::tty()->forever()->env(['DEV_SHELL' => '1'])->path($path)->run("exec {$shell['bin']}");
 
         return true;
     }

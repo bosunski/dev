@@ -6,7 +6,6 @@ use App\Bootstrap\ConfiguresDev;
 use App\Cmd\ConfigCommand;
 use App\Config\Config;
 use App\Contracts\Command\ResolvesOwnArgs;
-use App\IO\IOInterface;
 use App\Plugin\Capability\CommandProvider;
 use Illuminate\Console\Application as Artisan;
 use Illuminate\Contracts\Container\BindingResolutionException;
@@ -18,7 +17,6 @@ use LaravelZero\Framework\Kernel as LaravelZeroKernel;
 use Symfony\Component\Console\Exception\CommandNotFoundException;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use UnexpectedValueException;
 
 /**
@@ -68,16 +66,6 @@ class Kernel extends LaravelZeroKernel
             // if command is not found, we will pass
             return $input;
         }
-    }
-
-    protected function resolveDev(?InputInterface $input = null, ?OutputInterface $output = null): Dev
-    {
-        $this->app->instance(
-            Dev::class,
-            $dev = Factory::create($this->app->make(IOInterface::class))
-        );
-
-        return $dev;
     }
 
     public function commands(): void

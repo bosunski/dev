@@ -16,13 +16,11 @@ class ConfiguresDev
         $this->resolveDev($app);
     }
 
-    protected function resolveDev(Application $app): Dev
+    protected function resolveDev(Application $app): void
     {
-        $app->instance(
+        $app->singleton(
             Dev::class,
-            $dev = Factory::create(app(IOInterface::class))
+            fn () => Factory::create(app(IOInterface::class))
         );
-
-        return $dev;
     }
 }
