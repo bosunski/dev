@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Process;
 use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command as Cmd;
 use Symfony\Component\Process\Process as SymfonyProcess;
+use Throwable;
 
 class Runner
 {
@@ -34,7 +35,6 @@ class Runner
         private readonly IOInterface $io,
         protected readonly Repository $stepRepository
     ) {
-        $this->checkShadowEnv();
     }
 
     public function withoutShadowEnv(): static
@@ -74,6 +74,8 @@ class Runner
 
             return Cmd::SUCCESS;
         } catch (UserException $e) {
+            throw $e;
+        } catch (Throwable $e) {
             if ($throw) {
                 throw $e;
             }
@@ -97,7 +99,9 @@ class Runner
         }
 
         if (! $step->run($this)) {
-            throw new UserException("Failed to run step: $name");
+            throw new UserException(
+                $name ? "Failed to run step: $name" : 'Failed to run step.'
+            );
         }
     }
 
@@ -167,6 +171,8 @@ class Runner
      */
     protected function createShadowEnvCommand(string|array $command): array
     {
+        $this->checkShadowEnv();
+
         $options = 'ec';
         if ($this->config->isDebug()) {
             $options .= 'v';
@@ -202,8 +208,7 @@ class Runner
             return [false, false];
         }
 
-        $profile = $shell['profile'];
-        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process("(source $profile && command -v __shadowenv_hook) >/dev/null 2>&1")->run()->successful();
+        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process([$shell['bin'], '-c', 'command -v __shadowenv_hook >/dev/null 2>&1'])->run()->successful();
 
         /**
          * It's highly unlikely that the hook will be installed and the binary not be installed.
