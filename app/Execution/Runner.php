@@ -208,7 +208,7 @@ class Runner
             return [false, false];
         }
 
-        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process([$shell['bin'], '-c', 'command -v __shadowenv_hook >/dev/null 2>&1'])->run()->successful();
+        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"])->run()->successful();
 
         /**
          * It's highly unlikely that the hook will be installed and the binary not be installed.
