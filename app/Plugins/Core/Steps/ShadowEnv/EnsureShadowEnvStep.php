@@ -66,7 +66,7 @@ class EnsureShadowEnvStep implements Step
 
     public function done(Runner $runner): bool
     {
-        [$hookInstalled, $binaryInstalled] = $runner->checkShadowEnv();
+        [$hookInstalled, $binaryInstalled] = $runner->checkShadowEnv(true);
         if ($hookInstalled) {
             return $this->hookInstalled = true;
         }
