@@ -51,9 +51,15 @@ class ServeStep
         $this->storePid();
 
         try {
-            $ps = $project->getServe();
-            $shouldPrefixProjectName = $ps->count() > 1;
-            $processes = $ps->values()->flatMap(fn (array $commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
+            $processes = $project->getServe();
+            if ($processes->isEmpty()) {
+                $this->dev->io()->dev('No processes to run. You can register processes user serve in the dev.yml file.');
+
+                return false;
+            }
+
+            $shouldPrefixProjectName = $processes->count() > 1;
+            $processes = $processes->values()->flatMap(fn (array $commands) => $commands)->map(function (array $process, int $index) use ($output, $shouldPrefixProjectName) {
                 $name = $shouldPrefixProjectName ? $process['project'] . ':' . $process['name'] : $process['name'];
                 $color = $this->generateRandomColor($index);
 
@@ -90,15 +96,12 @@ class ServeStep
 
             return true;
         } finally {
-            if (is_file($this->dev->config->path($this->dev->name))) {
-                unlink($this->dev->config->path($this->dev->name));
-            }
-
+            $this->removePid();
             $output->close();
         }
     }
 
-    protected function storePid(): void
+    private function storePid(): void
     {
         if (! File::isDirectory($this->dev->config->path())) {
             File::makeDirectory($this->dev->config->path(), recursive: true);
@@ -109,6 +112,13 @@ class ServeStep
         }
 
         File::put($this->dev->config->path($this->dev->name), (string) $pid);
+    }
+
+    private function removePid(): void
+    {
+        if (is_file($this->dev->config->path($this->dev->name))) {
+            unlink($this->dev->config->path($this->dev->name));
+        }
     }
 
     private function trapSignals(): void
@@ -182,7 +192,7 @@ class ServeStep
      * @param Channel<bool> $done
      * @return void
      */
-    protected function waitForDoneOrInterrupt(Channel $done): void
+    private function waitForDoneOrInterrupt(Channel $done): void
     {
         $finished = new Channel();
         Coroutine::create(fn () => $finished->push($done->pop()));
@@ -191,7 +201,7 @@ class ServeStep
         $finished->pop();
     }
 
-    protected function waitTimeoutOrInterrupt(): void
+    private function waitTimeoutOrInterrupt(): void
     {
         $finished = new Channel();
         $timer = Timer::after(5000, fn () => $finished->push(true));

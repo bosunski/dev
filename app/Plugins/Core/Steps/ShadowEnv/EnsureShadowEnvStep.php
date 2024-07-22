@@ -7,11 +7,14 @@ use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Brew\Steps\BrewStep;
 
+/**
+ * @see https://shopify.github.io/shadowenv/getting-started
+ */
 class EnsureShadowEnvStep implements Step
 {
-    protected bool $installed = false;
+    private bool $installed = false;
 
-    protected bool $hookInstalled = false;
+    private bool $hookInstalled = false;
 
     public function name(): string
     {
@@ -52,7 +55,7 @@ class EnsureShadowEnvStep implements Step
         return $this->done($runner);
     }
 
-    protected function config(string $shell): string
+    private function config(string $shell): string
     {
         /**
          * We are adding a new line before the eval command to ensure that it has an empty line before it.
