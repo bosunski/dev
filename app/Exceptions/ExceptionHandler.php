@@ -43,7 +43,7 @@ class ExceptionHandler implements DebugExceptionHandler
             }
 
             if ($e instanceof ExitException) {
-                $this->write("<bg=red;options=bold> DEV </> {$e->getMessage()}");
+                $this->write('<bg=red;options=bold> DEV </> Exited Unexpectedly');
 
                 return;
             }

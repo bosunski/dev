@@ -98,10 +98,87 @@ commands:
 
 The command, once defined, can now be run using dev as `dev style`  or `dev run style` .  
 #### sites
+You can define sites that are part of the project. This is useful when you have multiple sites that are part of the project and you want to manage them using DEV. You can define sites like this:
+
+```yaml
+sites:
+    admin: https://example.com/admin
+    frontend: https://example.com
+```
 
 #### serve
+The `serve` attribute is used to define processes that should run when your projects are being served - when you run `dev serve`. This is useful when you have a project that requires multiple services to be running at the same time. You can define the processes like this:
+
+```yaml
+serve:
+    app: php artisan serve
+    queue: php artisan queue:work
+    vite: vite
+```
+
+While the serve attribute is Procfile-like, it is not a Procfile as it adds some extra features. It is a simple way to define processes that should run when you run `dev serve`. The processes are started in the order in which they are defined and the stoppage of one of the processes will stop the others as well.
+
+It is also worth noting that when a dependency project has a `serve` attribute, DEV will also start the processes defined in the dependency project when you run `dev serve` for the current project. This is useful when you have a project that depends on another project that requires some services to be running.
+
+If you have a `.env.<environment>` file in the project, DEV will make sure that the environment variables are loaded before starting the processes defined in the `serve` attribute. Env files loaded are per-project basis and not shaared across projects. The default env file is `.env` but you can specify a different one like this:
+    
+```yaml
+serve:
+    web:
+        run: php artisan serve
+        env: local # .env.local
+    queue: php artisan queue:work
+```
+
+You can also instruct DEV to not load env files by setting the `env` attribute to `false` like this:
+
+```yaml
+serve:
+    web:
+        run: php artisan serve
+        env: false
+```
 
 #### env
+The `env` attribute is used to define environment variables that should be set at all times during the provisioning of the project, when running custom commands and when running the `serve` command. They will also be injected into all shells whose working diretory is the project where you defined them. You can define environment variables like this:
+
+```yaml
+env:
+    SOCK: /var/run/docker.sock
+```
+
+Since the environment variables are set at all times, you can use them in your commands, scripts, and processes. For example, you can use the `APP_ENV` environment variable in your `serve` attribute like this:
+
+```yaml
+serve:
+    web: ./bin/serve --sock=${SOCK}
+commands:
+    show-sock: echo ${SOCK}
+```
+
+Variables defined in the `env` attribute can also be dynmically set in cases where you want to set them based on the environment. You can use the `${ENV}` syntax to set the value of the environment variable based on the environment or use the backticks to run commands within the env value. We can combine the two like this:
+
+```yaml
+env:
+    SOCK: "${HOME}/run/`echo $PWD | md5`.sock" # /Users/bosun/run/1a79a4d60de6718e8e5b326e338ae533.sock
+```
+
+DEV will evaluate the values of environment variables that are dynamically set and inject them appropriately when running commands, scripts, and processes.
+
+There might be times you want to set a variable based on user input, maybe a password, or a token that you don't want to store in dev.yml. You can define this type of variables like this:
+
+```yaml
+env:
+    STRIPE_SECRET:
+        prompt: "What is your Stripe Secret Key?"
+        hint: "You can get the Secret Key at https://dashboard.stripe.com/test/apikeys"
+        placeholder: "Looks like sk_test_xGgsdfgvsdf..."
+```
+
+When you run `dev up`, DEV will prompt you to enter the value of the `STRIPE_SECRET` environment variable. The value entered will be stored in the `$PWD/.dev/config.json` file where it can be reused when running commands, serve, and provisioning.
+
+> [!Note]
+> It is important to run `dev up` after modifying the `env` attributes so that the environment variables can injected in the shells, since the default ShadowEnv lisp file is generated during the provisioning process.
 
 ### Use of Shadowenv
 ### Contributing to DEV
