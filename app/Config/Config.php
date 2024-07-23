@@ -28,13 +28,15 @@ use function Illuminate\Filesystem\join_paths;
  *
  * @phpstan-type Script array{
  *      desc?: string,
+ *      name?: string,
  *      run: string|string[],
  *      'met?'?: string
  * }
  *
  * @phpstan-type Step array<string, mixed> | Script
  *
- * @phpstan-type Steps array<int, array<string | "script", Step>>
+ * @phpstan-type CommandStep array<"command", non-empty-string>
+ * @phpstan-type Steps array<int, array<string | "script", Step> | CommandStep>
  *
  * @phpstan-type RawConfig array{
  *      name?: string,

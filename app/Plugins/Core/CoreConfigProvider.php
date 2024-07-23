@@ -34,8 +34,8 @@ class CoreConfigProvider implements ConfigProvider
     public function stepResolvers(): array
     {
         return [
-            'script'  => $r = new ScriptResolver(),
-            'custom'  => $r,
+            'script'  => $scriptResolver = new ScriptResolver(),
+            'custom'  => $scriptResolver,
             'command' => new CommandResolver($this->dev->config->commands()),
             'mysql'   => new MySqlResolver(),
         ];
