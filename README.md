@@ -65,7 +65,7 @@ When `dev up` runs, it ensures that all projects defined as a dependency are clo
 ```yaml
 name: org/frontend
 projects:
-    - org/backend
+  - org/backend
 ```
 
 As you can see, projects are defined by their repository names as in `owner/repo` or `org/repo` so as to inform DEV where to source the project when it is missing locally.
@@ -77,8 +77,8 @@ The current project is resolved last and will be provisioned last since it depen
 ```yaml
 name: org/frontend
 projects:
-    - org/payments # depends on org/websocket
-    - org/backend
+  - org/payments # depends on org/websocket
+  - org/backend
 ```
 
 Will end up being resolved in this order:
@@ -93,7 +93,7 @@ Sometimes, you may want to keep utility commands that are specific to the projec
 
 ```yaml
 commands:
-    style: prettier 
+  style: prettier 
 ```
 
 The command, once defined, can now be run using dev as `dev style`  or `dev run style` .  
@@ -102,8 +102,8 @@ You can define sites that are part of the project. This is useful when you have 
 
 ```yaml
 sites:
-    admin: https://example.com/admin
-    frontend: https://example.com
+  admin: https://example.com/admin
+  frontend: https://example.com
 ```
 
 #### serve
@@ -111,9 +111,9 @@ The `serve` attribute is used to define processes that should run when your proj
 
 ```yaml
 serve:
-    app: php artisan serve
-    queue: php artisan queue:work
-    vite: vite
+  app: php artisan serve
+  queue: php artisan queue:work
+  vite: vite
 ```
 
 While the serve attribute is Procfile-like, it is not a Procfile as it adds some extra features. It is a simple way to define processes that should run when you run `dev serve`. The processes are started in the order in which they are defined and the stoppage of one of the processes will stop the others as well.
@@ -124,19 +124,19 @@ If you have a `.env.<environment>` file in the project, DEV will make sure that 
     
 ```yaml
 serve:
-    web:
-        run: php artisan serve
-        env: local # .env.local
-    queue: php artisan queue:work
+  web:
+    run: php artisan serve
+    env: local # .env.local
+  queue: php artisan queue:work
 ```
 
 You can also instruct DEV to not load env files by setting the `env` attribute to `false` like this:
 
 ```yaml
 serve:
-    web:
-        run: php artisan serve
-        env: false
+  web:
+    run: php artisan serve
+    env: false
 ```
 
 #### env
@@ -144,23 +144,23 @@ The `env` attribute is used to define environment variables that should be set a
 
 ```yaml
 env:
-    SOCK: /var/run/docker.sock
+  SOCK: /var/run/docker.sock
 ```
 
 Since the environment variables are set at all times, you can use them in your commands, scripts, and processes. For example, you can use the `APP_ENV` environment variable in your `serve` attribute like this:
 
 ```yaml
 serve:
-    web: ./bin/serve --sock=${SOCK}
+  web: ./bin/serve --sock=${SOCK}
 commands:
-    show-sock: echo ${SOCK}
+  show-sock: echo ${SOCK}
 ```
 
 Variables defined in the `env` attribute can also be dynmically set in cases where you want to set them based on the environment. You can use the `${ENV}` syntax to set the value of the environment variable based on the environment or use the backticks to run commands within the env value. We can combine the two like this:
 
 ```yaml
 env:
-    SOCK: "${HOME}/run/`echo $PWD | md5`.sock" # /Users/bosun/run/1a79a4d60de6718e8e5b326e338ae533.sock
+  SOCK: "${HOME}/run/`echo $PWD | md5`.sock" # /Users/bosun/run/1a79a4d60de6718e8e5b326e338ae533.sock
 ```
 
 DEV will evaluate the values of environment variables that are dynamically set and inject them appropriately when running commands, scripts, and processes.
@@ -169,10 +169,10 @@ There might be times you want to set a variable based on user input, maybe a pas
 
 ```yaml
 env:
-    STRIPE_SECRET:
-        prompt: "What is your Stripe Secret Key?"
-        hint: "You can get the Secret Key at https://dashboard.stripe.com/test/apikeys"
-        placeholder: "Looks like sk_test_xGgsdfgvsdf..."
+  STRIPE_SECRET:
+    prompt: "What is your Stripe Secret Key?"
+    hint: "You can get the Secret Key at https://dashboard.stripe.com/test/apikeys"
+    placeholder: "Looks like sk_test_xGgsdfgvsdf..."
 ```
 
 When you run `dev up`, DEV will prompt you to enter the value of the `STRIPE_SECRET` environment variable. The value entered will be stored in the `$PWD/.dev/config.json` file where it can be reused when running commands, serve, and provisioning.
