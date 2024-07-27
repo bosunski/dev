@@ -184,12 +184,12 @@ class ValetPlugin implements Capable, PluginInterface
 
     protected static function runCommand(string $command): ProcessResult
     {
-        return Process::timeout(3)->command($command)->run()->throw();
+        return Process::command($command)->run()->throw();
     }
 
     private function exec(string $command): ?string
     {
-        $result = Process::timeout(3)->command($command)->run();
+        $result = Process::command($command)->run();
         if ($result->successful()) {
             return trim($result->output());
         }
