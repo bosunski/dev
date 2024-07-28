@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.0.4](https://github.com/bosunski/dev/compare/v0.0.3...v0.0.4) (2024-07-28)
+
+
+### Bug Fixes
+
+* handle case where serve is empty ([d9c7a19](https://github.com/bosunski/dev/commit/d9c7a193b6f0399322bc1385a140eb6c5534990c))
+* looping shadowenv hook ([44d1274](https://github.com/bosunski/dev/commit/44d12746350094f1ac34593aa2a5f2b27f3d79b1))
+* remove 3 seconds timeout ([5abf18c](https://github.com/bosunski/dev/commit/5abf18c06f00b83ec32ada71966d2d87e4627307))
+* remove need for GITHUB_TOKEN ([6e2ebb1](https://github.com/bosunski/dev/commit/6e2ebb1a7ca47e68c6cb78da484b736de92d502e))
+
+
+### Miscellaneous Chores
+
+* Format readme, update some code ([f573f21](https://github.com/bosunski/dev/commit/f573f210e354c4186016f1f2cd55f6cb521f3842))
+* Improve README ([4ce0589](https://github.com/bosunski/dev/commit/4ce05894536e15cbb9e079e44b086aecc795394e))
+
 ## [0.0.3](https://github.com/bosunski/dev/compare/v0.0.2...v0.0.3) (2024-07-17)
 
 
