@@ -126,14 +126,8 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
 
     protected function downloadAsset(string $url, string $path): void
     {
-        $token = env('GITHUB_TOKEN');
-        if (! $token || ! is_string($token)) {
-            throw new RuntimeException('GITHUB_TOKEN must be set and be a string');
-        }
-
         Http::sink($path)->withHeaders([
             'Accept'               => 'application/octet-stream',
-            'Authorization'        => "Bearer $token",
             'X-GitHub-Api-Version' => '2022-11-28',
         ])->get($url)->throw();
 
