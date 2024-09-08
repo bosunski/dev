@@ -4,9 +4,14 @@ namespace App\Plugins\Spc\Steps;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use RuntimeException;
 
 class SpcInstallStep implements Step
 {
+    public function __construct(private bool $force = false)
+    {
+    }
+
     public function id(): string
     {
         return 'spc-install';
@@ -19,22 +24,41 @@ class SpcInstallStep implements Step
 
     public function run(Runner $runner): bool
     {
-        $binDir = $runner->config()->path('bin');
+        $binDir = $runner->config()->globalPath('bin');
+        @mkdir($binDir, recursive: true);
 
-        $filename = 'spc-macos-aarch64.tar.gz';
+        $filename = $this->getFilename();
         $script = <<<SCRIPT
-            mkdir -p $binDir
-            gh release --repo crazywhalecc/static-php-cli download -p $filename
-            tar -xvf $filename
+            set -xe
+            curl -L -o $filename https://github.com/crazywhalecc/static-php-cli/releases/latest/download/$filename
+            tar -xf $filename
             chmod +x spc
             rm $filename
         SCRIPT;
 
-        return $runner->exec($script, $runner->config()->globalPath('bin'));
+        return $runner->exec($script, $binDir);
+    }
+
+    private function getFilename(): string
+    {
+        $os = php_uname('s');
+        $os = match($os) {
+            'Darwin' => 'macos',
+            'Linux'  => 'linux',
+            default  => throw new RuntimeException("Unsupported OS: $os for SPC"),
+        };
+
+        $arch = php_uname('m');
+        $arch = match($arch) {
+            'aarch64', 'arm64' => 'aarch64',
+            default => throw new RuntimeException("Unsupported architecture: $arch for SPC"),
+        };
+
+        return "spc-$os-$arch.tar.gz";
     }
 
     public function done(Runner $runner): bool
     {
-        return is_file($runner->config()->globalPath('bin/spc'));
+        return ! $this->force && is_file($runner->config()->globalPath('bin/spc'));
     }
 }

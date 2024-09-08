@@ -4,6 +4,7 @@ namespace App\Plugins\Spc;
 
 use App\Dev;
 use App\Plugin\Capability\CommandProvider;
+use App\Plugins\Spc\Command\SpcInstallCommand;
 use App\Plugins\Spc\Config\SpcConfig;
 
 /**
@@ -20,7 +21,9 @@ class SpcCommandProvider implements CommandProvider
      */
     public function getCommands(): array
     {
-        return [];
+        return [
+            new SpcInstallCommand(),
+        ];
     }
 
     public function getConfigCommands(): array
