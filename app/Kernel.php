@@ -87,7 +87,9 @@ class Kernel extends LaravelZeroKernel
             $newCommands = $capability->getCommands();
             foreach ($newCommands as $command) {
                 if (! $command instanceof Command) {
-                    throw new UnexpectedValueException('Plugin capability ' . get_class($capability) . ' returned an invalid value, we expected an array of App\Command\BaseCommand objects');
+                    $class = Command::class;
+
+                    throw new UnexpectedValueException('Plugin capability ' . get_class($capability) . ' returned an invalid value, we expected an array of ' . $class);
                 }
             }
 
