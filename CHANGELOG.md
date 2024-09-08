@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/bosunski/dev/compare/v0.0.4...v0.0.5) (2024-09-08)
+
+
+### Bug Fixes
+
+* Failing SPC build ([30e62d1](https://github.com/bosunski/dev/commit/30e62d1380c4fff81a1a14486066618f24b68952))
+
 ## [0.0.4](https://github.com/bosunski/dev/compare/v0.0.3...v0.0.4) (2024-07-28)
 
 
