@@ -45,9 +45,9 @@ class CreateDatabaseStep implements Step
         );
 
         try {
-            return retry(3, function () use ($runner, $command) {
+            return retry([1000, 2000, 3000], function () use ($runner, $command) {
                 return $runner->process($command)->run()->throw()->successful();
-            }, 1000);
+            });
         } catch (ProcessFailedException $e) {
             echo $e->getMessage();
 
