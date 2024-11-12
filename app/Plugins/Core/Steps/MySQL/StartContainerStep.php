@@ -25,7 +25,7 @@ class StartContainerStep implements Step
         echo $runner->process($command)->run()->output();
 
         $dataDir = $runner->config()->globalPath('mysql/data');
-        $command = "docker run --rm -v $dataDir:/var/lib/mysql -l dev.orbstack.domains=mysql.dev.local --name dev-mysql -e MYSQL_ALLOW_EMPTY_PASSWORD='yes' -d mysql:8.3.0";
+        $command = "docker run --rm -v $dataDir:/var/lib/mysql -l dev.orbstack.domains=mysql.dev.local --name dev-mysql -e MYSQL_ALLOW_EMPTY_PASSWORD='yes' -d mysql:8.3.0 --max-allowed-packet=512M";
 
         try {
             return $runner->process($command)->run()->throw()->successful();

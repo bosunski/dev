@@ -103,9 +103,12 @@ class ExtensionInstallStep implements Step
     public function enabled(): bool
     {
         try {
-            $process = Process::fromShellCommandline("{$this->environment['bin']} -m")->mustRun();
+            $name = Str::before($this->name, '-');
+            $version = Str::after($this->name, '-');
 
-            return Str::of($process->getOutput())->after('[PHP Modules]')->contains(Str::before($this->name, '-'));
+            $process = Process::fromShellCommandline("{$this->environment['bin']} --ri $name")->mustRun();
+
+            return Str::contains($process->getOutput(), "$version");
         } catch (ProcessFailedException) {
             return false;
         }
