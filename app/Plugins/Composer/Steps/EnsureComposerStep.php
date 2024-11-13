@@ -4,7 +4,6 @@ namespace App\Plugins\Composer\Steps;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
-use App\Plugins\Brew\Steps\BrewStep;
 
 class EnsureComposerStep implements Step
 {
@@ -20,7 +19,10 @@ class EnsureComposerStep implements Step
 
     public function run(Runner $runner): bool
     {
-        return $runner->execute(new BrewStep(['composer']));
+        $bin = $runner->config->globalBinPath('composer');
+
+        return $runner->exec("/usr/bin/curl --fail --location --progress-bar --output $bin  https://github.com/composer/composer/releases/latest/download/composer.phar")
+                && $runner->exec("chmod +x $bin");
     }
 
     public function done(Runner $runner): bool

@@ -14,7 +14,7 @@ class SpcInstallStep implements Step
 
     public function id(): string
     {
-        return 'spc-install';
+        return 'spc.install';
     }
 
     public function name(): string
