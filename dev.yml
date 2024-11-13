@@ -4,6 +4,10 @@ env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
 
 steps:
+  - brew:
+    # Required by SPC for building PHP from source
+    - autoconf
+  - composer: []
   - spc:
       combine:
         input: builds/dev.phar
