@@ -213,6 +213,16 @@ class Config
         return $home;
     }
 
+    public function globalBinPath(?string $path = null): string
+    {
+        $binPath = 'bin';
+        if ($path) {
+            $binPath = "bin/$path";
+        }
+
+        return $this->globalPath($binPath);
+    }
+
     public static function home(?string $path = null): string
     {
         $home = (string) (getenv('HOME') ?: getenv('USERPROFILE'));
