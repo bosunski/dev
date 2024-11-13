@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/bosunski/dev/compare/v0.0.6...v0.0.7) (2024-11-13)
+
+
+### Bug Fixes
+
+* ensure composer is installed ([fbe1efe](https://github.com/bosunski/dev/commit/fbe1efe84f01691d7a59c65aad10c6737eaadd3b))
+
 ## [0.0.6](https://github.com/bosunski/dev/compare/v0.0.5...v0.0.6) (2024-11-12)
 
 
