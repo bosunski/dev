@@ -56,11 +56,11 @@ jobs:
         run: composer install --no-progress --no-suggest
         if: steps.composer-cache.outputs.cache-hit != 'true'
 
-      # - name: Check Code Styles
-      #   run: vendor/bin/pint --test -v
+      - name: Check Code Styles
+        run: vendor/bin/pint --test -v
 
-      # - name: Run Tests
-      #   run: vendor/bin/pest --coverage -v
+      - name: Run Tests
+        run: vendor/bin/pest --coverage -v
 
   build:
     name: Build ${{ github.ref_name }} on ${{ matrix.platform }}
