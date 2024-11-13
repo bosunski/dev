@@ -4,6 +4,7 @@ namespace App\Plugins\Composer;
 
 use App\Dev;
 use App\Plugin\Capability\ConfigProvider;
+use App\Plugin\Capability\PathProvider;
 use App\Plugin\Capable;
 use App\Plugin\PluginInterface;
 
@@ -25,6 +26,7 @@ class ComposerPlugin implements Capable, PluginInterface
     {
         return [
             ConfigProvider::class => ComposerConfigProvider::class,
+            PathProvider::class   => ComposerPathProvider::class,
         ];
     }
 }
