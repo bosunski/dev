@@ -12,7 +12,6 @@ use App\Repository\Repository;
 use Exception;
 use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\PendingProcess;
-use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use InvalidArgumentException;
 use Symfony\Component\Console\Command\Command as Cmd;
@@ -208,7 +207,9 @@ class Runner
             return [false, false];
         }
 
-        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"])->run()->successful();
+        $result = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook)"])->run();
+        dump($result->output(), $result->successful(), [$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"]);
+        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $result->successful();
 
         /**
          * It's highly unlikely that the hook will be installed and the binary not be installed.
@@ -265,24 +266,34 @@ class Runner
         }
 
         $name = basename($bin);
-        $profile = $this->config->home($this->profile($name));
+        $profile = $this->profile($name);
 
         return compact('name', 'bin', 'profile');
     }
 
+    /**
+     * Returns possible shell configs for a given shell
+     *
+     * @param string $shell
+     * @return string
+     * @throws UserException
+     */
     private function profile(string $shell): string
     {
-        return match ($shell) {
-            'bash'  => '.bash_profile',
-            'zsh'   => '.zshrc',
-            'fish'  => 'config.fish',
+        $possibleProfile = match ($shell) {
+            'bash'  => ['.bash_profile', '.bashrc', 'bash_profile', 'bashrc', '.profile'],
+            'zsh'   => ['.zshrc'],
+            'fish'  => ['config.fish'],
             default => throw new UserException("Unknown shell: $shell. Supported shells are: bash, zsh, fish."),
         };
-    }
 
-    public function pool(callable $callback): ProcessPoolResults
-    {
-        return Process::pool($callback)->start($this->handleOutput(...))->wait();
+        foreach ($possibleProfile as $profile) {
+            if (is_file($realPath = $this->config->home($profile))) {
+                return $realPath;
+            }
+        }
+
+        throw new UserException("Unable to find the profile file for the shell: $shell. Supported shells are: bash, zsh, fish.");
     }
 
     private function handleOutput(string $_, string $output, ?string $key = null): void

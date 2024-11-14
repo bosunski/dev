@@ -23,6 +23,7 @@ class EnsureShadowEnvStep implements Step
 
     public function run(Runner $runner): bool
     {
+        dump('Running EnsureShadowEnvStep');
         /**
          * We are not sure that ShadowEnv is setup yet,
          * So, we will configure the runner to not use the ShadowEnv.
@@ -30,6 +31,8 @@ class EnsureShadowEnvStep implements Step
         if (! $this->installed) {
             $installed = $runner->withoutShadowEnv()->execute(new BrewStep(['shadowenv'])) === 0;
             if (! $installed) {
+                dump('Issue');
+
                 return false;
             }
         }
@@ -69,6 +72,7 @@ class EnsureShadowEnvStep implements Step
 
     public function done(Runner $runner): bool
     {
+        dump('Running done');
         [$hookInstalled, $binaryInstalled] = $runner->checkShadowEnv(true);
         if ($hookInstalled) {
             return $this->hookInstalled = true;

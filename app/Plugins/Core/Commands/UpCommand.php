@@ -80,8 +80,8 @@ class UpCommand extends Command
                     continue;
                 }
 
-                if ($project->dev->runner->execute($step, force: $force) !== self::SUCCESS) {
-                    $this->error("⛔️ Failed to run steps for $project->id");
+                if ($project->dev->runner->execute($step, throw: true, force: $force) !== self::SUCCESS) {
+                    $this->error("⛔️ Failed to run step {$step->name()} for $project->id");
 
                     return self::FAILURE;
                 }
