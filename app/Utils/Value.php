@@ -155,7 +155,7 @@ class Value
                 $output = Process::run($match, function ($_, $chunk) use (&$output): void { $output .= $chunk; })->throw()->output();
                 $this->value = str_replace("`$match`", trim($output), $this->value);
             } catch (ProcessFailedException $e) {
-                throw new UserException("Failed to evaluate environment variable: $this->value.\nOutput: $output");
+                throw new UserException("Failed to evaluate environment variable: $this->value", "Output: $output");
             }
         }
 

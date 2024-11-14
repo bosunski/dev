@@ -14,9 +14,7 @@ use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\PendingProcess;
 use Illuminate\Support\Facades\Process;
 use InvalidArgumentException;
-use Symfony\Component\Console\Command\Command as Cmd;
 use Symfony\Component\Process\Process as SymfonyProcess;
-use Throwable;
 
 class Runner
 {
@@ -54,42 +52,34 @@ class Runner
      *
      * @throws Exception
      */
-    public function execute(array|Step $steps = [], bool $throw = false, bool $force = false): int
+    public function execute(array|Step $steps = [], bool $force = false): bool
     {
-        try {
-            if (! is_array($steps)) {
-                $steps = [$steps];
-            }
-
-            foreach ($steps as $step) {
-                $id = $step->id();
-                if (isset($this->stepRepository->steps[$id])) {
-                    continue;
-                }
-
-                $this->stepRepository->steps[$id] = $step;
-                $this->executeStep($step, $force);
-            }
-
-            return Cmd::SUCCESS;
-        } catch (UserException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            if ($throw) {
-                throw $e;
-            }
-
-            return Cmd::FAILURE;
+        if (! is_array($steps)) {
+            $steps = [$steps];
         }
+
+        foreach ($steps as $step) {
+            $id = $step->id();
+            if (isset($this->stepRepository->steps[$id])) {
+                continue;
+            }
+
+            $this->stepRepository->steps[$id] = $step;
+            if (! $this->executeStep($step, $force)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
      * @throws UserException
      */
-    private function executeStep(Step $step, bool $force = false): void
+    private function executeStep(Step $step, bool $force = false): bool
     {
         if (! $force && $step->done($this)) {
-            return;
+            return true;
         }
 
         $name = $step->name();
@@ -97,11 +87,7 @@ class Runner
             $this->io->writeln($name);
         }
 
-        if (! $step->run($this)) {
-            throw new UserException(
-                $name ? "Failed to run step: $name" : 'Failed to run step.'
-            );
-        }
+        return $step->run($this);
     }
 
     /**
@@ -207,8 +193,7 @@ class Runner
             return [false, false];
         }
 
-        $result = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook)"])->run();
-        dump($result->output(), $result->successful(), [$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"]);
+        $result = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"])->run();
         $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $result->successful();
 
         /**

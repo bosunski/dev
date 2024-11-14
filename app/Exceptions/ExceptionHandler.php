@@ -60,6 +60,9 @@ class ExceptionHandler implements DebugExceptionHandler
     {
         $message = $e instanceof Printable ? $e->print() : $e->getMessage();
         $this->write("<bg=red;options=bold> DEV </> $message");
+        if ($e->body && $this->io->getOutput()->isVerbose()) {
+            $this->write($e->body);
+        }
 
         if ($e instanceof InvalidConfigException) {
             $this->write($e->getSourceHighlight());

@@ -42,6 +42,8 @@ class CdCommand extends Command
             return 1;
         }
 
-        return $dev->runner->execute([new CdStep(self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('repo'))]);
+        return $dev->runner->execute([new CdStep(self::KNOWN_SOURCES[$source] ?? 'github.com', $this->argument('repo'))])
+            ? self::SUCCESS
+            : self::FAILURE;
     }
 }
