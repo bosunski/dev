@@ -21,7 +21,7 @@ steps:
         sources: {}
   - script:
       desc: Install composer dependencies
-      run: exit 1
+      run: composer install
 
   - script:
       desc: Create output.txt
