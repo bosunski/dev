@@ -12,12 +12,9 @@ use App\Repository\Repository;
 use Exception;
 use Illuminate\Process\InvokedProcess;
 use Illuminate\Process\PendingProcess;
-use Illuminate\Process\ProcessPoolResults;
 use Illuminate\Support\Facades\Process;
 use InvalidArgumentException;
-use Symfony\Component\Console\Command\Command as Cmd;
 use Symfony\Component\Process\Process as SymfonyProcess;
-use Throwable;
 
 class Runner
 {
@@ -55,42 +52,34 @@ class Runner
      *
      * @throws Exception
      */
-    public function execute(array|Step $steps = [], bool $throw = false, bool $force = false): int
+    public function execute(array|Step $steps = [], bool $force = false): bool
     {
-        try {
-            if (! is_array($steps)) {
-                $steps = [$steps];
-            }
-
-            foreach ($steps as $step) {
-                $id = $step->id();
-                if (isset($this->stepRepository->steps[$id])) {
-                    continue;
-                }
-
-                $this->stepRepository->steps[$id] = $step;
-                $this->executeStep($step, $force);
-            }
-
-            return Cmd::SUCCESS;
-        } catch (UserException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            if ($throw) {
-                throw $e;
-            }
-
-            return Cmd::FAILURE;
+        if (! is_array($steps)) {
+            $steps = [$steps];
         }
+
+        foreach ($steps as $step) {
+            $id = $step->id();
+            if (isset($this->stepRepository->steps[$id])) {
+                continue;
+            }
+
+            $this->stepRepository->steps[$id] = $step;
+            if (! $this->executeStep($step, $force)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
      * @throws UserException
      */
-    private function executeStep(Step $step, bool $force = false): void
+    private function executeStep(Step $step, bool $force = false): bool
     {
         if (! $force && $step->done($this)) {
-            return;
+            return true;
         }
 
         $name = $step->name();
@@ -98,11 +87,7 @@ class Runner
             $this->io->writeln($name);
         }
 
-        if (! $step->run($this)) {
-            throw new UserException(
-                $name ? "Failed to run step: $name" : 'Failed to run step.'
-            );
-        }
+        return $step->run($this);
     }
 
     /**
@@ -208,7 +193,8 @@ class Runner
             return [false, false];
         }
 
-        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"])->run()->successful();
+        $result = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"])->run();
+        $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $result->successful();
 
         /**
          * It's highly unlikely that the hook will be installed and the binary not be installed.
@@ -265,24 +251,34 @@ class Runner
         }
 
         $name = basename($bin);
-        $profile = $this->config->home($this->profile($name));
+        $profile = $this->profile($name);
 
         return compact('name', 'bin', 'profile');
     }
 
+    /**
+     * Returns possible shell configs for a given shell
+     *
+     * @param string $shell
+     * @return string
+     * @throws UserException
+     */
     private function profile(string $shell): string
     {
-        return match ($shell) {
-            'bash'  => '.bash_profile',
-            'zsh'   => '.zshrc',
-            'fish'  => 'config.fish',
+        $possibleProfile = match ($shell) {
+            'bash'  => ['.bash_profile', '.bashrc', 'bash_profile', 'bashrc', '.profile'],
+            'zsh'   => ['.zshrc'],
+            'fish'  => ['config.fish'],
             default => throw new UserException("Unknown shell: $shell. Supported shells are: bash, zsh, fish."),
         };
-    }
 
-    public function pool(callable $callback): ProcessPoolResults
-    {
-        return Process::pool($callback)->start($this->handleOutput(...))->wait();
+        foreach ($possibleProfile as $profile) {
+            if (is_file($realPath = $this->config->home($profile))) {
+                return $realPath;
+            }
+        }
+
+        throw new UserException("Unable to find the profile file for the shell: $shell. Supported shells are: bash, zsh, fish.");
     }
 
     private function handleOutput(string $_, string $output, ?string $key = null): void

@@ -12,7 +12,7 @@ class InvalidConfigException extends UserException
 
     public function __construct(protected ParseException $exception)
     {
-        parent::__construct($exception->getMessage(), $exception->getCode(), $exception);
+        parent::__construct($exception->getMessage(), '', $exception->getCode(), $exception);
         $this->highlighter = new Highlighter();
     }
 

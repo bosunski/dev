@@ -56,6 +56,6 @@ class CloneCommand extends Command implements ResolvesOwnArgs
         return $dev->runner->execute([
             new CloneStep($definition, $argString),
             CdStep::fromDefinition($definition),
-        ]);
+        ]) ? self::SUCCESS : self::FAILURE;
     }
 }

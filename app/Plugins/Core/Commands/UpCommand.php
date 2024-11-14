@@ -80,10 +80,10 @@ class UpCommand extends Command
                     continue;
                 }
 
-                if ($project->dev->runner->execute($step, force: $force) !== self::SUCCESS) {
-                    $this->error("⛔️ Failed to run steps for $project->id");
-
-                    return self::FAILURE;
+                if (! $project->dev->runner->execute($step, $force)) {
+                    throw new UserException(
+                        ($name = $step->name()) ? "Failed to run step '$name' in $project->id" : "Failed to run step in $project->id"
+                    );
                 }
             }
         }
@@ -103,10 +103,12 @@ class UpCommand extends Command
     protected function runDeferred(array $deferred, bool $force): int
     {
         foreach ($deferred as [$project, $step]) {
-            if ($project->dev->runner->execute($step, force: $force) !== self::SUCCESS) {
-                $this->error("⛔️ Failed to run deferred steps for $project->id");
-
-                return self::FAILURE;
+            if (! $project->dev->runner->execute($step, $force)) {
+                throw new UserException(
+                    ($name = $step->name())
+                        ? "Failed to run deferred step '$name' in $project->id"
+                        : "Failed to run deferred step in $project->id"
+                );
             }
         }
 
@@ -134,7 +136,7 @@ class UpCommand extends Command
          * We also need to resolve any dependencies it has.
          * ToDo: Handle error if the project does not exist or not clonable
          */
-        if ($this->runner->execute([new CloneStep($projectDefinition, ['--depth=1'], $root, true)]) !== 0) {
+        if (! $this->runner->execute([new CloneStep($projectDefinition, ['--depth=1'], $root, true)])) {
             throw new UserException("Failed to clone $projectDefinition");
         }
 

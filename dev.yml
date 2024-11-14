@@ -1,7 +1,7 @@
 name: bosunski/dev
 
 env:
-  PSB_DIR: "${HOME}/.dev/`echo $PWD | md5`"
+  PSB_DIR: "${HOME}/.dev/`echo $PWD | md5sum`"
 
 steps:
   - brew:
@@ -45,7 +45,7 @@ commands:
     run: echo $PHP_DIR
   style:
     desc: Fix PHP code style
-    run: pint
+    run: ./vendor/bin/pint
   analyse:
     desc: PHPStan Analyse
     run: ./vendor/bin/phpstan analyse --memory-limit=2G

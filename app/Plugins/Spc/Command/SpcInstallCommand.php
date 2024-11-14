@@ -20,6 +20,8 @@ class SpcInstallCommand extends Command
 
     public function handle(Dev $dev): int
     {
-        return $dev->runner->execute(new SpcInstallStep(true));
+        return $dev->runner->execute(new SpcInstallStep(true))
+            ? self::SUCCESS
+            : self::FAILURE;
     }
 }

@@ -150,11 +150,12 @@ class Value
 
         preg_match_all('/`([^`]*)`/', $this->value, $matches);
         foreach ($matches[1] ?? [] as $match) {
+            $output = '';
             try {
-                $output = Process::run($match)->throw()->output();
+                $output = Process::run($match, function ($_, $chunk) use (&$output): void { $output .= $chunk; })->throw()->output();
                 $this->value = str_replace("`$match`", trim($output), $this->value);
             } catch (ProcessFailedException $e) {
-                throw new InvalidArgumentException("Failed to evaluate environment variable: $this->value. Output: {$e->result->output()}");
+                throw new UserException("Failed to evaluate environment variable: $this->value", "Output: $output");
             }
         }
 

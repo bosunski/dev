@@ -28,7 +28,7 @@ class EnsureShadowEnvStep implements Step
          * So, we will configure the runner to not use the ShadowEnv.
          */
         if (! $this->installed) {
-            $installed = $runner->withoutShadowEnv()->execute(new BrewStep(['shadowenv'])) === 0;
+            $installed = $runner->withoutShadowEnv()->execute(new BrewStep(['shadowenv']));
             if (! $installed) {
                 return false;
             }
