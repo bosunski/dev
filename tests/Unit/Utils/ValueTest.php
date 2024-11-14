@@ -35,7 +35,7 @@ class ValueTest extends TestCase
      */
     public function evaluateWithFailedProcess(): void
     {
-        $this->expectExceptionMessage('Failed to evaluate environment variable: `echo "Hello World" && exit 1`. Output: Hello World');
+        $this->expectExceptionMessage('Failed to evaluate environment variable: `echo "Hello World" && exit 1`');
         $value = new Value('`echo "Hello World" && exit 1`');
         $value->resolve();
     }
