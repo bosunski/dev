@@ -30,7 +30,7 @@ class Runner
     private ?array $shell = null;
 
     public function __construct(
-        private readonly Config $config,
+        public readonly Config $config,
         private readonly IOInterface $io,
         protected readonly Repository $stepRepository
     ) {

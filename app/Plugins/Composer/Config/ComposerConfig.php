@@ -5,6 +5,7 @@ namespace App\Plugins\Composer\Config;
 use App\Contracts\ConfigInterface;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Composer\Steps\EnsureComposerStep;
 use App\Plugins\Composer\Steps\PackagesStep;
 use App\Utils\Value;
 
@@ -43,12 +44,12 @@ class ComposerConfig implements ConfigInterface
      */
     public function steps(): array
     {
-        $steps = [];
+        $steps = [new EnsureComposerStep()];
         if (isset($this->config['auth'])) {
             $steps[] = new AuthConfig($this->config['auth']);
         }
 
-        if (isset($this->config['packages'])) {
+        if (isset($this->config['packages']) && ! empty($this->config['packages'])) {
             $steps[] = new PackagesStep($this->config['packages']);
         }
 
