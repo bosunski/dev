@@ -4,6 +4,7 @@ namespace App\Plugins\Valet;
 
 use App\Config\Config;
 use App\Dev;
+use App\Exceptions\UserException;
 use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Capability\EnvProvider;
 use App\Plugin\Capability\PathProvider;
@@ -16,8 +17,6 @@ use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
-
-use function Illuminate\Filesystem\join_paths;
 
 /**
  * @phpstan-import-type RawValetEnvironment from ValetConfig
@@ -89,44 +88,67 @@ class ValetPlugin implements Capable, PluginInterface
                 : $config['php'];
         }
 
-        $phpBin = self::phpPath($configVersion) ?: trim(`which php` ?? '');
+        try {
+            $phpBin = self::phpPath($configVersion) ?: trim(`which php` ?? '');
+        } catch (ProcessFailedException $exception) {
+            return $this->environment = [];
+        }
 
         return $this->environment = [
-            'bin'           => $phpBin ?: trim(`which php` ?? ''),
+            'bin'           => $phpBin,
             'pecl'          => dirname($phpBin) . '/pecl',
+            // This assumes too much that the PHP binaries are in /opt/homebrew/Cellar
             'dir'           => dirname($phpBin, 2),
-            'extensionPath' => $this->currentPhpExtensionPath($phpBin),
             'version'       => ValetStepResolver::PHP_VERSION_MAP[$configVersion] ?? $configVersion,
             'cwd'           => $devConfig->cwd(),
-            'home'          => $_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? null,
             'composer'      => $composer = $this->composerBinPath(),
             'valet'         => [
-                'bin'           => $bin = $this->valetBinPath($composer),
-                'path'          => join_paths($_SERVER['HOME'] ?? $_SERVER['USERPROFILE'] ?? '', '.config/valet'),
-                /**
-                 * It is possible that the valet tld is not set yet, so we need to check if the valet bin exists
-                 * and if it does, we can get the tld from the valet bin, otherwise we use the default tld.
-                 *
-                 * It is safe to assume that when the valet bin doesn't exist, the default tld is 'test'
-                 */
-                'tld'           => is_file($bin) ? ($this->exec("$bin tld") ?: ValetConfig::Tld) : ValetConfig::Tld,
+                'bin'           => $this->valetBinPath($composer),
+                'path'          => $devConfig->home('.config/valet'),
+                'tld'           => $this->getTld($devConfig),
             ],
         ];
+    }
+
+    private function getTld(Config $config): string
+    {
+        /**
+         * It is possible that the valet tld is not set yet, so we need to check if the valet bin exists
+         * and if it does, we can get the tld from the valet bin, otherwise we use the default tld.
+         *
+         * It is safe to assume that when the valet bin doesn't exist, the default tld is 'test'
+         */
+        $configPath = $config->home('.config/valet/config.json');
+        if (! ($content = @file_get_contents($configPath))) {
+            return ValetConfig::Tld;
+        }
+
+        $config = json_decode($content, true);
+        if (! is_array($config)) {
+            return ValetConfig::Tld;
+        }
+
+        return $config['tld'] ?? ValetConfig::Tld;
     }
 
     protected static function phpPath(string $version): string
     {
         $source = ValetStepResolver::PHP_VERSION_MAP[$version] ?? null;
         if (! $source) {
-            return '';
+            throw new UserException("Unknown PHP version '$version' in configuration.", 'Supported versions: ' . implode(', ', array_keys(ValetStepResolver::PHP_VERSION_MAP)));
         }
 
+        /**
+         * ToDo: Don't limit the search to /opt/homebrew/Cellar. Maybe allow SPC binaries?
+         * Counterpoint: Valet actually uses homebrew to install PHP, so it's safe to assume
+         * that the PHP binaries are in /opt/homebrew/Cellar.
+         */
         $command = "find /opt/homebrew/Cellar/$source | grep \"$source/$version.*/bin/php$\"";
         $output = Str::of(self::runCommand($command)->output());
         $paths = $output->explode(PHP_EOL)->filter();
 
         if ($paths->isEmpty()) {
-            return '';
+            throw new UserException("Valet: PHP $version is not installed in /opt/homebrew/Cellar/$source.");
         }
 
         $versions = collect();
@@ -139,7 +161,7 @@ class ValetPlugin implements Capable, PluginInterface
         if (! is_string($latest)) {
             // The PHP version is not found and probaly because the version is not installed
             // in this case, there should be a step to install the PHP version before we get here
-            return '';
+            throw new UserException("Valet: PHP $version is not installed in /opt/homebrew/Cellar/$source.");
         }
 
         $versions->each(function (string $path, string $version) use (&$latest): void {
@@ -160,7 +182,7 @@ class ValetPlugin implements Capable, PluginInterface
 
     protected function composerBinPath(): string
     {
-        $valetPath = `which composer`;
+        $valetPath = `command -v composer`;
         if ($valetPath) {
             return trim($valetPath);
         }
@@ -184,16 +206,8 @@ class ValetPlugin implements Capable, PluginInterface
 
     protected static function runCommand(string $command): ProcessResult
     {
+        // This doesn't have Shadowenv covrage and might not work as expected
+        // especially when an environment specific binary is being used
         return Process::command($command)->run()->throw();
-    }
-
-    private function exec(string $command): ?string
-    {
-        $result = Process::command($command)->run();
-        if ($result->successful()) {
-            return trim($result->output());
-        }
-
-        return null;
     }
 }

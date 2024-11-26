@@ -30,7 +30,7 @@ class ValetConfigProvider implements ConfigProvider
         return [
             'valet' => new ValetStepResolver(
                 $this->dev,
-                $this->plugin->environment($this->dev->config),
+                fn () => $this->plugin->environment($this->dev->config),
             ),
         ];
     }

@@ -11,36 +11,37 @@ class Site
 {
     public readonly string $type;
 
-    public readonly string $host;
+    private readonly string $host;
 
     public readonly ?string $proxy;
 
     public readonly bool $secure;
 
-    public readonly string $virtualHost;
-
     /**
      * @param RawSiteConfig|string $site
      */
-    public function __construct(array | string $site, protected string $tld)
+    public function __construct(array|string $site)
     {
         if (is_array($site)) {
             $this->type = isset($site['proxy']) ? 'proxy' : 'link';
-            $this->host = $this->createHost($site['host']);
+            $this->host = $site['host'];
             $this->proxy = $site['proxy'] ?? null;
             $this->secure = $site['secure'] ?? true;
         } else {
             $this->type = 'link';
-            $this->host = $this->createHost($site);
+            $this->host = $site;
             $this->proxy = null;
             $this->secure = true;
         }
-
-        $this->virtualHost = "$this->host.$tld";
     }
 
-    private function createHost(string $host): string
+    public function host(string $tld = 'test'): string
     {
-        return Str::of($host)->before(".$this->tld")->toString();
+        return Str::of($this->host)->before(".$tld")->toString();
+    }
+
+    public function vhost(string $tld = 'test'): string
+    {
+        return Str::of($this->host($tld))->append(".$tld")->toString();
     }
 }

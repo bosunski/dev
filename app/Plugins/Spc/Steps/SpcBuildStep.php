@@ -4,6 +4,7 @@ namespace App\Plugins\Spc\Steps;
 
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Brew\Steps\BrewStep;
 use App\Plugins\Spc\Config\SpcConfig;
 use Illuminate\Support\Facades\File;
 
@@ -27,8 +28,7 @@ class SpcBuildStep implements Step
     {
         $this->ensureCMakeIsInstalled($runner);
 
-        $result = $runner->spawn($this->config->buildCommand(), $this->config->phpPath())->wait()->successful();
-        if ($result) {
+        if ($runner->exec($this->config->buildCommand(), $this->config->phpPath())) {
             return true;
         }
 
@@ -43,7 +43,7 @@ class SpcBuildStep implements Step
             return;
         }
 
-        $runner->spawn('brew install cmake')->wait()->throw();
+        $runner->execute(new BrewStep(['cmake']));
     }
 
     public function done(Runner $runner): bool

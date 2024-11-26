@@ -24,6 +24,9 @@ class ValetPathProvider implements PathProvider
         }
 
         $environment = $this->plugin->environment($this->dev->config);
+        if (empty($environment)) {
+            return [];
+        }
 
         return [dirname($environment['bin'])];
     }

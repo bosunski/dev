@@ -24,6 +24,10 @@ class ValetEnvProvider implements EnvProvider
         }
 
         $environment = $this->plugin->environment($this->dev->config);
+        if (empty($environment)) {
+            return [];
+        }
+
         $iniScanDir = $this->dev->config->devPath('php.d');
 
         return [

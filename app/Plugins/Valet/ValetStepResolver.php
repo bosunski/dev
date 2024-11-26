@@ -24,10 +24,10 @@ class ValetStepResolver implements StepResolverInterface
 
     /**
      * @param Dev $dev
-     * @param RawValetEnvironment $environment
+     * @param callable(): RawValetEnvironment $environment
      * @return void
      */
-    public function __construct(protected readonly Dev $dev, protected readonly array $environment)
+    public function __construct(protected readonly Dev $dev, protected $environment)
     {
     }
 
@@ -50,6 +50,6 @@ class ValetStepResolver implements StepResolverInterface
          * We should be able to inject the environment variables, anytime environment
          * variables are needed.
          */
-        return new ValetConfig($args, $this->environment);
+        return new ValetConfig($args, $this->environment, $this->dev->config);
     }
 }

@@ -23,9 +23,11 @@ class PostUpStep implements Deferred, Step
 
     public function run(Runner $runner): bool
     {
+        $tld = $this->config->env->get('valet.tld', 'test');
         foreach ($this->config->sites() as $site) {
-            $md5Path = $runner->config()->globalPath("valet/sites/$site->virtualHost.md5");
-            $nginxPath = $this->config->nginxPath($site->virtualHost);
+            $host = $site->vhost($tld);
+            $md5Path = $runner->config()->globalPath("valet/sites/$host.md5");
+            $nginxPath = $this->config->nginxPath($host);
 
             if (! $md5 = md5_file($nginxPath)) {
                 continue;
