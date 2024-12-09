@@ -10,10 +10,10 @@ use App\Plugin\Capability\EnvProvider;
 use App\Plugin\Capability\PathProvider;
 use App\Plugin\Capable;
 use App\Plugin\PluginInterface;
+use App\Plugins\Valet\Config\LocalValetConfig;
 use App\Plugins\Valet\Config\ValetConfig;
 use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Process\Exceptions\ProcessFailedException;
-use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -26,10 +26,14 @@ class ValetPlugin implements Capable, PluginInterface
 {
     public const NAME = 'valet';
 
-    /**
-     * @var RawValetEnvironment|array{}
-     */
-    protected array $environment = [];
+    private ?LocalValetConfig $env = null;
+
+    public function env(): LocalValetConfig
+    {
+        assert($this->env instanceof LocalValetConfig);
+
+        return $this->env;
+    }
 
     public function activate(Dev $dev): void
     {
@@ -40,6 +44,8 @@ class ValetPlugin implements Capable, PluginInterface
         if (! is_dir($path = $dev->config->devPath('php.d'))) {
             mkdir($path, recursive: true);
         }
+
+        $this->env = new LocalValetConfig($dev->config);
     }
 
     public function deactivate(Dev $dev): void
@@ -65,70 +71,6 @@ class ValetPlugin implements Capable, PluginInterface
     public function active(Config $devConfig): bool
     {
         return ! empty($devConfig->up()->get(ValetPlugin::NAME) ?? []);
-    }
-
-    /**
-     * @return RawValetEnvironment
-     * @throws ProcessFailedException
-     * @throws ProcessTimedOutException
-     */
-    public function environment(Config $devConfig): array
-    {
-        if (! empty($this->environment)) {
-            return $this->environment;
-        }
-
-        /** @var RawValetConfig $config */
-        $config = $devConfig->up()->get(ValetPlugin::NAME) ?? [];
-
-        $configVersion = '8.3';
-        if (isset($config['php'])) {
-            $configVersion = is_array($config['php'])
-                ? $config['php']['version']
-                : $config['php'];
-        }
-
-        try {
-            $phpBin = self::phpPath($configVersion) ?: trim(`which php` ?? '');
-        } catch (ProcessFailedException $exception) {
-            return $this->environment = [];
-        }
-
-        return $this->environment = [
-            'bin'           => $phpBin,
-            'pecl'          => dirname($phpBin) . '/pecl',
-            // This assumes too much that the PHP binaries are in /opt/homebrew/Cellar
-            'dir'           => dirname($phpBin, 2),
-            'version'       => ValetStepResolver::PHP_VERSION_MAP[$configVersion] ?? $configVersion,
-            'cwd'           => $devConfig->cwd(),
-            'composer'      => $composer = $this->composerBinPath(),
-            'valet'         => [
-                'bin'           => $this->valetBinPath($composer),
-                'path'          => $devConfig->home('.config/valet'),
-                'tld'           => $this->getTld($devConfig),
-            ],
-        ];
-    }
-
-    private function getTld(Config $config): string
-    {
-        /**
-         * It is possible that the valet tld is not set yet, so we need to check if the valet bin exists
-         * and if it does, we can get the tld from the valet bin, otherwise we use the default tld.
-         *
-         * It is safe to assume that when the valet bin doesn't exist, the default tld is 'test'
-         */
-        $configPath = $config->home('.config/valet/config.json');
-        if (! ($content = @file_get_contents($configPath))) {
-            return ValetConfig::Tld;
-        }
-
-        $config = json_decode($content, true);
-        if (! is_array($config)) {
-            return ValetConfig::Tld;
-        }
-
-        return $config['tld'] ?? ValetConfig::Tld;
     }
 
     protected static function phpPath(string $version): string

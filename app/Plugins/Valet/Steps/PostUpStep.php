@@ -23,7 +23,7 @@ class PostUpStep implements Deferred, Step
 
     public function run(Runner $runner): bool
     {
-        $tld = $this->config->env->get('valet.tld', 'test');
+        $tld = $this->config->env->get('tld');
         foreach ($this->config->sites() as $site) {
             $host = $site->vhost($tld);
             $md5Path = $runner->config()->globalPath("valet/sites/$host.md5");

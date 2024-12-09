@@ -6,6 +6,7 @@ use App\Dev;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
+use App\Plugins\Valet\Config\LocalValetConfig;
 use App\Plugins\Valet\Config\ValetConfig;
 use InvalidArgumentException;
 
@@ -24,10 +25,10 @@ class ValetStepResolver implements StepResolverInterface
 
     /**
      * @param Dev $dev
-     * @param callable(): RawValetEnvironment $environment
+     * @param LocalValetConfig $localValetConfig
      * @return void
      */
-    public function __construct(protected readonly Dev $dev, protected $environment)
+    public function __construct(protected readonly Dev $dev, protected LocalValetConfig $localValetConfig)
     {
     }
 
@@ -50,6 +51,6 @@ class ValetStepResolver implements StepResolverInterface
          * We should be able to inject the environment variables, anytime environment
          * variables are needed.
          */
-        return new ValetConfig($args, $this->environment, $this->dev->config);
+        return new ValetConfig($args, $this->dev->config, $this->localValetConfig);
     }
 }

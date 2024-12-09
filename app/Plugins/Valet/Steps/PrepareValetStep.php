@@ -2,9 +2,11 @@
 
 namespace App\Plugins\Valet\Steps;
 
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Core\Steps\ShadowEnv\ShadowEnvStep;
 use App\Plugins\Valet\Config\ValetConfig;
 
 use function Illuminate\Filesystem\join_paths;
@@ -29,7 +31,7 @@ class PrepareValetStep implements Step
             return true;
         }
 
-        return mkdir($path, recursive: true);
+        return $runner->execute(new ShadowEnvStep(app(Dev::class))) && mkdir($path, recursive: true);
     }
 
     private function gatherValetFacts(Runner $runner): void
@@ -47,21 +49,20 @@ class PrepareValetStep implements Step
         }
 
         $paths = explode(PHP_EOL, $result->output());
-        $result = $runner->process("$valet tld")->run();
-        if (! $result->successful()) {
+        $tldResult = $runner->process("$valet tld")->run();
+        if (! $tldResult->successful()) {
             throw new UserException('Failed to get Valet TLD');
         }
 
-        $tld = trim($result->output());
         foreach ([
             'version' => $version,
             'bin'     => $this->valetBinPath($runner),
             'path'    => $paths[0],
-            'tld'     => $tld,
+            'tld'     => trim($tldResult->output()),
             'php'     => $runner->config->path('bin/php'),
-            'dir'     => $this->config->path(),
+            'dir'     => $runner->config->home('.config/valet'),
         ] as $key => $value) {
-            $this->config->env->put("valet.$key", $value);
+            $this->config->env->put($key, $value);
         }
     }
 

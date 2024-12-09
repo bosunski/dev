@@ -12,7 +12,6 @@ use App\Plugins\Valet\Steps\PostUpStep;
 use App\Plugins\Valet\Steps\PrepareValetStep;
 use App\Plugins\Valet\Steps\SiteStep;
 use Exception;
-use Illuminate\Support\Collection;
 
 use function Illuminate\Filesystem\join_paths;
 
@@ -55,20 +54,16 @@ class ValetConfig implements Config
 
     public const DefaultPhpversion = '8.3';
 
-    /**
-     * @var Collection{"valet.tld": string}
-     */
-    public readonly Collection $env;
+    public readonly LocalValetConfig $env;
 
     /**
      * @param RawValetConfig $config
-     * @param callable(): RawValetEnvironment $environment
      *
      * @return void
      */
-    public function __construct(protected readonly array $config, public $environment, public readonly ConfigConfig $devConfig)
+    public function __construct(protected readonly array $config, public readonly ConfigConfig $devConfig, LocalValetConfig $localValetConfig)
     {
-        $this->env = new Collection();
+        $this->env = $localValetConfig;
     }
 
     /**
@@ -99,7 +94,7 @@ class ValetConfig implements Config
     }
 
     /**
-     * @param RawValetConfig['php'] $config
+     * @param RawPhpConfig|string $config
      * @return array<int, Step|Config>
      * @throws Exception
      */
@@ -146,11 +141,9 @@ class ValetConfig implements Config
 
     public function path(string $path = ''): string
     {
-        if (empty($path)) {
-            return join_paths(($this->environment)()['valet']['path']);
-        }
+        assert($valetDir = $this->env->get('dir'));
 
-        return join_paths(($this->environment)()['valet']['path'], $path);
+        return join_paths($valetDir, $path);
     }
 
     public function cwd(): string

@@ -8,7 +8,6 @@ use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Config\Site;
 use App\Plugins\Valet\Config\ValetConfig;
 use Exception;
-use RuntimeException;
 
 /**
  * @phpstan-import-type RawValetEnvironment from ValetConfig
@@ -34,9 +33,7 @@ class SiteStep implements Step
      */
     public function run(Runner $runner): bool
     {
-        $valetBinary = $this->config->env->get('valet.bin');
-        assert(is_string($valetBinary), new RuntimeException('Expected valet.bin to be a string, got ' . gettype($valetBinary)));
-
+        $valetBinary = $this->config->env->get('bin');
         $host = $this->site->host($this->tld());
 
         $command = match ($this->site->type) {
@@ -50,10 +47,7 @@ class SiteStep implements Step
 
     private function tld(): string
     {
-        $tld = $this->config->env->get('valet.tld', 'test');
-        assert(is_string($tld), new RuntimeException('Expected valet.tld to be a string, got ' . gettype($tld)));
-
-        return $tld;
+        return $this->config->env->get('tld');
     }
 
     /**
