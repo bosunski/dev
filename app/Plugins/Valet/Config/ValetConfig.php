@@ -2,7 +2,7 @@
 
 namespace App\Plugins\Valet\Config;
 
-use App\Config\Config as ConfigConfig;
+use App\Dev;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Steps\ExtensionInstallStep;
@@ -61,7 +61,7 @@ class ValetConfig implements Config
      *
      * @return void
      */
-    public function __construct(protected readonly array $config, public readonly ConfigConfig $devConfig, LocalValetConfig $localValetConfig)
+    public function __construct(protected readonly array $config, public readonly Dev $dev, LocalValetConfig $localValetConfig)
     {
         $this->env = $localValetConfig;
     }
@@ -78,7 +78,7 @@ class ValetConfig implements Config
         $phpConfig = $this->config['php'] ?? self::DefaultPhpversion;
         $steps = $this->phpSteps($phpConfig);
 
-        array_push($steps, new InstallValetStep(), new PrepareValetStep($this));
+        array_push($steps, new InstallValetStep(), new PrepareValetStep($this, $this->dev));
 
         if (isset($this->config['php'])) {
             $steps = array_merge($steps, $this->phpSteps($this->config['php']));
@@ -113,7 +113,7 @@ class ValetConfig implements Config
 
             if ($name === 'extensions') {
                 foreach ($value as $name => $config) {
-                    $steps[] = new ExtensionInstallStep($name, $this->devConfig->cwd(), $config);
+                    $steps[] = new ExtensionInstallStep($name, $this->dev->config->cwd(), $config);
                 }
                 continue;
             }
@@ -148,6 +148,6 @@ class ValetConfig implements Config
 
     public function cwd(): string
     {
-        return $this->devConfig->cwd();
+        return $this->dev->config->cwd();
     }
 }

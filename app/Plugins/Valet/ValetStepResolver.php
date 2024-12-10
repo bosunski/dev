@@ -16,7 +16,8 @@ use InvalidArgumentException;
 class ValetStepResolver implements StepResolverInterface
 {
     public const PHP_VERSION_MAP = [
-        '8.3' => 'php',
+        '8.4' => 'php',
+        '8.3' => 'php@8.3',
         '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',
         '8.0' => 'php@8.0',
@@ -51,6 +52,6 @@ class ValetStepResolver implements StepResolverInterface
          * We should be able to inject the environment variables, anytime environment
          * variables are needed.
          */
-        return new ValetConfig($args, $this->dev->config, $this->localValetConfig);
+        return new ValetConfig($args, $this->dev, $this->localValetConfig);
     }
 }

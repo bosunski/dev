@@ -54,5 +54,5 @@ jobs:
         with:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           make_latest: false
-          tag_name: ${{ steps.calver.outputs.tag }}
+          tag_name: PR-${{ github.event.number }}-${{ steps.calver.outputs.tag }}
           name: ${{ steps.calver.outputs.tag }}

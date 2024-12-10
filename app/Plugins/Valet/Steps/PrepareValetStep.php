@@ -13,7 +13,7 @@ use function Illuminate\Filesystem\join_paths;
 
 class PrepareValetStep implements Step
 {
-    public function __construct(protected ValetConfig $config)
+    public function __construct(protected ValetConfig $config, protected Dev $dev)
     {
     }
 
@@ -31,7 +31,7 @@ class PrepareValetStep implements Step
             return true;
         }
 
-        return $runner->execute(new ShadowEnvStep(app(Dev::class))) && mkdir($path, recursive: true);
+        return $runner->execute(new ShadowEnvStep($this->dev)) && mkdir($path, recursive: true);
     }
 
     private function gatherValetFacts(Runner $runner): void
