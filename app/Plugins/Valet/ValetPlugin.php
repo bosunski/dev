@@ -4,24 +4,14 @@ namespace App\Plugins\Valet;
 
 use App\Config\Config;
 use App\Dev;
-use App\Exceptions\UserException;
 use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Capability\EnvProvider;
 use App\Plugin\Capability\PathProvider;
 use App\Plugin\Capable;
 use App\Plugin\PluginInterface;
 use App\Plugins\Valet\Config\LocalValetConfig;
-use App\Plugins\Valet\Config\ValetConfig;
-use Illuminate\Contracts\Process\ProcessResult;
-use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Str;
 
-/**
- * @phpstan-import-type RawValetEnvironment from ValetConfig
- * @phpstan-import-type RawValetConfig from ValetConfig
- */
 class ValetPlugin implements Capable, PluginInterface
 {
     public const NAME = 'valet';
