@@ -6,10 +6,8 @@ use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Config\ValetConfig;
-use Illuminate\Support\Facades\File;
+use Illuminate\Process\Exceptions\ProcessFailedException;
 use Illuminate\Support\Str;
-use Symfony\Component\Process\Exception\ProcessFailedException;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -20,11 +18,11 @@ class ExtensionInstallStep implements Step
 {
     /**
      * @param string $name
-     * @param RawValetEnvironment $environment
+     * @param string $cwd
      * @param RawExtensionConfig|true $config
      * @return void
      */
-    public function __construct(protected readonly string $name, protected readonly array $environment, protected readonly array|true $config)
+    public function __construct(protected readonly string $name, protected string $cwd, protected readonly array|true $config)
     {
     }
 
@@ -40,7 +38,7 @@ class ExtensionInstallStep implements Step
     {
         $this->ensureIniDirectoryExists($runner);
 
-        if ($this->installed()) {
+        if ($this->installed($runner)) {
             return $this->enableExtension($runner);
         }
 
@@ -48,8 +46,23 @@ class ExtensionInstallStep implements Step
             throw_unless($runner->exec($this->config['before']), new UserException("Failed to run before command: {$this->config['before']}"));
         }
 
-        return $runner->exec("{$this->environment['pecl']} install -D '{$this->getOptions()}' $this->name")
+        $phpBin = realpath($runner->config->path('bin/php'));
+        if (! $phpBin) {
+            throw new UserException("Linked PHP binary $phpBin not found");
+        }
+
+        $phpBinDir = dirname($phpBin);
+        $peclBin = "$phpBinDir/pecl";
+
+        return $runner->exec("$peclBin install -D '{$this->getOptions()}' $this->name")
             && $this->enableExtension($runner);
+    }
+
+    protected function currentPhpExtensionPath(Runner $runner): string
+    {
+        $phpBin = $runner->config->path('bin/php');
+
+        return trim($runner->withoutEnv()->process([$phpBin, '-nr', '"echo ini_get(\'extension_dir\');"'])->run()->throw()->output());
     }
 
     private function getOptions(): string
@@ -71,44 +84,44 @@ class ExtensionInstallStep implements Step
 
     private function enableExtension(Runner $runner): bool
     {
-        if ($this->enabled()) {
+        if ($this->enabled($runner)) {
             return true;
         }
 
         $name = Str::before($this->name, '-');
 
-        return (bool) @file_put_contents($runner->config()->cwd(".garm/php.d/$name.ini"), "extension={$this->extensionPath()}");
+        return (bool) @file_put_contents($runner->config()->devPath("php.d/$name.ini"), "extension={$this->extensionPath($runner)}");
     }
 
     private function ensureIniDirectoryExists(Runner $runner): void
     {
-        File::makeDirectory($runner->config()->cwd('.garm/php.d'), 0755, true, true);
+        @mkdir($runner->config()->devPath('php.d'), 0755, true);
     }
 
     public function done(Runner $runner): bool
     {
-        return $this->enabled();
+        return $this->enabled($runner);
     }
 
-    public function installed(): bool
+    public function installed(Runner $runner): bool
     {
-        return is_file($this->extensionPath());
+        return is_file($this->extensionPath($runner));
     }
 
-    private function extensionPath(): string
+    private function extensionPath(Runner $runner): string
     {
-        return $this->environment['extensionPath'] . DIRECTORY_SEPARATOR . Str::before($this->name, '-') . '.so';
+        return $this->currentPhpExtensionPath($runner) . DIRECTORY_SEPARATOR . Str::before($this->name, '-') . '.so';
     }
 
-    public function enabled(): bool
+    private function enabled(Runner $runner): bool
     {
         try {
             $name = Str::before($this->name, '-');
             $version = Str::after($this->name, '-');
 
-            $process = Process::fromShellCommandline("{$this->environment['bin']} --ri $name")->mustRun();
+            $result = $runner->process([$runner->config->path('bin/php'), '--ri', $name])->run()->throw();
 
-            return Str::contains($process->getOutput(), "$version");
+            return Str::contains($result->output(), "$version");
         } catch (ProcessFailedException) {
             return false;
         }
@@ -116,7 +129,6 @@ class ExtensionInstallStep implements Step
 
     public function id(): string
     {
-        // TODO: Include path to make it unique across projects
-        return "{$this->environment['cwd']}.php.extension.$this->name";
+        return "$this->cwd.php.extension.$this->name";
     }
 }

@@ -6,6 +6,7 @@ use App\Dev;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugin\StepResolverInterface;
+use App\Plugins\Valet\Config\LocalValetConfig;
 use App\Plugins\Valet\Config\ValetConfig;
 use InvalidArgumentException;
 
@@ -15,7 +16,8 @@ use InvalidArgumentException;
 class ValetStepResolver implements StepResolverInterface
 {
     public const PHP_VERSION_MAP = [
-        '8.3' => 'php',
+        '8.4' => 'php',
+        '8.3' => 'php@8.3',
         '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',
         '8.0' => 'php@8.0',
@@ -24,10 +26,10 @@ class ValetStepResolver implements StepResolverInterface
 
     /**
      * @param Dev $dev
-     * @param RawValetEnvironment $environment
+     * @param LocalValetConfig $localValetConfig
      * @return void
      */
-    public function __construct(protected readonly Dev $dev, protected readonly array $environment)
+    public function __construct(protected readonly Dev $dev, protected LocalValetConfig $localValetConfig)
     {
     }
 
@@ -50,6 +52,6 @@ class ValetStepResolver implements StepResolverInterface
          * We should be able to inject the environment variables, anytime environment
          * variables are needed.
          */
-        return new ValetConfig($args, $this->environment);
+        return new ValetConfig($args, $this->dev, $this->localValetConfig);
     }
 }

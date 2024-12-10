@@ -57,7 +57,7 @@ class CloneStep implements Step
             $gitArgs .= " --branch {$this->project->ref}";
         }
 
-        $result = $runner->exec("git clone$gitArgs {$this->project->url} $clonePath");
+        $result = $runner->withoutEnv()->exec("git clone$gitArgs {$this->project->url} $clonePath");
         if (! $result) {
             File::deleteDirectory($clonePath);
         }
@@ -67,7 +67,7 @@ class CloneStep implements Step
 
     public function pullChanges(Runner $runner, string $clonePath): bool
     {
-        return $runner->exec('git reset --hard HEAD && git pull', $clonePath, [
+        return $runner->withoutEnv()->exec('git reset --hard HEAD && git pull', $clonePath, [
             /**
              * Both of these variables prevents git from looking for the .git directory in the parent directories
              * so as to avoid any unexpected behavior.

@@ -14,8 +14,6 @@ use Exception;
  */
 class SiteStep implements Step
 {
-    private string $valetBinary = 'valet';
-
     /**
      * @param Site $site
      * @param ValetConfig $config
@@ -23,12 +21,11 @@ class SiteStep implements Step
      */
     public function __construct(private readonly Site $site, protected ValetConfig $config)
     {
-        $this->valetBinary = $config->bin();
     }
 
     public function name(): string
     {
-        return "Creating Valet site: {$this->site->virtualHost}";
+        return "Creating Valet site: {$this->site->host()}";
     }
 
     /**
@@ -36,13 +33,21 @@ class SiteStep implements Step
      */
     public function run(Runner $runner): bool
     {
+        $valetBinary = $this->config->env->get('bin');
+        $host = $this->site->host($this->tld());
+
         $command = match ($this->site->type) {
-            'link'  => "{$this->valetBinary} link {$this->site->host}" . ($this->site->secure ? ' --secure' : ''),
-            'proxy' => "{$this->valetBinary} proxy {$this->site->host} {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
+            'link'  => "$valetBinary link $host" . ($this->site->secure ? ' --secure' : ''),
+            'proxy' => "$valetBinary proxy $host {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
             default => throw new UserException("Unknown site type: {$this->site->type}"),
         };
 
         return $runner->exec($command);
+    }
+
+    private function tld(): string
+    {
+        return $this->config->env->get('tld');
     }
 
     /**
@@ -50,12 +55,13 @@ class SiteStep implements Step
      */
     public function done(Runner $runner): bool
     {
-        $nginxPath = $this->config->nginxPath($this->site->virtualHost);
+        $tld = $this->tld();
+        $nginxPath = $this->config->nginxPath($this->site->vhost($tld));
         if (! is_file($nginxPath)) {
             return false;
         }
 
-        $md5Path = $runner->config()->globalPath("valet/sites/{$this->site->virtualHost}.md5");
+        $md5Path = $runner->config()->globalPath("valet/sites/{$this->site->vhost($tld)}.md5");
         if (! is_file($md5Path)) {
             return false;
         }
@@ -70,6 +76,6 @@ class SiteStep implements Step
 
     public function id(): string
     {
-        return "valet.site.{$this->site->host}";
+        return "valet.site.{$this->site->host()}";
     }
 }

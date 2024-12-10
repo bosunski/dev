@@ -2,8 +2,10 @@
 
 namespace App\Plugins\Valet\Config;
 
+use App\Dev;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
+use App\Plugins\Valet\Steps\ExtensionInstallStep;
 use App\Plugins\Valet\Steps\InstallValetStep;
 use App\Plugins\Valet\Steps\LinkPhpStep;
 use App\Plugins\Valet\Steps\PostUpStep;
@@ -39,7 +41,6 @@ use function Illuminate\Filesystem\join_paths;
  *      bin: string,
  *      dir: string,
  *      version: string,
- *      extensionPath: string,
  *      cwd: string,
  *      home: string,
  *      pecl: string,
@@ -51,14 +52,18 @@ class ValetConfig implements Config
 {
     public const Tld = 'test';
 
+    public const DefaultPhpversion = '8.3';
+
+    public readonly LocalValetConfig $env;
+
     /**
      * @param RawValetConfig $config
-     * @param RawValetEnvironment $environment
      *
      * @return void
      */
-    public function __construct(protected readonly array $config, protected array $environment)
+    public function __construct(protected readonly array $config, public readonly Dev $dev, LocalValetConfig $localValetConfig)
     {
+        $this->env = $localValetConfig;
     }
 
     /**
@@ -67,14 +72,16 @@ class ValetConfig implements Config
      */
     public function steps(): array
     {
-        $steps = [
-            new InstallValetStep($this->environment['composer'], $this->environment['valet']['bin']),
-            new PrepareValetStep(),
-        ];
+        /**
+         * PHP is required to run Valet, so we always link PHP first.
+         */
+        $phpConfig = $this->config['php'] ?? self::DefaultPhpversion;
+        $steps = $this->phpSteps($phpConfig);
+
+        array_push($steps, new InstallValetStep(), new PrepareValetStep($this, $this->dev));
 
         if (isset($this->config['php'])) {
-            $config = $this->config['php'];
-            $steps[] = is_array($config) ? new PhpConfig($config, $this->environment) : new LinkPhpStep($config, $this->environment);
+            $steps = array_merge($steps, $this->phpSteps($this->config['php']));
         }
 
         foreach ($this->sites() as $site) {
@@ -87,20 +94,40 @@ class ValetConfig implements Config
     }
 
     /**
+     * @param RawPhpConfig|string $config
+     * @return array<int, Step|Config>
+     * @throws Exception
+     */
+    public function phpSteps(string|array $config): array
+    {
+        if (is_string($config)) {
+            return [new LinkPhpStep($config)];
+        }
+
+        $steps = [];
+        foreach ($config as $name => $value) {
+            if ($name === 'version') {
+                $steps[] = new LinkPhpStep($value);
+                continue;
+            }
+
+            if ($name === 'extensions') {
+                foreach ($value as $name => $config) {
+                    $steps[] = new ExtensionInstallStep($name, $this->dev->config->cwd(), $config);
+                }
+                continue;
+            }
+        }
+
+        return $steps;
+    }
+
+    /**
      * @return Site[]
      */
     public function sites(): array
     {
-        return array_map(fn (array|string $site): Site => new Site($site, $this->environment['valet']['tld']), $this->config['sites'] ?? []);
-    }
-
-    public function path(string $path = ''): string
-    {
-        if (empty($path)) {
-            return join_paths($this->environment['valet']['path']);
-        }
-
-        return join_paths($this->environment['valet']['path'], $path);
+        return array_map(fn (array|string $site): Site => new Site($site), $this->config['sites'] ?? []);
     }
 
     public function nginxPath(string $path = ''): string
@@ -112,13 +139,15 @@ class ValetConfig implements Config
         return $this->path('Nginx' . DIRECTORY_SEPARATOR . $path);
     }
 
-    public function bin(): string
+    public function path(string $path = ''): string
     {
-        return $this->environment['valet']['bin'];
+        assert($valetDir = $this->env->get('dir'));
+
+        return join_paths($valetDir, $path);
     }
 
     public function cwd(): string
     {
-        return $this->environment['cwd'];
+        return $this->dev->config->cwd();
     }
 }

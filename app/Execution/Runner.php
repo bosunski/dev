@@ -42,6 +42,21 @@ class Runner
         return $new;
     }
 
+    /**
+     * Disable the injection of environment variables from plugins
+     * which is done by calling the $this->envResolver. This is useful when you
+     * want to run a command without loading plugin variables.
+     *
+     * @return static
+     */
+    public function withoutEnv(): static
+    {
+        $new = clone $this;
+        $new->envResolver = null;
+
+        return $new;
+    }
+
     public function setEnvResolver(EnvResolver $envResolver): void
     {
         $this->envResolver = $envResolver;
@@ -91,51 +106,40 @@ class Runner
     }
 
     /**
+     * Runs a command through ShadowEnv, injecting environment variables
+     * from plugins and the system. The command is run in a TTY mode.
+     *
      * @param string[]|string $command
      * @param null|string $path
      * @param array<string, string> $env
-     * @return bool
+     * @return bool true if the command was successful, false otherwise.
      * @throws InvalidArgumentException
      */
     public function exec(string|array $command, ?string $path = null, array $env = []): bool
     {
-        return $this->process($this->createShadowEnvCommand($command), $path, $env)
-            ->tty()
-            ->run(output: $this->handleOutput(...))
-            ->successful();
+        return $this->spawn($command, $path, $env)->wait()->successful();
     }
 
     /**
+     * Spawns a command through ShadowEnv, injecting environment variables
+     * from plugins and the system. The command is run in a TTY mode.
+     *
      * @param string[]|string $command
      * @param null|string $path
      * @param array<string, string> $env
-     * @return InvokedProcess
+     * @return InvokedProcess The invoked process.
      * @throws InvalidArgumentException
      */
     public function spawn(string|array $command, ?string $path = null, array $env = []): InvokedProcess
     {
-        return $this->process($this->createShadowEnvCommand($command), $path, $env)
-            ->tty()
-            ->start(output: $this->handleOutput(...));
+        return $this->process($command, $path, $env)->tty()->start();
     }
 
     /**
-     * @param array<string, string> $env
-     * @return array<string, string|null>
-     * @throws InvalidArgumentException
-     */
-    private function environment(array $env = []): array
-    {
-        /**
-         * ToDo: Review this precedence order and make sure it's correct.
-         */
-        return $this->config->envs()
-            ->merge(getenv())
-            ->merge($this->envResolver?->envs() ?? [])
-            ->merge($env)->all();
-    }
-
-    /**
+     * Create a new process instance. By default, the process instance will
+     * use the current working directory, inject environment variables and use
+     * ShadowEnv if it's available.
+     *
      * @param string[]|string $command
      * @param null|string $path
      * @param array<string, string> $env
@@ -146,16 +150,36 @@ class Runner
     {
         return Process::forever()
             ->path($path ?? $this->config->cwd())
-            ->command($command)
+            ->command($this->createShadowEnvCommand($command))
             ->env($this->environment($env));
     }
 
     /**
-     * @param string|string[] $command
-     * @return string[]
+     * @param array<string, string> $env
+     * @return array<string, string|null>
+     * @throws InvalidArgumentException
      */
-    protected function createShadowEnvCommand(string|array $command): array
+    private function environment(array $env = []): array
     {
+        return $this->config->envs()
+            ->merge(getenv())
+            ->merge($this->envResolver?->envs() ?? [])
+            ->merge($env)->all();
+    }
+
+    /**
+     * @param string|string[] $command
+     * @return string|string[]
+     */
+    protected function createShadowEnvCommand(string|array $command): array|string
+    {
+        /**
+         * If running through ShadowEnv is disabled, we will return the command as is.
+         */
+        if (! $this->usingShadowEnv) {
+            return $command;
+        }
+
         $this->checkShadowEnv();
 
         $options = 'ec';
@@ -168,10 +192,9 @@ class Runner
             $shell = '/bin/sh';
         }
 
-        $commandPrefix = $this->usingShadowEnv ? ['/opt/homebrew/bin/shadowenv', 'exec', '--'] : [];
         $command = is_string($command) ? $command : implode(' ', $command);
 
-        return array_merge($commandPrefix, [$shell, "-$options", $command]);
+        return array_merge(['/opt/homebrew/bin/shadowenv', 'exec', '--'], [$shell, "-$options", $command]);
     }
 
     /**
@@ -193,7 +216,12 @@ class Runner
             return [false, false];
         }
 
-        $result = $this->process([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"])->run();
+        /**
+         * We will use process without ShadowEnv or environment injection to prevent
+         * infinite recursion. Besides, we don't need to inject any environment variables
+         * or use ShadowEnv.
+         */
+        $result = Process::run([$shell['bin'], '-c', "(source {$shell['profile']} && command -v __shadowenv_hook) >/dev/null 2>&1"]);
         $hookInstalled = $binaryInstalled = $this->usingShadowEnv = $result->successful();
 
         /**
@@ -204,7 +232,7 @@ class Runner
             return [$hookInstalled, $binaryInstalled];
         }
 
-        $binaryInstalled = $this->process(['command', '-v', 'shadowenv'])->run()->successful();
+        $binaryInstalled = Process::run(['command', '-v', 'shadowenv'])->successful();
 
         return [false, $binaryInstalled];
     }
@@ -218,7 +246,12 @@ class Runner
      */
     public function symfonyProcess(array|string $command, ?string $path = null, array $env = []): SymfonyProcess
     {
-        return new SymfonyProcess($this->createShadowEnvCommand($command), $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
+        $command = $this->createShadowEnvCommand($command);
+        if (is_string($command)) {
+            return SymfonyProcess::fromShellCommandline($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
+        }
+
+        return new SymfonyProcess($command, $path ?? $this->config->cwd(), $this->environment($env), timeout: 0);
     }
 
     /**
@@ -279,11 +312,6 @@ class Runner
         }
 
         throw new UserException("Unable to find the profile file for the shell: $shell. Supported shells are: bash, zsh, fish.");
-    }
-
-    private function handleOutput(string $_, string $output, ?string $key = null): void
-    {
-        $this->io()->write($output);
     }
 
     public function io(): IOInterface

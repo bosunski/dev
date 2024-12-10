@@ -42,13 +42,13 @@ class ProcProcess
     protected ?Closure $output = null;
 
     /**
-     * @param string[] $command
+     * @param string|string[] $command
      * @param string|null $cwd
      * @param array<string, string|null> $envs
      *
      * @return void
      */
-    public function __construct(public readonly array $command, public readonly ?string $cwd = null, public readonly array $envs = [])
+    public function __construct(public readonly string|array $command, public readonly ?string $cwd = null, public readonly array $envs = [])
     {
     }
 

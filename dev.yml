@@ -7,7 +7,9 @@ steps:
   - brew:
       # Required by SPC for building PHP from source
       - autoconf
-  - composer: []
+  - composer:
+      packages:
+        - phpstan/phpstan
   - spc:
       combine:
         input: builds/dev.phar
