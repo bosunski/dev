@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/bosunski/dev/compare/v0.0.7...v0.0.8) (2024-12-10)
+
+
+### Bug Fixes
+
+* random issues in running dev ([42e8479](https://github.com/bosunski/dev/commit/42e8479b40a62e56ed52192379cca9494f702ca4))
+
 ## [0.0.7](https://github.com/bosunski/dev/compare/v0.0.6...v0.0.7) (2024-11-13)
 
 
