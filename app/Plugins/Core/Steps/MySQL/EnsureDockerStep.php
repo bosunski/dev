@@ -82,6 +82,10 @@ class EnsureDockerStep implements Step
 
     public function done(Runner $runner): bool
     {
+        if ($runner->hasCommand('docker')) {
+            return true;
+        }
+
         /**
          * We need to check if OrbStack is installed and running. We also
          * need to check if the current docker engine is powered by OrbStack.

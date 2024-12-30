@@ -4,6 +4,7 @@ namespace App\Plugins\Valet;
 
 use App\Config\Config;
 use App\Dev;
+use App\Plugin\Capability\CommandProvider;
 use App\Plugin\Capability\ConfigProvider;
 use App\Plugin\Capability\EnvProvider;
 use App\Plugin\Capability\PathProvider;
@@ -52,9 +53,10 @@ class ValetPlugin implements Capable, PluginInterface
     public function capabilities(): array
     {
         return [
-            ConfigProvider::class => ValetConfigProvider::class,
-            EnvProvider::class    => ValetEnvProvider::class,
-            PathProvider::class   => ValetPathProvider::class,
+            ConfigProvider::class  => ValetConfigProvider::class,
+            EnvProvider::class     => ValetEnvProvider::class,
+            PathProvider::class    => ValetPathProvider::class,
+            CommandProvider::class => ValetCommandProvider::class,
         ];
     }
 

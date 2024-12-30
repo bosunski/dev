@@ -2,10 +2,12 @@
 
 namespace App\Plugins\Core\Config;
 
+use App\Dev;
 use App\Plugin\Contracts\Config;
 use App\Plugins\Core\Steps\MySQL\CreateDatabaseStep;
 use App\Plugins\Core\Steps\MySQL\EnsureDockerStep;
 use App\Plugins\Core\Steps\MySQL\StartContainerStep;
+use App\Plugins\Core\Steps\MySQL\UpdateEnvironmentStep;
 
 /**
  * @phpstan-type RawMySqlConfig array{
@@ -19,7 +21,7 @@ class MySqlConfig implements Config
      * @param RawMySqlConfig $config
      * @return void
      */
-    public function __construct(protected array $config)
+    public function __construct(protected array $config, public readonly Dev $dev)
     {
     }
 
@@ -28,6 +30,7 @@ class MySqlConfig implements Config
         return [
             new EnsureDockerStep(),
             new StartContainerStep(),
+            new UpdateEnvironmentStep($this),
             new CreateDatabaseStep($this->config['databases']),
         ];
     }

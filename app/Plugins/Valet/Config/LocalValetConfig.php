@@ -3,7 +3,10 @@
 namespace App\Plugins\Valet\Config;
 
 use App\Config\Config;
+use App\Exceptions\UserException;
 use RuntimeException;
+
+use function Illuminate\Filesystem\join_paths;
 
 /**
  * @phpstan-type RawLocalValetConfig array{
@@ -22,14 +25,26 @@ class LocalValetConfig
 
     public function __construct(protected Config $devConfig)
     {
+        $valetDir = $this->resolveValetDir($this->devConfig);
         $this->config = [
-            'dir'     => $this->devConfig->home('.config/valet'),
-            'bin'     => $this->devConfig->path('bin/valet'),
+            'dir'     => $valetDir,
+            'bin'     => $this->devConfig->home('.config/composer/vendor/bin/valet'),
             'version' => '4.0.0',
-            'path'    => $this->devConfig->home('.config/valet'),
+            'path'    => $valetDir,
             'tld'     => 'test',
             'php'     => $this->devConfig->path('bin/php'),
         ];
+
+        $this->config = array_merge($this->config, $this->json());
+    }
+
+    private function resolveValetDir(Config $config): string
+    {
+        return match(true) {
+            $config->isDarwin() => $config->home('.config/valet'),
+            $config->isLinux()  => $config->home('.valet'),
+            default             => throw new UserException('Valet is not supported on this platform: ' . $config->platform()),
+        };
     }
 
     /**
@@ -55,5 +70,28 @@ class LocalValetConfig
     public function put(string $key, mixed $value): void
     {
         $this->config[$key] = $value;
+    }
+
+    /**
+     * @return array{tld?: string}
+     */
+    private function json(): array
+    {
+        $content = @file_get_contents(join_paths($this->config['dir'], 'config.json'));
+        if (! $content) {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        if (isset($decoded['domain'])) {
+            $decoded['tld'] = $decoded['domain'];
+            unset($decoded['domain']);
+        }
+
+        return $decoded;
     }
 }

@@ -52,7 +52,7 @@ class ValetConfig implements Config
 {
     public const Tld = 'test';
 
-    public const DefaultPhpversion = '8.3';
+    public const DefaultPhpversion = '8.4';
 
     public readonly LocalValetConfig $env;
 
@@ -76,13 +76,9 @@ class ValetConfig implements Config
          * PHP is required to run Valet, so we always link PHP first.
          */
         $phpConfig = $this->config['php'] ?? self::DefaultPhpversion;
-        $steps = $this->phpSteps($phpConfig);
+        $steps = $this->phpSteps($phpConfig, isset($this->config['php']));
 
-        array_push($steps, new InstallValetStep(), new PrepareValetStep($this, $this->dev));
-
-        if (isset($this->config['php'])) {
-            $steps = array_merge($steps, $this->phpSteps($this->config['php']));
-        }
+        array_push($steps, new InstallValetStep(), new PrepareValetStep($this));
 
         foreach ($this->sites() as $site) {
             $steps[] = new SiteStep($site, $this);
@@ -98,16 +94,20 @@ class ValetConfig implements Config
      * @return array<int, Step|Config>
      * @throws Exception
      */
-    public function phpSteps(string|array $config): array
+    private function phpSteps(string|array $config, bool $link = true): array
     {
-        if (is_string($config)) {
-            return [new LinkPhpStep($config)];
+        if ($link && is_string($config)) {
+            return [new LinkPhpStep($config, $this->dev->config->brewPath('Cellar'), $this)];
+        }
+
+        if (! is_array($config)) {
+            return [];
         }
 
         $steps = [];
         foreach ($config as $name => $value) {
-            if ($name === 'version') {
-                $steps[] = new LinkPhpStep($value);
+            if ($link && $name === 'version') {
+                $steps[] = new LinkPhpStep($value, $this->dev->config->brewPath('Cellar'), $this);
                 continue;
             }
 

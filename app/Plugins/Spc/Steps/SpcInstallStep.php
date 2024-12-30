@@ -51,7 +51,8 @@ class SpcInstallStep implements Step
         $arch = php_uname('m');
         $arch = match($arch) {
             'aarch64', 'arm64' => 'aarch64',
-            default => throw new RuntimeException("Unsupported architecture: $arch for SPC"),
+            'x86_64'           => 'x86_64',
+            default            => throw new RuntimeException("Unsupported architecture: $arch for SPC"),
         };
 
         return "spc-$os-$arch.tar.gz";
