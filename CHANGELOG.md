@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/bosunski/dev/compare/v0.0.8...v0.0.9) (2024-12-30)
+
+
+### Bug Fixes
+
+* issues preventing dev from working on linux ([157b414](https://github.com/bosunski/dev/commit/157b414826568f11ccdfe81751f7e950f4e08bb6))
+
 ## [0.0.8](https://github.com/bosunski/dev/compare/v0.0.7...v0.0.8) (2024-12-10)
 
 
