@@ -42,7 +42,6 @@ class PrepareValetStep implements Step
         }
 
         $version = trim($result->output());
-        $tldCommand = $runner->config->isDarwin() ? 'tld' : 'domain';
 
         foreach ([
             'version' => $version,
@@ -52,17 +51,7 @@ class PrepareValetStep implements Step
             $this->config->env->put($key, $value);
         }
 
-        $jsonConfig = $this->config();
-        if (isset($jsonConfig[$tldCommand])) {
-            $this->config->env->put('tld', $jsonConfig[$tldCommand]);
-        }
-
         $this->config->dev->updateEnvironment();
-    }
-
-    private function config(): array
-    {
-        return $this->config->env->json();
     }
 
     private function valetBinPath(Runner $runner): string

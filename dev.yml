@@ -56,7 +56,7 @@ commands:
   style:
     desc: Fix PHP code style
     run: ./vendor/bin/pint
-  analyse:
+  check:
     desc: PHPStan Analyse
     run: ./vendor/bin/phpstan analyse --memory-limit=2G
   test:

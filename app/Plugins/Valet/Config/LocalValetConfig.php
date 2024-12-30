@@ -6,6 +6,8 @@ use App\Config\Config;
 use App\Exceptions\UserException;
 use RuntimeException;
 
+use function Illuminate\Filesystem\join_paths;
+
 /**
  * @phpstan-type RawLocalValetConfig array{
  *  dir: string,
@@ -30,9 +32,10 @@ class LocalValetConfig
             'version' => '4.0.0',
             'path'    => $valetDir,
             'tld'     => 'test',
-            'php'     => $bin = $this->devConfig->path('bin/php'),
-            'php.dir' => dirname($bin),
+            'php'     => $this->devConfig->path('bin/php'),
         ];
+
+        $this->config = array_merge($this->config, $this->json());
     }
 
     private function resolveValetDir(Config $config): string
@@ -69,9 +72,12 @@ class LocalValetConfig
         $this->config[$key] = $value;
     }
 
-    public function json(): array
+    /**
+     * @return array{tld?: string}
+     */
+    private function json(): array
     {
-        $content = @file_get_contents($this->config['dir'] . '/config.json');
+        $content = @file_get_contents(join_paths($this->config['dir'], 'config.json'));
         if (! $content) {
             return [];
         }
@@ -79,6 +85,11 @@ class LocalValetConfig
         $decoded = json_decode($content, true);
         if (! is_array($decoded)) {
             return [];
+        }
+
+        if (isset($decoded['domain'])) {
+            $decoded['tld'] = $decoded['domain'];
+            unset($decoded['domain']);
         }
 
         return $decoded;

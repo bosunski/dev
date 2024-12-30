@@ -93,6 +93,8 @@ class InstallValetStep implements Step
 
             return true;
         }
+
+        return false;
     }
 
     private function valetBinPath(Runner $runner): string
