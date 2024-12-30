@@ -8,6 +8,10 @@ use App\Plugin\Contracts\Step;
 
 class BrewStep implements Step
 {
+    private array $installed = [];
+
+    private array $uninstalled = [];
+
     /**
      * @param string[] $packages
      * @return void
@@ -18,7 +22,7 @@ class BrewStep implements Step
 
     public function name(): string
     {
-        return 'Install brew packages: ' . implode(', ', $this->packages);
+        return 'Install brew formulae: ' . implode(', ', $this->packages);
     }
 
     private function brewBinPath(): string
@@ -40,7 +44,22 @@ class BrewStep implements Step
 
     public function done(Runner $runner): bool
     {
-        return false;
+        $installedPackages = $runner->withoutShadowEnv()->process([$this->brewBinPath(), 'list', '--formulae', '--versions'])->run()->throw()->output();
+        $packages = array_filter(explode("\n", $installedPackages));
+        $this->installed = array_map(fn (string $package) => explode(' ', $package), $packages);
+
+        foreach ($this->packages as $package) {
+            if (! $this->isInstalled($package)) {
+                $this->uninstalled[] = $package;
+            }
+        }
+
+        return empty($this->uninstalled);
+    }
+
+    private function isInstalled(string $package): bool
+    {
+        return collect($this->installed)->contains(fn (array $installed) => $installed[0] === $package);
     }
 
     public function id(): string
