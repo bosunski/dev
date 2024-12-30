@@ -2,6 +2,7 @@
 
 namespace App\Plugins\Core\Resolvers;
 
+use App\Dev;
 use App\Exceptions\UserException;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
@@ -11,6 +12,10 @@ use InvalidArgumentException;
 
 class MySqlResolver implements StepResolverInterface
 {
+    public function __construct(protected Dev $dev)
+    {
+    }
+
     public function resolve(mixed $args): Config|Step
     {
         if (! is_array($args) && ! is_string($args)) {
@@ -21,6 +26,6 @@ class MySqlResolver implements StepResolverInterface
             throw new UserException('MySQL configuration should have a databases key!');
         }
 
-        return new MySqlConfig($args);
+        return new MySqlConfig($args, $this->dev);
     }
 }

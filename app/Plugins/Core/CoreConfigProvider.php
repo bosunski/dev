@@ -37,7 +37,7 @@ class CoreConfigProvider implements ConfigProvider
             'script'  => $scriptResolver = new ScriptResolver(),
             'custom'  => $scriptResolver,
             'command' => new CommandResolver($this->dev->config->commands()),
-            'mysql'   => new MySqlResolver(),
+            'mysql'   => new MySqlResolver($this->dev),
         ];
     }
 }

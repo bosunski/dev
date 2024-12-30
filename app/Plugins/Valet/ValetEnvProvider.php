@@ -4,6 +4,7 @@ namespace App\Plugins\Valet;
 
 use App\Dev;
 use App\Plugin\Capability\EnvProvider;
+use Illuminate\Support\Str;
 
 use function Illuminate\Filesystem\join_paths;
 
@@ -21,10 +22,14 @@ class ValetEnvProvider implements EnvProvider
 
         $iniScanDir = $this->dev->config->devPath('php.d');
 
+        // We need to find a way to ensure envs are loaded properly so that we can be sure
+        // that all the env injection are complete before we use them
         return [
-            'PHP_BIN'                 => $phpBin = $this->plugin->env()->get('php'),
-            'PHP_DIR'                 => dirname($phpBin),
-            'HERD_OR_VALET'           => 'valet',
+            'PHP_BIN'                 => $bin = $this->plugin->env()->get('php'),
+            'PHP_DIR'                 => Str::before(realpath($bin), '/bin/php'),
+            'HERD_OR_VALET'           => $bin = $this->plugin->env()->get('bin'),
+            'VALET_BIN'               => $bin,
+            'VALET_PATH'              => $this->plugin->env()->get('path'),
             'SITE_PATH'               => $sitesPath = join_paths($this->plugin->env()->get('dir'), 'Nginx'),
             'VALET_OR_HERD_SITE_PATH' => $sitesPath,
             'PHP_INI_SCAN_DIR'        => $iniScanDir,

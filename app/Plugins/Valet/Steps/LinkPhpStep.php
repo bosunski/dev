@@ -15,8 +15,9 @@ use Illuminate\Support\Str;
 */
 class LinkPhpStep implements Step
 {
-    private const PHP_VERSION_MAP = [
-        '8.3' => 'php',
+    public const PHP_VERSION_MAP = [
+        '8.4' => 'php',
+        '8.3' => 'php@8.3',
         '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',
         '8.0' => 'php@8.0',
@@ -31,7 +32,7 @@ class LinkPhpStep implements Step
      * @param string $version
      * @return void
      */
-    public function __construct(protected readonly string $version)
+    public function __construct(protected readonly string $version, private readonly string $brewPath, private readonly ValetConfig $valetConfig)
     {
     }
 
@@ -58,12 +59,23 @@ class LinkPhpStep implements Step
             return false;
         }
 
+        // $this->updateEnvironment(dirname($sourcePhpPath));
+
         $binDir = $runner->config->path('bin');
         $binPath = $runner->config->path('bin/php');
 
         $sourcePhpPath = escapeshellarg($sourcePhpPath);
 
         return $runner->exec("mkdir -p $binDir && ln -sf $sourcePhpPath $binPath");
+    }
+
+    private function updateEnvironment(string $phpSourcePath): bool
+    {
+        $this->valetConfig->env->put('php.dir', $phpSourcePath);
+
+        $this->valetConfig->dev->updateEnvironment();
+
+        return true;
     }
 
     private function source(string $version): string
@@ -85,7 +97,7 @@ class LinkPhpStep implements Step
      */
     private function getPhpInstallations(string $source, string $version): Collection
     {
-        $paths = glob("/opt/homebrew/Cellar/$source/$version.*/bin/php");
+        $paths = glob("$this->brewPath/$source/$version.*/bin/php");
         assert($paths !== false, new UserException("Failed to find PHP installations for $version"));
 
         return collect($paths);
@@ -97,7 +109,7 @@ class LinkPhpStep implements Step
 
         $paths = $this->getPhpInstallations($source, $version)->filter();
         if ($paths->isEmpty()) {
-            throw new UserException("Valet: PHP $version is not installed in /opt/homebrew/Cellar/$source");
+            throw new UserException("Valet: PHP $version is not installed in $this->brewPath/$source");
         }
 
         /**
@@ -114,10 +126,10 @@ class LinkPhpStep implements Step
         if (! is_string($latest)) {
             // The PHP version is not found and probaly because the version is not installed
             // in this case, there should be a step to install the PHP version before we get here
-            throw new UserException("Valet: PHP $version is not installed in /opt/homebrew/Cellar/$source.");
+            throw new UserException("Valet: PHP $version is not installed in $this->brewPath/$source.");
         }
 
-        $versions->each(function (string $path, string $version) use (&$latest): void {
+        $versions->each(function (string $_, string $version) use (&$latest): void {
             if (version_compare($version, $latest, '>')) {
                 $latest = $version;
             }
@@ -138,6 +150,6 @@ class LinkPhpStep implements Step
             $this->installed = false;
         }
 
-        return $this->installed && $this->linked;
+        return $this->installed && $this->linked && $this->valetConfig->env->get('php.dir') === dirname(realpath($phpBin));
     }
 }

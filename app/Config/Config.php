@@ -194,6 +194,15 @@ class Config
         return $this->cwd(self::DevDir . DIRECTORY_SEPARATOR . trim($path ?? '', DIRECTORY_SEPARATOR));
     }
 
+    public function brewPath(string $path = ''): string
+    {
+        return match (true) {
+            $this->isDarwin()         => join_paths('/opt/homebrew', $path),
+            $this->isLinux()          => join_paths('/home/linuxbrew/.linuxbrew', $path),
+            default                   => throw new UserException('Encountered unsupported OS ' . php_uname('s') . ' while trying to resolve brew path'),
+        };
+    }
+
     public function cwd(?string $path = null): string
     {
         if ($path) {
@@ -341,13 +350,18 @@ class Config
 
         /**
          * If we had to prompt for any values, we need to persist the settings
-         * to disk. So we can use them next and not prompt again.
+         * to disk. So we can use them next time and not prompt again.
          */
         if ($this->env->wasPrompted()) {
             $this->writeSettings();
         }
 
         return $resolved;
+    }
+
+    public function putenv(string $key, string $value): void
+    {
+        $this->env->put($key, $value);
     }
 
     public function isDebug(): bool
@@ -376,5 +390,10 @@ class Config
     public function isWindows(): bool
     {
         return $this->uname === 'Windows';
+    }
+
+    public function platform(): string
+    {
+        return $this->uname;
     }
 }

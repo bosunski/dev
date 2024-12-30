@@ -4,12 +4,20 @@ env:
   PSB_DIR: "${HOME}/.dev/`echo $PWD | md5sum`"
 
 steps:
+  - mysql:
+      databases:
+        - dev_testing
   - brew:
       # Required by SPC for building PHP from source
       - autoconf
   - composer:
       packages:
         - phpstan/phpstan
+  - valet:
+      php: 8.4
+      sites:
+        - proxy: http://localhost:8000
+          host: psb
   - spc:
       combine:
         input: builds/dev.phar

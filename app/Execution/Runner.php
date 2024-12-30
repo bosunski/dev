@@ -194,7 +194,7 @@ class Runner
 
         $command = is_string($command) ? $command : implode(' ', $command);
 
-        return array_merge(['/opt/homebrew/bin/shadowenv', 'exec', '--'], [$shell, "-$options", $command]);
+        return array_merge([$this->shadowenvBin(), 'exec', '--'], [$shell, "-$options", $command]);
     }
 
     /**
@@ -235,6 +235,16 @@ class Runner
         $binaryInstalled = Process::run(['command', '-v', 'shadowenv'])->successful();
 
         return [false, $binaryInstalled];
+    }
+
+    public function shadowenvBin(): string
+    {
+        return $this->config->brewPath('bin/shadowenv');
+    }
+
+    public function hasCommand(string $command): bool
+    {
+        return $this->process(['command', '-v', $command])->run()->successful();
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Plugins\Valet\Config;
 
 use App\Config\Config;
+use App\Exceptions\UserException;
 use RuntimeException;
 
 /**
@@ -22,14 +23,25 @@ class LocalValetConfig
 
     public function __construct(protected Config $devConfig)
     {
+        $valetDir = $this->resolveValetDir($this->devConfig);
         $this->config = [
-            'dir'     => $this->devConfig->home('.config/valet'),
-            'bin'     => $this->devConfig->path('bin/valet'),
+            'dir'     => $valetDir,
+            'bin'     => $this->devConfig->home('.config/composer/vendor/bin/valet'),
             'version' => '4.0.0',
-            'path'    => $this->devConfig->home('.config/valet'),
+            'path'    => $valetDir,
             'tld'     => 'test',
-            'php'     => $this->devConfig->path('bin/php'),
+            'php'     => $bin = $this->devConfig->path('bin/php'),
+            'php.dir' => dirname($bin),
         ];
+    }
+
+    private function resolveValetDir(Config $config): string
+    {
+        return match(true) {
+            $config->isDarwin() => $config->home('.config/valet'),
+            $config->isLinux()  => $config->home('.valet'),
+            default             => throw new UserException('Valet is not supported on this platform: ' . $config->platform()),
+        };
     }
 
     /**
@@ -55,5 +67,20 @@ class LocalValetConfig
     public function put(string $key, mixed $value): void
     {
         $this->config[$key] = $value;
+    }
+
+    public function json(): array
+    {
+        $content = @file_get_contents($this->config['dir'] . '/config.json');
+        if (! $content) {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return $decoded;
     }
 }

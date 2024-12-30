@@ -19,13 +19,11 @@ class SpcInstallRequirementsStep implements Step
 
     public function run(Runner $runner): bool
     {
-        return $runner->exec('brew install cmake', env: [
-            'HOMEBREW_NO_AUTO_UPDATE' => '1',
-        ]);
+        return $runner->exec([$runner->config->globalPath('bin/spc'), 'doctor', '--auto-fix', '--no-interaction']);
     }
 
     public function done(Runner $runner): bool
     {
-        return $runner->process('cmake --version')->run()->successful();
+        return $runner->exec([$runner->config->globalPath('bin/spc'), 'doctor', '--no-interaction']);
     }
 }

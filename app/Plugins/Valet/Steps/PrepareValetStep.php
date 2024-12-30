@@ -2,7 +2,6 @@
 
 namespace App\Plugins\Valet\Steps;
 
-use App\Dev;
 use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
@@ -13,7 +12,7 @@ use function Illuminate\Filesystem\join_paths;
 
 class PrepareValetStep implements Step
 {
-    public function __construct(protected ValetConfig $config, protected Dev $dev)
+    public function __construct(protected ValetConfig $config)
     {
     }
 
@@ -31,7 +30,7 @@ class PrepareValetStep implements Step
             return true;
         }
 
-        return $runner->execute(new ShadowEnvStep($this->dev)) && mkdir($path, recursive: true);
+        return $runner->execute(new ShadowEnvStep($this->config->dev)) && mkdir($path, recursive: true);
     }
 
     private function gatherValetFacts(Runner $runner): void
@@ -43,32 +42,36 @@ class PrepareValetStep implements Step
         }
 
         $version = trim($result->output());
-        $result = $runner->process("$valet paths")->run();
-        if (! $result->successful()) {
-            throw new UserException('Failed to get Valet paths');
-        }
-
-        $paths = explode(PHP_EOL, $result->output());
-        $tldResult = $runner->process("$valet tld")->run();
-        if (! $tldResult->successful()) {
-            throw new UserException('Failed to get Valet TLD');
-        }
+        $tldCommand = $runner->config->isDarwin() ? 'tld' : 'domain';
 
         foreach ([
             'version' => $version,
             'bin'     => $this->valetBinPath($runner),
-            'path'    => $paths[0],
-            'tld'     => trim($tldResult->output()),
             'php'     => $runner->config->path('bin/php'),
-            'dir'     => $runner->config->home('.config/valet'),
         ] as $key => $value) {
             $this->config->env->put($key, $value);
         }
+
+        $jsonConfig = $this->config();
+        if (isset($jsonConfig[$tldCommand])) {
+            $this->config->env->put('tld', $jsonConfig[$tldCommand]);
+        }
+
+        $this->config->dev->updateEnvironment();
+    }
+
+    private function config(): array
+    {
+        return $this->config->env->json();
     }
 
     private function valetBinPath(Runner $runner): string
     {
-        $result = $runner->process('composer global config home')->run();
+        /**
+         * It's important to use global so the command won't fail if
+         * the current directory doesn't have a composer.json file.
+         */
+        $result = $runner->process('composer global config home --no-interaction')->run();
         if (! $result->successful()) {
             throw new UserException('Attempted to install Valet but it seems Composer is not installed or not in the PATH.');
         }

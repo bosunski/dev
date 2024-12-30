@@ -2,11 +2,10 @@
 
 namespace App\Plugins\Brew\Steps;
 
-use App\Exceptions\UserException;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 
-class BrewStep implements Step
+class EnsureBrewStep implements Step
 {
     /**
      * @param string[] $packages
@@ -18,21 +17,24 @@ class BrewStep implements Step
 
     public function name(): string
     {
-        return 'Install brew packages: ' . implode(', ', $this->packages);
+        $packages = implode(', ', $this->packages);
+
+        return "Install brew packages: $packages";
     }
 
-    private function brewBinPath(): string
+    public function command(): string
     {
-        return match (php_uname('s')) {
-            'Darwin' => '/opt/homebrew/bin/brew',
-            'Linux'  => '/home/linuxbrew/.linuxbrew/bin/brew',
-            default  => throw new UserException('Unsupported OS: ' . php_uname('s')),
-        };
+        return 'brew install ' . implode(' ', $this->packages);
+    }
+
+    public function checkCommand(): string
+    {
+        return $this->command();
     }
 
     public function run(Runner $runner): bool
     {
-        return $runner->exec([$this->brewBinPath(), 'install', ...$this->packages], env: [
+        return $runner->exec($this->command(), env: [
             'HOMEBREW_NO_AUTO_UPDATE'     => '1',
             'HOMEBREW_NO_INSTALL_UPGRADE' => '1',
         ]);
@@ -40,7 +42,7 @@ class BrewStep implements Step
 
     public function done(Runner $runner): bool
     {
-        return false;
+        return $runner->exec($this->checkCommand());
     }
 
     public function id(): string

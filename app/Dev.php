@@ -82,6 +82,67 @@ class Dev implements EnvResolver
         return $paths;
     }
 
+    public function updateEnvironment(): bool
+    {
+        if (! $this->init($this->config)) {
+            return false;
+        }
+
+        if ($this->createDefaultLispFile($this->config) && $this->createGitIgnoreFile($this->config)) {
+            /**
+             * we only want to use ShadowEnv in the runner when it's setup. At this
+             * point, that is not the case since we are still setting it up.
+             */
+            return $this->runner->withoutShadowEnv()->exec([$this->config->brewPath('bin/shadowenv'), 'trust']);
+        }
+
+        return false;
+    }
+
+    private function init(Config $config): bool
+    {
+        if (is_dir($config->cwd($this->path()))) {
+            return true;
+        }
+
+        return @mkdir($config->cwd($this->path()), 0755, true);
+    }
+
+    private function createDefaultLispFile(Config $config): bool
+    {
+        return (bool) file_put_contents($config->cwd($this->path('000_default.lisp')), $this->defaultContent($config));
+    }
+
+    private function createGitIgnoreFile(Config $config): bool
+    {
+        return (bool) file_put_contents($config->cwd($this->path('.gitignore')), $this->gitIgnoreContent());
+    }
+
+    private function path(?string $path = null): string
+    {
+        if ($path) {
+            return ".shadowenv.d/$path";
+        }
+
+        return '.shadowenv.d';
+    }
+
+    private function defaultContent(Config $config): string
+    {
+        return view('shadowenv.default', [
+            'paths' => $this->paths(),
+            'envs'  => $this->envs(),
+        ])->render();
+    }
+
+    private function gitIgnoreContent(): string
+    {
+        return <<<'EOF'
+.*
+!.gitignore
+EOF;
+    }
+
     public function isDebug(): bool
     {
         return $this->config->isDebug();

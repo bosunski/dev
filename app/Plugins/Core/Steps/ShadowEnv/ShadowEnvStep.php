@@ -26,19 +26,7 @@ class ShadowEnvStep implements Step
             return true;
         }
 
-        if (! $this->init($runner->config())) {
-            return false;
-        }
-
-        if ($this->createDefaultLispFile($runner->config()) && $this->createGitIgnoreFile($runner->config())) {
-            /**
-             * we only want to use ShadowEnv in the runner when it's setup. At this
-             * point, that is not the case since we are still setting it up.
-             */
-            return $runner->withoutShadowEnv()->exec(['/opt/homebrew/bin/shadowenv', 'trust']);
-        }
-
-        return false;
+        return $this->dev->updateEnvironment();
     }
 
     private function init(Config $config): bool

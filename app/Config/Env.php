@@ -73,6 +73,11 @@ class Env
         return $resolved;
     }
 
+    public function put(string $key, string $value): void
+    {
+        $this->env[$key] = $value;
+    }
+
     public function wasPrompted(): bool
     {
         return $this->envWasPrompted;
