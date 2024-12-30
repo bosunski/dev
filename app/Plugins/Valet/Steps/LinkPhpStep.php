@@ -59,23 +59,18 @@ class LinkPhpStep implements Step
             return false;
         }
 
-        // $this->updateEnvironment(dirname($sourcePhpPath));
+        $binDirReady = is_dir($runner->config->path('bin')) || @mkdir($runner->config->path('bin'), recursive: true);
 
-        $binDir = $runner->config->path('bin');
-        $binPath = $runner->config->path('bin/php');
-
-        $sourcePhpPath = escapeshellarg($sourcePhpPath);
-
-        return $runner->exec("mkdir -p $binDir && ln -sf $sourcePhpPath $binPath");
+        return $binDirReady
+            && $runner->exec("ln -sf $sourcePhpPath {$runner->config->path('bin/php')}")
+            && $this->updateEnvironment($sourcePhpPath);
     }
 
     private function updateEnvironment(string $phpSourcePath): bool
     {
-        $this->valetConfig->env->put('php.dir', $phpSourcePath);
+        $this->valetConfig->env->put('php', $phpSourcePath);
 
-        $this->valetConfig->dev->updateEnvironment();
-
-        return true;
+        return $this->valetConfig->dev->updateEnvironment();
     }
 
     private function source(string $version): string
@@ -140,6 +135,8 @@ class LinkPhpStep implements Step
 
     public function done(Runner $runner): bool
     {
+        $phpBin = '';
+
         try {
             $phpBin = $this->phpPath($this->version);
             $this->installed = true;
@@ -150,6 +147,6 @@ class LinkPhpStep implements Step
             $this->installed = false;
         }
 
-        return $this->installed && $this->linked && $this->valetConfig->env->get('php.dir') === dirname(realpath($phpBin));
+        return $this->installed && $this->linked && $this->valetConfig->env->get('php') === $phpBin;
     }
 }

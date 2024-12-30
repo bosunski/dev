@@ -4,6 +4,7 @@ namespace App\Plugins\Valet;
 
 use App\Dev;
 use App\Plugin\Capability\CommandProvider;
+use App\Plugins\Valet\Config\ValetConfig;
 
 /**
  * @phpstan-import-type RawValetConfig from ValetConfig
