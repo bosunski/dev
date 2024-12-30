@@ -8,8 +8,14 @@ use App\Plugin\Contracts\Step;
 
 class BrewStep implements Step
 {
+    /**
+     * @var array<int, array{string, string}>
+     */
     private array $installed = [];
 
+    /**
+     * @var string[]
+     */
     private array $uninstalled = [];
 
     /**
@@ -46,6 +52,7 @@ class BrewStep implements Step
     {
         $installedPackages = $runner->withoutShadowEnv()->process([$this->brewBinPath(), 'list', '--formulae', '--versions'])->run()->throw()->output();
         $packages = array_filter(explode("\n", $installedPackages));
+        // @phpstan-ignore-next-line
         $this->installed = array_map(fn (string $package) => explode(' ', $package), $packages);
 
         foreach ($this->packages as $package) {
