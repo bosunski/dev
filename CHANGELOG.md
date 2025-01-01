@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.10](https://github.com/bosunski/dev/compare/v0.0.9...v0.0.10) (2025-01-01)
+
+
+### Bug Fixes
+
+* do not use realpath when we are not sure ([94d03eb](https://github.com/bosunski/dev/commit/94d03eb84e7f74b4b40a5ec57eed783913ba8ba3))
+
 ## [0.0.9](https://github.com/bosunski/dev/compare/v0.0.8...v0.0.9) (2024-12-30)
 
 
