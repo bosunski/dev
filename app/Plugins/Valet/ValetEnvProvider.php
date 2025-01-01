@@ -5,7 +5,6 @@ namespace App\Plugins\Valet;
 use App\Dev;
 use App\Plugin\Capability\EnvProvider;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 use function Illuminate\Filesystem\join_paths;
 
@@ -22,16 +21,13 @@ class ValetEnvProvider implements EnvProvider
         }
 
         $iniScanDir = $this->dev->config->devPath('php.d');
-        $phpBinRealPath = realpath($linkPath = $this->plugin->env()->get('php'));
-        if (! $phpBinRealPath) {
-            throw new RuntimeException("Unable to determine the real path of PHP binary: $linkPath");
-        }
+        $linkPath = $this->plugin->env()->get('php');
 
         // We need to find a way to ensure envs are loaded properly so that we can be sure
         // that all the env injection are complete before we use them
         return [
             'PHP_BIN'                 => $linkPath,
-            'PHP_DIR'                 => Str::before($phpBinRealPath, '/bin/php'),
+            'PHP_DIR'                 => Str::before($linkPath, '/bin/php'),
             'HERD_OR_VALET'           => $bin = $this->plugin->env()->get('bin'),
             'VALET_BIN'               => $bin,
             'VALET_PATH'              => $this->plugin->env()->get('path'),
