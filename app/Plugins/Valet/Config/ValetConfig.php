@@ -3,6 +3,7 @@
 namespace App\Plugins\Valet\Config;
 
 use App\Dev;
+use App\Exceptions\UserException;
 use App\Plugin\Contracts\Config;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Valet\Steps\ExtensionInstallStep;
@@ -54,6 +55,8 @@ class ValetConfig implements Config
 
     public const DefaultPhpversion = '8.4';
 
+    public string $currentPhpVersion = self::DefaultPhpversion;
+
     public readonly LocalValetConfig $env;
 
     /**
@@ -97,6 +100,8 @@ class ValetConfig implements Config
     private function phpSteps(string|array $config, bool $link = true): array
     {
         if ($link && is_string($config)) {
+            $this->currentPhpVersion = $config;
+
             return [new LinkPhpStep($config, $this->dev->config->brewPath('Cellar'), $this)];
         }
 
@@ -107,6 +112,8 @@ class ValetConfig implements Config
         $steps = [];
         foreach ($config as $name => $value) {
             if ($link && $name === 'version') {
+                $this->currentPhpVersion = $value;
+
                 $steps[] = new LinkPhpStep($value, $this->dev->config->brewPath('Cellar'), $this);
                 continue;
             }
@@ -149,5 +156,19 @@ class ValetConfig implements Config
     public function cwd(): string
     {
         return $this->dev->config->cwd();
+    }
+
+    public function php(): string
+    {
+        $source = LinkPhpStep::PHP_VERSION_MAP[$this->currentPhpVersion] ?? null;
+        if (! $source) {
+            throw new UserException("Unknown PHP version '$this->currentPhpVersion' in configuration.", 'Supported versions: ' . implode(', ', array_keys(LinkPhpStep::PHP_VERSION_MAP)));
+        }
+
+        if ($source === 'php') {
+            $source .= '@' . self::DefaultPhpversion;
+        }
+
+        return $source;
     }
 }

@@ -19,6 +19,7 @@ steps:
       sites:
         - proxy: http://localhost:8000
           host: psb
+        - dev
   - spc:
       combine:
         input: builds/dev.phar

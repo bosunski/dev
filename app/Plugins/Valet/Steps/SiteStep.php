@@ -37,10 +37,18 @@ class SiteStep implements Step
         $host = $this->site->host($this->tld());
 
         $command = match ($this->site->type) {
-            'link'  => "$valetBinary link $host" . ($this->site->secure ? ' --secure' : ''),
-            'proxy' => "$valetBinary proxy $host {$this->site->proxy}" . ($this->site->secure ? ' --secure' : ''),
+            'link'  => [$valetBinary, 'link', $host],
+            'proxy' => [$valetBinary, 'proxy', $host, "{$this->site->proxy}"],
             default => throw new UserException("Unknown site type: {$this->site->type}"),
         };
+
+        if ($this->site->secure) {
+            $command[] = '--secure';
+        }
+
+        if ($this->site->type === 'link') {
+            $command = [...$command, '&&', $valetBinary, 'isolate', '--site', $host, $this->config->php()];
+        }
 
         return $runner->exec($command);
     }
