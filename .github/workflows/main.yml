@@ -26,10 +26,14 @@ jobs:
       matrix:
         os:
           - macos-latest
+          - ubuntu-latest
         include:
           - os: macos-latest
             arch: arm64
             platform: macOS
+          - os: ubuntu-latest
+            arch: x86_64
+            platform: Linux
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -69,6 +73,7 @@ jobs:
       matrix:
         os:
           - macos-latest
+          - ubuntu-latest
         include:
           - php-version: 8.3
           - os: macos-latest
@@ -76,6 +81,11 @@ jobs:
             platform: macOS
             target: darwin-arm64
             filename: dev-darwin-arm64
+          - os: ubuntu-latest
+            arch: x86_64
+            platform: linux
+            target: linux-x86_64
+            filename: dev-linux-x86_64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup PHP

@@ -10,6 +10,9 @@
     "files": [
         "composer.json"
     ],
+    "blacklist": [
+        "dev.yml"
+    ],
     "exclude-composer-files": false,
     "compression": "GZ",
     "compactors": [
