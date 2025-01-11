@@ -8,7 +8,6 @@ use Humbug\SelfUpdate\Updater;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use LaravelZero\Framework\Components\Updater\Strategy\StrategyInterface;
 use RuntimeException;
 use ZipArchive;
@@ -60,10 +59,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
             throw new RuntimeException("Unsupported OS type: $os");
         }
 
-        $os = static::OS_TYPE_MAP[$os];
-        $arch = static::MACHINE_TYPE_MAP[$machine];
-
-        return Str::of("dev-$os-$arch")->slug();
+        return strtolower(sprintf('dev-%s-%s', static::OS_TYPE_MAP[$os], static::MACHINE_TYPE_MAP[$machine]));
     }
 
     protected function getLatestReleaseUrl(?string $tag = null): string
