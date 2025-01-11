@@ -101,7 +101,8 @@ jobs:
           repository: crazywhalecc/static-php-cli
           path: spc
 
-      - if: ${{ matrix.platform }} == 'macOS'
+      - name: Install Automake and Gzip on macOS
+        if: ${{ matrix.platform == 'macOS' }}
         run: |
           brew install automake gzip
 
@@ -130,6 +131,11 @@ jobs:
 
       - name: Setup SPC
         run: composer update --no-dev --classmap-authoritative
+        working-directory: spc
+
+      - name: Instal SPC Dependencies
+        run: |
+          ./bin/spc doctor --auto-fix --no-interaction
         working-directory: spc
 
       - name: Download SPC files

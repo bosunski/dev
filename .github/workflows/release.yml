@@ -19,6 +19,7 @@ jobs:
       matrix:
         os:
           - macos-latest
+          - ubuntu-latest
         include:
           - php-version: 8.3
           - os: macos-latest
@@ -26,6 +27,11 @@ jobs:
             platform: macOS
             target: darwin-arm64
             filename: dev-darwin-arm64
+          - os: ubuntu-latest
+            arch: x86_64
+            platform: linux
+            target: linux-x86_64
+            filename: dev-linux-x86_64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +49,8 @@ jobs:
           repository: crazywhalecc/static-php-cli
           path: spc
 
-      - if: ${{ matrix.platform }} == 'macOS'
+      - name: Install Automake and Gzip on macOS
+        if: ${{ matrix.platform == 'macOS' }}
         run: |
           brew install automake gzip
 
@@ -86,6 +93,11 @@ jobs:
 
       - name: Setup SPC
         run: composer update --no-dev --classmap-authoritative
+        working-directory: spc
+
+      - name: Instal SPC Dependencies
+        run: |
+          ./bin/spc doctor --auto-fix --no-interaction
         working-directory: spc
 
       - if: steps.spc-cache.outputs.cache-hit != 'true'
