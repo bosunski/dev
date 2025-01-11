@@ -23,14 +23,18 @@ use ZipArchive;
  */
 class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInterface
 {
+    private const ApiVersion = '2022-11-28';
+
     protected string $baseUrl = 'https://api.github.com/repos/bosunski/dev';
 
     protected const MACHINE_TYPE_MAP = [
-        'arm64' => 'arm64',
+        'arm64'  => 'arm64',
+        'x86_64' => 'x86_64',
     ];
 
     protected const OS_TYPE_MAP = [
         'Darwin' => 'darwin',
+        'Linux'  => 'linux',
     ];
 
     /**
@@ -84,7 +88,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
             // Trusting GitHub blindly here
             // @phpstan-ignore-next-line
             return $this->release = Http::asJson()->withHeaders([
-                'X-GitHub-Api-Version' => '2022-11-28',
+                'X-GitHub-Api-Version' => self::ApiVersion,
             ])->get($this->getLatestReleaseUrl($tag))->throw()->json();
         } catch(RequestException $e) {
             if ($e->response->notFound()) {
@@ -128,7 +132,7 @@ class PrivateGitHubReleaseStrategy extends GithubStrategy implements StrategyInt
     {
         Http::sink($path)->withHeaders([
             'Accept'               => 'application/octet-stream',
-            'X-GitHub-Api-Version' => '2022-11-28',
+            'X-GitHub-Api-Version' => self::ApiVersion,
         ])->get($url)->throw();
 
         if (! file_exists($path)) {

@@ -69,7 +69,7 @@ case $(uname -ms) in
     target=linux-arm64
     ;;
 'Linux x86_64' | *)
-    target=linux-x64
+    target=linux-x86_64
     ;;
 esac
 
