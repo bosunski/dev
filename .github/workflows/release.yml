@@ -43,9 +43,12 @@ jobs:
           repository: crazywhalecc/static-php-cli
           path: spc
 
-      - run: |
+      - if: ${{ matrix.platform }} == 'macOS'
+        run: |
           brew install automake gzip
-          echo "SPC_BUILD_OS=macos" >> $GITHUB_ENV
+
+      - run: |
+          echo "SPC_BUILD_OS=${{ matrix.platform }}" >> $GITHUB_ENV
 
       - name: Cache Composer Dependencies
         id: cache-composer-deps
