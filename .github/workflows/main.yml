@@ -73,7 +73,7 @@ jobs:
       matrix:
         os:
           - macos-latest
-          # - ubuntu-latest
+          # # - ubuntu-latest
         include:
           - os: macos-latest
             arch: arm64
@@ -81,11 +81,13 @@ jobs:
             target: darwin-arm64
             filename: dev-darwin-arm64
             php-version: 8.3
+            php-version: 8.3
           - os: ubuntu-latest
             arch: x86_64
             platform: linux
             target: linux-x86_64
             filename: dev-linux-x86_64
+            php-version: 8.2
             php-version: 8.2
     runs-on: ${{ matrix.os }}
     steps:
@@ -94,6 +96,13 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, bcmath, swoole
+          tools: composer:v2,pecl,php-config
+
+      - name: Check Setup PHP
+        run: |
+          set -e
+          command -v php-config
+          command -v pecl
           tools: composer:v2,pecl,php-config
 
       - name: Check Setup PHP
@@ -129,7 +138,7 @@ jobs:
           fi
 
           echo "bin=$bin" >> $GITHUB_OUTPUT
-          echo "php-version=$php-version" >> $GITHUB_OUTPUT
+          echo "php-version=$php_version" >> $GITHUB_OUTPUT
 
       - name: Resolve Variables
         id: vars
@@ -162,7 +171,7 @@ jobs:
 
       - name: Download SPC files
         if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --with-php=${{ steps.set-spc-binary.outputs.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
