@@ -41,7 +41,7 @@ jobs:
         with:
           php-version: 8.3
           extensions: mbstring, bcmath, swoole
-          tools: composer:v2
+          tools: composer:v2,pecl,php-config
 
       - name: Checkout crazywhalecc/static-php-cli
         uses: actions/checkout@v4
@@ -95,17 +95,29 @@ jobs:
         run: composer update --no-dev --classmap-authoritative
         working-directory: spc
 
+      - name: Set SPC Binary
+        id: set-spc-binary
+        run: |
+          set -e
+          if [ "${{ matrix.platform }}" = 'macOS' ]; then
+            bin=spc
+          else
+            bin=spc-alpine-docker
+          fi
+
+          echo "bin=$bin" >> $GITHUB_OUTPUT
+
       - name: Instal SPC Dependencies
         run: |
           ./bin/spc doctor --auto-fix --no-interaction
         working-directory: spc
 
       - if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/spc download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
 
       - if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
+        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
 
       - name: Build PHAR
@@ -114,7 +126,7 @@ jobs:
       - name: Build DEV binary for ${{ matrix.target }}
         working-directory: spc
         run: |
-            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILEPATH }}
+            php -d memory_limit=-1 bin/${{ steps.set-spc-binary.outputs.bin }} micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILEPATH }}
             chmod +x ${{ steps.vars.outputs.FILEPATH }}
 
       - name: Zip Binary
