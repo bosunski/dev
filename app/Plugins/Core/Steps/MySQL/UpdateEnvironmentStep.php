@@ -15,7 +15,7 @@ class UpdateEnvironmentStep implements Step
 
     public function id(): string
     {
-        return 'mysql-update-environment';
+        return "mysql-update-environment-{$this->config->dev->config->path()}";
     }
 
     public function name(): ?string

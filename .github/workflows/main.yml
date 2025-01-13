@@ -73,7 +73,7 @@ jobs:
       matrix:
         os:
           - macos-latest
-          - ubuntu-latest
+          # - ubuntu-latest
         include:
           - php-version: 8.3
           - os: macos-latest
@@ -81,11 +81,11 @@ jobs:
             platform: macOS
             target: darwin-arm64
             filename: dev-darwin-arm64
-          - os: ubuntu-latest
-            arch: x86_64
-            platform: linux
-            target: linux-x86_64
-            filename: dev-linux-x86_64
+          # - os: ubuntu-latest
+          #   arch: x86_64
+          #   platform: linux
+          #   target: linux-x86_64
+          #   filename: dev-linux-x86_64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup PHP
@@ -93,7 +93,13 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, bcmath, swoole
-          tools: composer:v2
+          tools: composer:v2,pecl,php-config
+
+      - name: Check Setup PHP
+        run: |
+          set -e
+          command -v php-config
+          command -v pecl
 
       - name: Checkout crazywhalecc/static-php-cli
         uses: actions/checkout@v4
@@ -133,21 +139,33 @@ jobs:
         run: composer update --no-dev --classmap-authoritative
         working-directory: spc
 
+      - name: Set SPC Binary
+        id: set-spc-binary
+        run: |
+          set -e
+          if [ "${{ matrix.platform }}" = 'macOS' ]; then
+            bin=spc
+          else
+            bin=spc-alpine-docker
+          fi
+
+          echo "bin=$bin" >> $GITHUB_OUTPUT
+
       - name: Instal SPC Dependencies
         run: |
-          ./bin/spc doctor --auto-fix --no-interaction
+          ./bin/${{ steps.set-spc-binary.outputs.bin }} doctor --auto-fix --no-interaction
         working-directory: spc
 
       - name: Download SPC files
         if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/spc download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build PHP Binaries (Micro and CLI)
         if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/spc build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }}
+        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
 
   release:
