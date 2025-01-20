@@ -73,7 +73,9 @@ jobs:
       matrix:
         os:
           - macos-latest
-          # # - ubuntu-latest
+          # Building for linux fails now because there is not php-config inside the container.
+          # This php-config is required when building swoole extension.
+          #- ubuntu-latest
         include:
           - os: macos-latest
             arch: arm64
@@ -81,14 +83,12 @@ jobs:
             target: darwin-arm64
             filename: dev-darwin-arm64
             php-version: 8.3
-            php-version: 8.3
-          - os: ubuntu-latest
-            arch: x86_64
-            platform: linux
-            target: linux-x86_64
-            filename: dev-linux-x86_64
-            php-version: 8.2
-            php-version: 8.2
+          # - os: ubuntu-latest
+          #   arch: x86_64
+          #   platform: linux
+          #   target: linux-x86_64
+          #   filename: dev-linux-x86_64
+          #   php-version: 8.2
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup PHP
@@ -96,13 +96,6 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, bcmath, swoole
-          tools: composer:v2,pecl,php-config
-
-      - name: Check Setup PHP
-        run: |
-          set -e
-          command -v php-config
-          command -v pecl
           tools: composer:v2,pecl,php-config
 
       - name: Check Setup PHP
@@ -130,15 +123,10 @@ jobs:
         run: |
           set -e
           if [ "${{ matrix.platform }}" = 'macOS' ]; then
-            bin="spc"
-            php_version="${{ matrix.php-version }}"
+            echo "bin=spc" >> $GITHUB_OUTPUT
           else
-            bin="spc-alpine-docker"
-            php_version="8.2"
+            echo "bin='spc-alpine-docker'" >> $GITHUB_OUTPUT
           fi
-
-          echo "bin=$bin" >> $GITHUB_OUTPUT
-          echo "php-version=$php_version" >> $GITHUB_OUTPUT
 
       - name: Resolve Variables
         id: vars
