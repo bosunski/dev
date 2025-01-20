@@ -128,8 +128,8 @@ class SpcConfig implements Config
          * to run or not based on Step::done() method.
          */
         return [
-            new SpcInstallRequirementsStep(),
             new SpcInstallStep(),
+            new SpcInstallRequirementsStep(),
             new SpcDownloadStep($this),
             new SpcBuildStep($this),
             new SpcLinkStep($this),
