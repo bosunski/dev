@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.0.11](https://github.com/bosunski/dev/compare/v0.0.10...v0.0.11) (2025-01-20)
+
+
+### Bug Fixes
+
+* do not use brew in linux ([087fafb](https://github.com/bosunski/dev/commit/087fafbe192659f65eac1255601706a2224926a8))
+* do not use brew in linuxgst ([8a07248](https://github.com/bosunski/dev/commit/8a072487026089a767ec7549702b0a0fd4baedc8))
+
+
+### Miscellaneous Chores
+
+* include linux in release build ([051da51](https://github.com/bosunski/dev/commit/051da51400b30ad3676d38a5483951c07ecb4e31))
+
 ## [0.0.10](https://github.com/bosunski/dev/compare/v0.0.9...v0.0.10) (2025-01-01)
 
 
