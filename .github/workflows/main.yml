@@ -77,18 +77,17 @@ jobs:
           # This php-config is required when building swoole extension.
           - ubuntu-latest
         include:
+          - php-version: 8.3
           - os: macos-latest
             arch: arm64
             platform: macOS
             target: darwin-arm64
             filename: dev-darwin-arm64
-            php-version: 8.3
           - os: ubuntu-latest
             arch: x86_64
             platform: linux
             target: linux-x86_64
             filename: dev-linux-x86_64
-            php-version: 8.3
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup PHP
