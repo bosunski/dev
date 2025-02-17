@@ -137,9 +137,8 @@ jobs:
         run: php dev app:build dev.phar --build-version=${{ github.ref_name }}
 
       - name: Build DEV binary for ${{ matrix.target }}
-        working-directory: spc
         run: |
-            php -d memory_limit=-1 bin/${{ steps.set-spc-binary.outputs.bin }} micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.combine_file_path }}
+            php -d memory_limit=-1 $GITHUB_WORKSPACE/spc/bin/${{ steps.set-spc-binary.outputs.bin }} micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.combine_file_path }}
             ls -alh
             ls -alh $GITHUB_WORKSPACE
             ls -alh $GITHUB_WORKSPACE/dist
