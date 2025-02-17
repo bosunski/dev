@@ -27,7 +27,8 @@ use Exception;
  *
  * @phpstan-type RawSpcConfig array{
  *      php: PhpConfig,
- *      combine?: RawSpcCombineConfig
+ *      combine?: RawSpcCombineConfig,
+ *      prefer-pre-built?: bool
  * }
  *
  * @phpstan-type SpcEnvironment array{bin: string, pecl: string, dir: string, version: string, extensionPath: string, cwd: string, home: string}
@@ -39,6 +40,12 @@ class SpcConfig implements Config
     public const DefaultPhpVersion = '8.2';
 
     public const SupportedPhpVersions = ['8.0', '8.1', '8.2', '8.3'];
+
+    private const PresetCommon = 'common';
+
+    private const PresetMinimal = 'minimal';
+
+    private const PresetBulk = 'bulk';
 
     public const DefaultExtensions = [
         'bcmath',
@@ -88,6 +95,8 @@ class SpcConfig implements Config
 
     public readonly string $md5;
 
+    public readonly bool $preferPreBuilt;
+
     /**
      * @param RawSpcConfig $config
      * @return void
@@ -97,11 +106,12 @@ class SpcConfig implements Config
         $this->phpVersion = $config['php']['version'] ?? self::DefaultPhpVersion;
         $this->extensions = array_merge(
             $this->config['php']['extensions'] ?? [],
-            $this->getPresetExtensions($config['php']['preset'] ?? '')
+            $this->getPresetExtensions($config['php']['preset'] ?? self::PresetCommon)
         );
 
         $this->sources = $this->config['php']['sources'] ?? [];
         $this->md5 = $this->md5();
+        $this->preferPreBuilt = $config['prefer-pre-built'] ?? true;
     }
 
     /**
@@ -110,11 +120,12 @@ class SpcConfig implements Config
      */
     public function getPresetExtensions(string $preset): array
     {
-        if ($preset === 'common') {
-            return self::DefaultExtensions;
-        }
-
-        return [];
+        return match($preset) {
+            self::PresetCommon  => self::DefaultExtensions,
+            self::PresetMinimal => explode(', ', 'pcntl,posix,mbstring,tokenizer,phar'),
+            self::PresetBulk    => explode(', ', 'apcu,bcmath,bz2,calendar,ctype,curl,dba,dom,event,exif,fileinfo,filter,ftp,gd,gmp,iconv,imagick,imap,intl,mbregex,mbstring,mysqli,mysqlnd,opcache,openssl,pcntl,pdo,pdo_mysql,pgsql,phar,posix,protobuf,readline,redis,session,shmop,simplexml,soap,sockets,sodium,sqlite3,swoole,swoole-hook-mysql,swoole-hook-pgsql,swoole-hook-sqlite,sysvmsg,sysvsem,sysvshm,tokenizer,xml,xmlreader,xmlwriter,xsl,zip,zlib'),
+            default             => [],
+        };
     }
 
     /**

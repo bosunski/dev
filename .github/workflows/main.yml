@@ -75,7 +75,7 @@ jobs:
           - macos-latest
           # Building for linux fails now because there is not php-config inside the container.
           # This php-config is required when building swoole extension.
-          #- ubuntu-latest
+          - ubuntu-latest
         include:
           - os: macos-latest
             arch: arm64
@@ -83,12 +83,12 @@ jobs:
             target: darwin-arm64
             filename: dev-darwin-arm64
             php-version: 8.3
-          # - os: ubuntu-latest
-          #   arch: x86_64
-          #   platform: linux
-          #   target: linux-x86_64
-          #   filename: dev-linux-x86_64
-          #   php-version: 8.2
+          - os: ubuntu-latest
+            arch: x86_64
+            platform: linux
+            target: linux-x86_64
+            filename: dev-linux-x86_64
+            php-version: 8.3
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup PHP
@@ -159,7 +159,7 @@ jobs:
 
       - name: Download SPC files
         if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
+        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --prefer-pre-built --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
