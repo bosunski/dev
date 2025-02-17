@@ -31,12 +31,15 @@ class SpcDownloadStep implements Step
             mkdir($spcGlobalPath, recursive: true);
         }
 
-        $command = "{$this->config->bin()} download --debug --with-php={$this->config->phpVersion}";
+        $command = [$this->config->bin(), 'download', '--debug', "--with-php={$this->config->phpVersion}"];
         foreach ($this->config->sources as $extensionOrLib => $url) {
-            $command .= " -U '$extensionOrLib:$url'";
+            array_push($command, '-U', "$extensionOrLib:$url");
         }
 
-        $command .= " --for-extensions='" . implode(',', $this->config->extensions) . "'";
+        $command[] = "--for-extensions='" . implode(',', $this->config->extensions) . "'";
+        if ($this->config->preferPreBuilt) {
+            $command[] = '--prefer-pre-built';
+        }
 
         $result = $runner->exec($command, $spcGlobalPath);
         if ($result) {
