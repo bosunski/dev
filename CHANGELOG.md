@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.12](https://github.com/bosunski/dev/compare/v0.0.11...v0.0.12) (2025-02-17)
+
+
+### Bug Fixes
+
+* Fix build when Swoole 6 is used ([02078e6](https://github.com/bosunski/dev/commit/02078e6e6e03974394968b972d6e4cdf2bd498fd))
+* micro combine in workflow ([619d782](https://github.com/bosunski/dev/commit/619d782494ce096b0a8a2ca85c37fd97a6057dfc))
+* micro combine in workflow ([103d876](https://github.com/bosunski/dev/commit/103d8762cb5246653bea0737a71caa5a332cbd47))
+* micro combine in workflow ([c822121](https://github.com/bosunski/dev/commit/c8221214fa463c596d159a84c322068a68d82957))
+* micro combine in workflow ([7b69864](https://github.com/bosunski/dev/commit/7b69864a6f1cf5ce0800be4d96eef4c595c7161c))
+* micro combine in workflow ([9718ef2](https://github.com/bosunski/dev/commit/9718ef224c02f8dda3ee20af30b5266deb9e8d4b))
+* micro combine in workflow ([a7b576d](https://github.com/bosunski/dev/commit/a7b576d1835dde1c4db494fb77a124d241eb8c59))
+* micro combine in workflow ([cbc46f7](https://github.com/bosunski/dev/commit/cbc46f716e32bcaf2526fb034abd0a7d4681eb13))
+* micro combine in workflow ([4cea2dc](https://github.com/bosunski/dev/commit/4cea2dcfb058748920db97c057aee18a19aaffc7))
+
 ## [0.0.11](https://github.com/bosunski/dev/compare/v0.0.10...v0.0.11) (2025-01-20)
 
 
