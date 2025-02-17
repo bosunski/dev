@@ -140,6 +140,10 @@ jobs:
         working-directory: spc
         run: |
             php -d memory_limit=-1 bin/${{ steps.set-spc-binary.outputs.bin }} micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.combine_file_path }}
+            ls -alh
+            ls -alh $GITHUB_WORKSPACE
+            ls -alh $GITHUB_WORKSPACE/dist
+            ls -alh $(dirname ${{ steps.vars.outputs.FILEPATH }})
             chmod +x ${{ steps.vars.outputs.FILEPATH }}
 
       - name: Zip Binary
