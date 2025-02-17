@@ -74,16 +74,10 @@ jobs:
         run: |
           SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
           CACHE_KEY=$(echo "${{ runner.os }}-${{ matrix.arch}}-php-${{ matrix.php-version }}-dependencies-$SPC_EXTENSIONS" | shasum -a 256 | awk '{print $1}')
-          # On linux we will point the combine output directory to /app/dist
-          OUT_DIR=$GITHUB_WORKSPACE/dist
-          if [ "${{ matrix.platform }}" = 'linux' ]; then
-            OUT_DIR=/app/dist
-          fi
 
           {
             echo "SPC_EXTENSIONS=$SPC_EXTENSIONS"
             echo "SPC_CACHE_KEY=spc-$CACHE_KEY"
-            echo "combine_file_path=$OUT_DIR/${{ matrix.filename }}"
             echo "FILEPATH=$GITHUB_WORKSPACE/dist/${{ matrix.filename }}"
             echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS"
           } >> $GITHUB_OUTPUT
@@ -118,13 +112,6 @@ jobs:
           ./bin/spc doctor --auto-fix --no-interaction
         working-directory: spc
 
-      # - name: Link dist directory on Linux
-      #   if: ${{ matrix.platform == 'linux' }}
-      #   run: |
-      #     mkdir -p $GITHUB_WORKSPACE/dist
-      #     ln -s $GITHUB_WORKSPACE/dist $GITHUB_WORKSPACE/spc/dist
-
-
       - if: steps.spc-cache.outputs.cache-hit != 'true'
         run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --prefer-pre-built --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
         working-directory: spc
@@ -139,15 +126,7 @@ jobs:
       - name: Build DEV binary for ${{ matrix.target }}
         working-directory: spc
         run: |
-            set -e
-            mkdir -p dist
             php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILEPATH }}
-            ls -alh
-            ls -alh dist
-            ls -alh $GITHUB_WORKSPACE
-            ls -alh $GITHUB_WORKSPACE/dist
-            ls -alh $(dirname ${{ steps.vars.outputs.FILEPATH }})
-            # mv dist/${{ matrix.filename }} ${{ steps.vars.outputs.FILEPATH }}
             chmod +x ${{ steps.vars.outputs.FILEPATH }}
 
       - name: Zip Binary
