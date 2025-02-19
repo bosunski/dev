@@ -21,18 +21,26 @@ permissions:
 
 jobs:
   tests:
-    name: Test for ${{ matrix.platform }}
+    name: Test for ${{ matrix.platform }}(${{ matrix.arch }})
     strategy:
       matrix:
         os:
           - macos-latest
+          - macos-13
           - ubuntu-latest
+          - ubuntu-24.04-arm
         include:
           - os: macos-latest
             arch: arm64
             platform: macOS
+          - os: macos-13
+            arch: x86_64
+            platform: macOS
           - os: ubuntu-latest
             arch: x86_64
+            platform: Linux
+          - os: ubuntu-24.04-arm
+            arch: arm64
             platform: Linux
 
     runs-on: ${{ matrix.os }}
@@ -67,15 +75,15 @@ jobs:
         run: vendor/bin/pest --coverage -v
 
   build:
-    name: Build ${{ github.ref_name }} on ${{ matrix.platform }}
+    name: Build ${{ github.ref_name }} on ${{ matrix.platform }}(${{ matrix.arch }})
     needs: tests
     strategy:
       matrix:
         os:
           - macos-latest
-          # Building for linux fails now because there is not php-config inside the container.
-          # This php-config is required when building swoole extension.
+          - macos-13
           - ubuntu-latest
+          - ubuntu-24.04-arm
         include:
           - php-version: 8.3
           - os: macos-latest
@@ -83,11 +91,21 @@ jobs:
             platform: macOS
             target: darwin-arm64
             filename: dev-darwin-arm64
+          - os: macos-13
+            arch: x86_64
+            platform: macOS
+            target: darwin-x86_64
+            filename: dev-darwin-x86_64
           - os: ubuntu-latest
             arch: x86_64
             platform: linux
             target: linux-x86_64
             filename: dev-linux-x86_64
+          - os: ubuntu-24.04-arm
+            arch: arm64
+            platform: linux
+            target: linux-arm64
+            filename: dev-linux-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup PHP
