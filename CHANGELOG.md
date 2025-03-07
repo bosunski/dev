@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.0.13](https://github.com/bosunski/dev/compare/v0.0.12...v0.0.13) (2025-03-07)
+
+
+### Bug Fixes
+
+* Ensure ShadowEnv is not used during clone ([9ad8ad8](https://github.com/bosunski/dev/commit/9ad8ad8654913663f4c3c0ba787e8e0b6683a688))
+
+
+### Miscellaneous Chores
+
+* build and test for x86_64 macos and arm64 linux ([01dc9f0](https://github.com/bosunski/dev/commit/01dc9f0793bf87013c83974d5afc405f2183e924))
+
 ## [0.0.12](https://github.com/bosunski/dev/compare/v0.0.11...v0.0.12) (2025-02-17)
 
 
