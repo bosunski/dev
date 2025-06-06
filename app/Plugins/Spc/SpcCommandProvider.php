@@ -52,7 +52,7 @@ class SpcCommandProvider implements CommandProvider
         if (! empty($combine)) {
             $commands['spc:combine'] = [
                 'desc' => 'Combine micro.sfx and php code together',
-                'run'  => "{$config->bin()} micro:combine -M {$config->sfx()} -O {$combine['output']} {$combine['input']}",
+                'run'  => "{$config->bin()} micro:combine -M {$config->sfx()} -O {$combine['output']} {$combine['input']} -I 'memory_limit=1G'",
             ];
         }
 
