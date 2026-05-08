@@ -41,6 +41,8 @@ class ProcProcess
 
     protected ?Closure $output = null;
 
+    protected bool $pty = false;
+
     /**
      * @param string|string[] $command
      * @param string|null $cwd
@@ -54,15 +56,17 @@ class ProcProcess
 
     public function setPty(bool $pty): ProcProcess
     {
+        $this->pty = $pty;
+
         return $this;
     }
 
     public function start(callable $output): void
     {
         $this->output = Closure::fromCallable($output);
-        // $descriptorspec = [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']];
-        $descriptorspec = [['pipe', 'r'], ['pty'], ['pty']];
-        // $descriptorspec = [['pty'], ['pty'], ['pty']];
+        $descriptorspec = $this->pty
+            ? [['pipe', 'r'], ['pty'], ['pty']]
+            : [['pipe', 'r'], ['pipe', 'w'], ['pipe', 'w']];
         $envPairs = [];
         $envs = $this->envs + $this->getDefaultEnv();
         foreach ($envs as $k => $v) {

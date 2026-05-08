@@ -5,7 +5,6 @@ namespace App\Plugins\Core\Steps\MySQL;
 use App\Execution\Runner;
 use App\Plugin\Contracts\Step;
 use App\Plugins\Core\Config\MySqlConfig;
-use Illuminate\Process\Exceptions\ProcessFailedException;
 
 class UpdateEnvironmentStep implements Step
 {
@@ -25,16 +24,9 @@ class UpdateEnvironmentStep implements Step
 
     public function run(Runner $runner): bool
     {
-        try {
-            $ipAddress = retry([100, 700, 2000], fn () => $runner->process('docker inspect -f "{{.NetworkSettings.IPAddress}}" dev-mysql')->run()->throw()->output());
-            $runner->config->putenv('DEV_MYSQL_HOST', trim($ipAddress));
+        $runner->config->putenv('DEV_MYSQL_HOST', '127.0.0.1');
 
-            return $this->config->dev->updateEnvironment();
-        } catch (ProcessFailedException $e) {
-            echo $e->getMessage();
-
-            return false;
-        }
+        return $this->config->dev->updateEnvironment();
     }
 
     public function done(Runner $runner): bool

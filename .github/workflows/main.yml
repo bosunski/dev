@@ -59,7 +59,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@master
         with:
-          php-version: 8.3
+          php-version: 8.4
           extensions: mbstring, bcmath, swoole
           tools: composer:v2
           coverage: pcov
@@ -85,7 +85,7 @@ jobs:
           - ubuntu-latest
           - ubuntu-24.04-arm
         include:
-          - php-version: 8.3
+          - php-version: 8.4
           - os: macos-latest
             arch: arm64
             platform: macOS

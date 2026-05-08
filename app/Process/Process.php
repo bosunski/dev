@@ -22,6 +22,27 @@ class Process
         $this->signalChannel = new Channel();
     }
 
+    public static function isPtySupported(): bool
+    {
+        static $result = null;
+        if ($result !== null) {
+            return $result;
+        }
+
+        if (! \function_exists('proc_open')) {
+            return $result = false;
+        }
+
+        $proc = @proc_open('echo', [['pty'], ['pty'], ['pty']], $pipes);
+        if (\is_resource($proc)) {
+            proc_close($proc);
+
+            return $result = true;
+        }
+
+        return $result = false;
+    }
+
     public function start(): void
     {
         try {
@@ -29,7 +50,7 @@ class Process
              * We are enabling PTY mode to allow the process to display output correctly as
              * it would in a terminal. For example, some processes may disable colored output without this.
              */
-            $this->process->setPty(true)->start(function (string $type, string $buffer): void {
+            $this->process->setPty(self::isPtySupported())->start(function (string $type, string $buffer): void {
                 $this->writeOutput($buffer);
             });
 

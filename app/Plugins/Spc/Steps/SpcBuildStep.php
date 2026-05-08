@@ -28,9 +28,18 @@ class SpcBuildStep implements Step
     {
         $this->ensureCMakeIsInstalled($runner);
 
-        if ($runner->exec($this->config->buildCommand(), $this->config->phpPath())) {
+        $cwd = getcwd();
+
+        chdir($this->config->phpPath());
+        dump($this->config->phpPath());
+        if ($runner->exec(['cd', $this->config->phpPath(), '&&', ...$this->config->buildCommand()], $this->config->phpPath(), [
+            'PWD' => $this->config->phpPath(),
+        ])) {
+            chdir($cwd);
             return true;
         }
+
+        chdir($cwd);
 
         File::deleteDirectory($this->config->phpPath('buildroot'));
 
@@ -48,6 +57,6 @@ class SpcBuildStep implements Step
 
     public function done(Runner $runner): bool
     {
-        return is_file($this->config->phpPath('buildroot/bin/php'));
+        return false;
     }
 }

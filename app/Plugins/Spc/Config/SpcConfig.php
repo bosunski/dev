@@ -39,7 +39,7 @@ class SpcConfig implements Config
 
     public const DefaultPhpVersion = '8.2';
 
-    public const SupportedPhpVersions = ['8.0', '8.1', '8.2', '8.3'];
+    public const SupportedPhpVersions = ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'];
 
     private const PresetCommon = 'common';
 
@@ -197,7 +197,7 @@ class SpcConfig implements Config
      * @param bool $rebuild Whether to rebuild the binaries
      * @return string[]
      */
-    public function buildCommand(bool $rebuild = false): array
+    public function buildCommand(bool $rebuild = true): array
     {
         $command = [
             $this->bin(),

@@ -28,7 +28,10 @@ class InstallValetStep implements Step
             $this->ensureRequirements($runner);
         }
 
-        $installed = $runner->exec("composer global require {$this->valetpackage($runner->config)} && $this->valetBinary install");
+        $packages = $this->valetpackage($runner->config);
+        $command = "composer global require $packages && $this->valetBinary install";
+        dump($command);
+        $installed = $runner->exec($command);
         if (! $installed) {
             return false;
         }
