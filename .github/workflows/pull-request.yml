@@ -1,4 +1,4 @@
-name: Pull Request WorkFlow
+name: Pull Request
 
 on:
   pull_request:
@@ -10,70 +10,11 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
+  typecheck:
+    name: Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v3
-        with:
-          path: vendor
-          key: composer-${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            composer-${{ github.repository }}-${{ runner.os }}-php-
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@master
-        with:
-          php-version: 8.4
-          extensions: mbstring, bcmath, swoole
-          tools: composer:v2
-          coverage: pcov
-
-      - name: Install Composer dependencies
-        run: composer install --no-progress --no-suggest
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-
-      - name: Check code styles
-        run: vendor/bin/pint --test -v
-
-      - name: PHPStan Analyze
-        run: ./vendor/bin/phpstan analyse --memory-limit=2G
-
-  tests:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - ubuntu-24.04-arm
-          - macos-latest
-          - macos-13
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v3
-        with:
-          path: vendor
-          key: composer-${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            composer-${{ github.repository }}-${{ runner.os }}-php-
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@master
-        with:
-          php-version: 8.4
-          extensions: mbstring, bcmath, swoole
-          tools: composer:v2
-          coverage: pcov
-
-      - name: Install Composer dependencies
-        run: composer install --no-progress --no-suggest
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-
-      - name: Run tests
-        run: vendor/bin/pest --coverage -vv
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run typecheck
