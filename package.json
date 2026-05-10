@@ -19,7 +19,7 @@
     "build": "bun run manifest && bun build src/main.ts --compile --outfile dist/dev",
     "build:debug": "bun run manifest && bun build src/main.ts --compile --outfile dist/dev",
     "dev": "bun run src/main.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "bun run manifest && tsc --noEmit",
     "oclif": "oclif",
     "install:local": "bun run build && cp dist/dev ~/.dev/bin/dev.new && mv ~/.dev/bin/dev.new ~/.dev/bin/dev"
   },
