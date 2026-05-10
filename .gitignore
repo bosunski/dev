@@ -14,3 +14,11 @@ downloads
 source
 builds
 coverage
+dist/
+oclif.manifest.json
+pkgroot/
+log/
+test-clack.ts
+
+# Mac
+.DS_Store

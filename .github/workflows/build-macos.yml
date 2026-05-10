@@ -6,9 +6,10 @@ on:
       version:
         required: true
         description: PHP Version to Compile
-        default: '8.2'
+        default: '8.4'
         type: choice
         options:
+          - '8.4'
           - '8.3'
           - '8.2'
           - '8.1'
@@ -40,7 +41,7 @@ on:
         required: true
         description: php version to compile
         type: string
-        default: '8.2'
+        default: '8.4'
       build-cli:
         description: build cli binary
         type: boolean
@@ -72,7 +73,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@master
         with:
-          php-version: 8.2
+          php-version: 8.4
           extensions: mbstring, bcmath
           tools: composer:v2
       - name: Checkout crazywhalecc/static-php-cli

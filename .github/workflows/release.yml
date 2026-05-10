@@ -1,160 +1,50 @@
 name: "Release: Build and Upload Binaries"
+
 on:
   release:
     types:
       - published
   workflow_dispatch:
 
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
 concurrency:
   group: release-build-${{ github.ref_name }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Build ${{ github.ref_name }} on ${{ matrix.platform }}(${{ matrix.arch }})
+    name: Build ${{ github.ref_name }} (${{ matrix.filename }})
     strategy:
       matrix:
-        os:
-          - macos-latest
-          - macos-13
-          - ubuntu-latest
-          - ubuntu-24.04-arm
         include:
-          - php-version: 8.3
           - os: macos-latest
-            arch: arm64
-            platform: macOS
-            target: darwin-arm64
+            target: bun-darwin-arm64
             filename: dev-darwin-arm64
           - os: macos-13
-            arch: x86_64
-            platform: macOS
-            target: darwin-x86_64
+            target: bun-darwin-x64
             filename: dev-darwin-x86_64
           - os: ubuntu-latest
-            arch: x86_64
-            platform: linux
-            target: linux-x86_64
+            target: bun-linux-x64
             filename: dev-linux-x86_64
           - os: ubuntu-24.04-arm
-            arch: arm64
-            platform: linux
-            target: linux-arm64
+            target: bun-linux-arm64
             filename: dev-linux-arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@master
-        with:
-          php-version: 8.3
-          extensions: mbstring, bcmath, swoole
-          tools: composer:v2,pecl,php-config
-
-      - name: Checkout crazywhalecc/static-php-cli
-        uses: actions/checkout@v4
-        with:
-          repository: crazywhalecc/static-php-cli
-          path: spc
-
-      - name: Install Automake and Gzip on macOS
-        if: ${{ matrix.platform == 'macOS' }}
-        run: |
-          brew install automake gzip
-
-      - run: |
-          echo "SPC_BUILD_OS=${{ matrix.platform }}" >> $GITHUB_ENV
-
-      - name: Cache Composer Dependencies
-        id: cache-composer-deps
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: release-composer-${{ github.repository }}-${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            release-composer-${{ github.repository }}-${{ runner.os }}-php-
-
-      - if: steps.cache-composer-deps.outputs.cache-hit != 'true'
-        run: composer install --no-dev --no-suggest
-
-      - name: Resolve Variables
-        id: vars
-        run: |
-          SPC_EXTENSIONS="bcmath,calendar,ctype,curl,dba,dom,exif,session,filter,fileinfo,iconv,mbstring,mbregex,openssl,pcntl,pdo,pdo_mysql,pdo_sqlite,phar,posix,readline,simplexml,sockets,sqlite3,tokenizer,xml,xmlreader,xmlwriter,zip,zlib,sodium,swoole,session"
-          CACHE_KEY=$(echo "${{ runner.os }}-${{ matrix.arch}}-php-${{ matrix.php-version }}-dependencies-$SPC_EXTENSIONS" | shasum -a 256 | awk '{print $1}')
-
-          {
-            echo "SPC_EXTENSIONS=$SPC_EXTENSIONS"
-            echo "SPC_CACHE_KEY=spc-$CACHE_KEY"
-            echo "FILEPATH=$GITHUB_WORKSPACE/dist/${{ matrix.filename }}"
-            echo "CHECKSUMS=$GITHUB_WORKSPACE/dist/CHECKSUMS"
-          } >> $GITHUB_OUTPUT
-
-      - name: Cache SPC Downloads and Buildroot
-        id: spc-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            spc/downloads
-            spc/buildroot
-          key: ${{ steps.vars.outputs.SPC_CACHE_KEY }}
-
-      - name: Setup SPC
-        run: composer update --no-dev --classmap-authoritative
-        working-directory: spc
-
-      - name: Set SPC Binary
-        id: set-spc-binary
-        run: |
-          set -e
-          if [ "${{ matrix.platform }}" = 'macOS' ]; then
-            bin=spc
-          else
-            bin=spc-alpine-docker
-          fi
-
-          echo "bin=$bin" >> $GITHUB_OUTPUT
-
-      - name: Instal SPC Dependencies
-        run: |
-          ./bin/spc doctor --auto-fix --no-interaction
-        working-directory: spc
-
-      - if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} download --prefer-pre-built --with-php=${{ matrix.php-version }} --for-extensions=${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
-        working-directory: spc
-
-      - if: steps.spc-cache.outputs.cache-hit != 'true'
-        run: ./bin/${{ steps.set-spc-binary.outputs.bin }} build --build-micro --build-cli --with-micro-fake-cli ${{ steps.vars.outputs.SPC_EXTENSIONS }} --debug
-        working-directory: spc
-
-      - name: Build PHAR
-        run: php dev app:build dev.phar --build-version=${{ github.ref_name }}
-
-      - name: Build DEV binary for ${{ matrix.target }}
-        working-directory: spc
-        run: |
-            php -d memory_limit=-1 bin/spc micro:combine $GITHUB_WORKSPACE/builds/dev.phar -O ${{ steps.vars.outputs.FILEPATH }}
-            chmod +x ${{ steps.vars.outputs.FILEPATH }}
-
-      - name: Zip Binary
-        working-directory: ${{ github.workspace }}/dist
-        run: |
-          zip -r ${{ matrix.filename }}.zip ${{ matrix.filename }}
-
-      - name: "Create Checksums"
-        working-directory: ${{ github.workspace }}/dist
-        run: |
-          shasum -a 256 ${{ matrix.filename }}.zip > ${{ steps.vars.outputs.CHECKSUMS }}
-
-      - name: Upload binaries to release
-        uses: softprops/action-gh-release@v2
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - name: Build
+        run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.filename }}
+      - name: Zip
+        run: zip -j dist/${{ matrix.filename }}.zip dist/${{ matrix.filename }}
+      - name: Checksum
+        working-directory: dist
+        run: shasum -a 256 ${{ matrix.filename }}.zip > ${{ matrix.filename }}.sha256
+      - uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ steps.vars.outputs.FILEPATH }}.zip
-            ${{ steps.vars.outputs.CHECKSUMS }}
+            dist/${{ matrix.filename }}.zip
+            dist/${{ matrix.filename }}.sha256

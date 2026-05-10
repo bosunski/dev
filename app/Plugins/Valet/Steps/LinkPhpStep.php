@@ -16,7 +16,8 @@ use Illuminate\Support\Str;
 class LinkPhpStep implements Step
 {
     public const PHP_VERSION_MAP = [
-        '8.4' => 'php',
+        '8.5' => 'php',
+        '8.4' => 'php@8.4',
         '8.3' => 'php@8.3',
         '8.2' => 'php@8.2',
         '8.1' => 'php@8.1',

@@ -14,23 +14,23 @@ steps:
   - composer:
       packages:
         - phpstan/phpstan
-  - valet:
-      php: 8.4
-      sites:
-        - proxy: http://localhost:8000
-          host: psb
-        - dev
   - spc:
       combine:
         input: builds/dev.phar
         output: builds/dev
       php:
-        version: 8.3
+        version: 8.4
         preset: common
         extensions:
           - swoole
           - ffi
         sources: {}
+  # - valet:
+  #     php: 8.5
+  #     sites:
+  #       - proxy: http://localhost:8000
+  #         host: psb
+  #       - dev
   - script:
       desc: Install composer dependencies
       run: composer install
