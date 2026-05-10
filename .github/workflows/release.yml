@@ -15,36 +15,32 @@ permissions:
 
 jobs:
   build:
-    name: Build ${{ github.ref_name }} (${{ matrix.filename }})
-    strategy:
-      matrix:
-        include:
-          - os: macos-latest
-            target: bun-darwin-arm64
-            filename: dev-darwin-arm64
-          - os: macos-13
-            target: bun-darwin-x64
-            filename: dev-darwin-x86_64
-          - os: ubuntu-latest
-            target: bun-linux-x64
-            filename: dev-linux-x86_64
-          - os: ubuntu-24.04-arm
-            target: bun-linux-arm64
-            filename: dev-linux-arm64
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ github.ref_name }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
-      - name: Build
-        run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.filename }}
-      - name: Zip
-        run: zip -j dist/${{ matrix.filename }}.zip dist/${{ matrix.filename }}
-      - name: Checksum
+      - run: bun run manifest
+      - name: Build all targets
+        run: |
+          for entry in \
+            "bun-darwin-arm64 dev-darwin-arm64" \
+            "bun-darwin-x64 dev-darwin-x86_64" \
+            "bun-linux-x64 dev-linux-x86_64" \
+            "bun-linux-arm64 dev-linux-arm64"; do
+            target=$(echo $entry | cut -d' ' -f1)
+            filename=$(echo $entry | cut -d' ' -f2)
+            bun build src/main.ts --compile --target=$target --outfile dist/$filename
+            zip -j dist/$filename.zip dist/$filename
+            shasum -a 256 dist/$filename.zip > dist/$filename.sha256
+          done
+      - name: Checksums
         working-directory: dist
-        run: shasum -a 256 ${{ matrix.filename }}.zip > ${{ matrix.filename }}.sha256
+        run: shasum -a 256 *.zip > CHECKSUMS
       - uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/${{ matrix.filename }}.zip
-            dist/${{ matrix.filename }}.sha256
+            dist/*.zip
+            dist/*.sha256
+            dist/CHECKSUMS
