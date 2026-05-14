@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Dev } from '../dev.js'
-import type { RawServe } from '../types/config.js'
+import type { RawServe, RawServeProcess } from '../types/config.js'
 
 const COLORS = [2, 3, 4, 5, 6, 42, 130, 103, 129, 108]
 
@@ -17,14 +17,26 @@ function colorPrefix(name: string, color: number): string {
   return `\x1b[38;5;${color}m${name.padEnd(20)}\x1b[0m | `
 }
 
+function isServeProcess(value: RawServe): value is RawServeProcess {
+  return typeof value === 'string' || ('run' in value && typeof value.run === 'string')
+}
+
 export class ServeManager {
   private processes: Bun.Subprocess[] = []
   private interrupted = false
 
   constructor(private readonly dev: Dev) {}
 
-  async run(): Promise<boolean> {
-    const entries = await this.collectProcesses()
+  getGroups(dev: Dev): string[] {
+    const serve = dev.config.getServe()
+    if (!serve || typeof serve === 'string') return []
+    return Object.entries(serve)
+      .filter(([, v]) => !isServeProcess(v))
+      .map(([k]) => k)
+  }
+
+  async run(groups?: string[]): Promise<boolean> {
+    const entries = await this.collectProcesses(groups)
 
     if (entries.length === 0) {
       this.dev.io().dev('No processes to run. You can register processes under serve in the dev.yml file.')
@@ -40,13 +52,20 @@ export class ServeManager {
     }
   }
 
-  private async collectProcesses(): Promise<ProcessEntry[]> {
-    const entries: ProcessEntry[] = []
-    await this.collectFrom(this.dev, entries)
-    return entries
+  private async collectProcesses(groups?: string[]): Promise<ProcessEntry[]> {
+    const raw: ProcessEntry[] = []
+    await this.collectFrom(this.dev, raw, undefined, groups)
+
+    // Deduplicate by name — first-seen wins
+    const seen = new Set<string>()
+    return raw.filter(e => {
+      if (seen.has(e.name)) return false
+      seen.add(e.name)
+      return true
+    })
   }
 
-  private async collectFrom(dev: Dev, entries: ProcessEntry[], parentName?: string): Promise<void> {
+  private async collectFrom(dev: Dev, entries: ProcessEntry[], parentName?: string, groups?: string[]): Promise<void> {
     // Collect from dependency projects first
     const projects = dev.config.projects()
     for (const projectDef of projects) {
@@ -62,7 +81,7 @@ export class ServeManager {
         const { Dev: DevClass } = await import('../dev.js')
         const depDev = new DevClass(depConfig, runner, io)
         depDev.setPluginManager(dev.getPluginManager())
-        await this.collectFrom(depDev, entries, projectDef.repo)
+        await this.collectFrom(depDev, entries, projectDef.repo, groups)
       } catch {
         // Skip if project not found
       }
@@ -78,22 +97,41 @@ export class ServeManager {
     const multiProject = !!parentName
 
     for (const [name, rawServe] of Object.entries(serves)) {
-      const serveConfig = typeof rawServe === 'string' ? { run: rawServe } : rawServe
-      const displayName = multiProject ? `${projectName}:${name}` : name
-      const dotenvPath = this.resolveDotenv(dev, serveConfig.env)
-
-      const cwd = serveConfig.cwd
-        ? join(dev.config.cwd(), serveConfig.cwd)
-        : dev.config.cwd()
-
-      entries.push({
-        name: displayName.toLowerCase(),
-        command: serveConfig.run,
-        cwd,
-        env: dotenvPath,
-        color: COLORS[entries.length % COLORS.length]!,
-      })
+      if (isServeProcess(rawServe)) {
+        // Flat serves always run — they are the shared layer
+        const serveConfig = typeof rawServe === 'string' ? { run: rawServe } : rawServe
+        const displayName = multiProject ? `${projectName}:${name}` : name
+        this.pushEntry(entries, dev, displayName, serveConfig)
+      } else {
+        // rawServe is a RawServeGroup — include all groups or only the requested ones
+        if (groups && !groups.includes(name)) continue
+        for (const [subName, subServe] of Object.entries(rawServe)) {
+          const serveConfig = typeof subServe === 'string' ? { run: subServe } : subServe
+          const displayName = multiProject ? `${projectName}:${name}:${subName}` : `${name}:${subName}`
+          this.pushEntry(entries, dev, displayName, serveConfig)
+        }
+      }
     }
+  }
+
+  private pushEntry(
+    entries: ProcessEntry[],
+    dev: Dev,
+    displayName: string,
+    serveConfig: { run: string; env?: string | false; cwd?: string },
+  ): void {
+    const env = this.resolveDotenv(dev, serveConfig.env)
+    const cwd = serveConfig.cwd
+      ? join(dev.config.cwd(), serveConfig.cwd)
+      : dev.config.cwd()
+
+    entries.push({
+      name: displayName.toLowerCase(),
+      command: serveConfig.run,
+      cwd,
+      env,
+      color: COLORS[entries.length % COLORS.length]!,
+    })
   }
 
   private resolveDotenv(dev: Dev, envFile: string | false | undefined): Record<string, string> {

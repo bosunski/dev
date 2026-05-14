@@ -4,7 +4,7 @@ import yaml from 'js-yaml'
 import { Env } from './env.js'
 import { UpConfig } from './up-config.js'
 import { ProjectDefinition } from './project-definition.js'
-import type { RawConfig, RawCommand, RawServe } from '../types/config.js'
+import type { RawConfig, RawCommand, RawServe, RawServeProcess } from '../types/config.js'
 import { UserException } from '../exceptions.js'
 
 export type DevSettings = {
@@ -18,6 +18,7 @@ export class Config {
   static readonly SrcDir = 'src'
   static readonly DefaultSource = 'github.com'
   static readonly FileName = 'dev.yml'
+  static readonly LocalFileName = 'dev.local.yml'
   static readonly LockFiles = [
     'composer.json',
     'package.json',
@@ -172,15 +173,57 @@ export class Config {
     return Config.read(Config.sourcePath(project.repo, undefined, resolvedRoot), resolvedRoot)
   }
 
-  private static parseYaml(path: string): RawConfig {
-    const fullPath = join(path, Config.FileName)
+  private static loadYaml(fullPath: string): RawConfig {
     if (!existsSync(fullPath)) return {}
-
     try {
       return (yaml.load(readFileSync(fullPath, 'utf8')) as RawConfig) ?? {}
     } catch (e) {
       throw new UserException(`Failed to parse ${fullPath}: ${String(e)}`)
     }
+  }
+
+  private static mergeConfigs(base: RawConfig, local: RawConfig): RawConfig {
+    if (Object.keys(local).length === 0) return base
+
+    const merged: RawConfig = { ...base, ...local }
+
+    // Deep-merge record types so local can override individual keys
+    const env = { ...base.env, ...local.env }
+    if (Object.keys(env).length > 0) merged.env = env
+
+    const commands = { ...base.commands, ...local.commands }
+    if (Object.keys(commands).length > 0) merged.commands = commands
+
+    const sites = { ...base.sites, ...local.sites }
+    if (Object.keys(sites).length > 0) merged.sites = sites
+
+    const mergedServe = Config.mergeServe(base.serve, local.serve)
+    if (mergedServe !== undefined) merged.serve = mergedServe
+
+    // For steps/up, local fully replaces base (procedural ordering is ambiguous to merge)
+    const mergedSteps = local.steps ?? local.up ?? base.steps ?? base.up
+    if (mergedSteps !== undefined) merged.steps = mergedSteps
+
+    // Merge and deduplicate projects
+    const projects = [...new Set([...(base.projects ?? []), ...(local.projects ?? [])])]
+    if (projects.length > 0) merged.projects = projects
+
+    return merged
+  }
+
+  private static mergeServe(
+    base: RawConfig['serve'],
+    local: RawConfig['serve'],
+  ): RawConfig['serve'] {
+    if (!local) return base
+    if (!base || typeof base === 'string' || typeof local === 'string') return local
+    return { ...base, ...local }
+  }
+
+  private static parseYaml(path: string): RawConfig {
+    const base = Config.loadYaml(join(path, Config.FileName))
+    const local = Config.loadYaml(join(path, Config.LocalFileName))
+    return Config.mergeConfigs(base, local)
   }
 
   getServe(): Record<string, RawServe> | string {
@@ -189,6 +232,10 @@ export class Config {
 
   file(): string {
     return this.cwd(Config.FileName)
+  }
+
+  localFile(): string {
+    return this.cwd(Config.LocalFileName)
   }
 
   async envs(): Promise<Map<string, string>> {

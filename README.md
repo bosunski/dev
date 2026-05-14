@@ -8,7 +8,7 @@ DEV is a tool for creating a consistent and evolvable project development enviro
 - Plugins
 - Preset [Upcoming]
 - Custom scripts
-- Built-in Procfiles support
+- Built-in Procfiles support with grouped serves
 - Customisable environment using ShadowEnv
 - Project dependencies
 - Custom project commands
@@ -120,8 +120,33 @@ While the serve attribute is Procfile-like, it is not a Procfile as it adds some
 
 It is also worth noting that when a dependency project has a `serve` attribute, DEV will also start the processes defined in the dependency project when you run `dev serve` for the current project. This is useful when you have a project that depends on another project that requires some services to be running.
 
-If you have a `.env.<environment>` file in the project, DEV will make sure that the environment variables are loaded before starting the processes defined in the `serve` attribute. Env files loaded are per-project basis and not shaared across projects. The default env file is `.env` but you can specify a different one like this:
-    
+##### Grouped serves
+
+You can organise serves into named groups. This lets you start a specific subset of processes without running everything:
+
+```yaml
+serve:
+  db: postgres           # flat — always starts regardless of which groups are selected
+  backend:
+    api: node server.js
+    worker: node worker.js
+  frontend:
+    vite: vite dev
+```
+
+```bash
+dev serve                      # starts db, backend:api, backend:worker, frontend:vite
+dev serve backend              # starts db, backend:api, backend:worker
+dev serve frontend             # starts db, frontend:vite
+dev serve backend frontend     # starts db, backend:api, backend:worker, frontend:vite
+```
+
+Flat (ungrouped) serves act as the shared layer — they always run regardless of which groups are specified. If the same process name appears in multiple groups, it is only started once (first-seen wins), so shared infrastructure like databases can be declared as a flat serve without risk of duplication.
+
+##### Environment files
+
+If you have a `.env.<environment>` file in the project, DEV will make sure that the environment variables are loaded before starting the processes defined in the `serve` attribute. Env files loaded are per-project basis and not shared across projects. The default env file is `.env` but you can specify a different one like this:
+
 ```yaml
 serve:
   web:
@@ -179,6 +204,34 @@ When you run `dev up`, DEV will prompt you to enter the value of the `STRIPE_SEC
 
 > [!Note]
 > It is important to run `dev up` after modifying the `env` attributes so that the environment variables can injected in the shells, since the default ShadowEnv lisp file is generated during the provisioning process.
+
+#### Local overrides (dev.local.yml)
+
+You can create a `dev.local.yml` file alongside `dev.yml` to override or extend any part of the configuration without modifying the committed file. This is useful for machine-specific tweaks — enabling a debugger, pointing at a local database, or adding extra environment variables that only apply to your machine.
+
+`dev.local.yml` is automatically added to `.gitignore` when you run `dev init`, so it will never be accidentally committed.
+
+The merge behaviour per key is:
+
+| Key | Behaviour |
+|---|---|
+| `env`, `commands`, `sites`, `serve` | Deep merged — local keys override or extend base |
+| `steps` / `up` | Local fully replaces base |
+| `name` | Local overrides base |
+| `projects` | Concatenated and deduplicated |
+
+For example, to override the `api` serve to run with the Node debugger enabled locally:
+
+```yaml
+# dev.local.yml  (gitignored)
+serve:
+  backend:
+    api:
+      run: node --inspect server.js
+      env: local
+env:
+  DATABASE_URL: postgres://localhost/myapp_local
+```
 
 ### Use of Shadowenv
 ### Contributing to DEV

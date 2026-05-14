@@ -16,13 +16,17 @@ export type RawCommand = {
   signature?: string
 }
 
-export type RawServe =
+export type RawServeProcess =
   | string
   | {
       run: string
       env?: string | false
       cwd?: string
     }
+
+export type RawServeGroup = Record<string, RawServeProcess>
+
+export type RawServe = RawServeProcess | RawServeGroup
 
 export type RawScript = {
   desc?: string
@@ -40,6 +44,7 @@ export type RawConfig = {
   steps?: RawStep[]
   commands?: Record<string, RawCommand>
   serve?: Record<string, RawServe> | string
+  groups?: Record<string, string[]>
   sites?: Record<string, string>
   env?: Record<string, RawEnvValue>
   projects?: string[]

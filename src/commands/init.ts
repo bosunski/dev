@@ -1,5 +1,6 @@
 import { Command, Args } from '@oclif/core'
-import { writeFileSync, existsSync } from 'node:fs'
+import { writeFileSync, existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { getDevContext } from '../context.js'
 import { Config } from '../config/config.js'
 import { UserException } from '../exceptions.js'
@@ -38,6 +39,16 @@ export default class Init extends Command {
       throw new UserException('Could not create the dev.yml file.')
     }
 
+    this.ensureGitignore(config.cwd(), Config.LocalFileName)
     this.log(`Initialized DEV at ${config.file()}`)
+  }
+
+  private ensureGitignore(cwd: string, entry: string): void {
+    const gitignorePath = join(cwd, '.gitignore')
+    const current = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf8') : ''
+    const lines = current.split('\n')
+    if (!lines.some(l => l.trim() === entry)) {
+      writeFileSync(gitignorePath, current + (current.endsWith('\n') || current === '' ? '' : '\n') + entry + '\n')
+    }
   }
 }
