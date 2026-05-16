@@ -9,7 +9,7 @@ export class StartContainerStep extends BaseStep {
     // Silently clean up any existing container; ignore errors if it doesn't exist
     Bun.spawnSync(['sh', '-c', 'docker kill dev-mysql 2>/dev/null; docker rm dev-mysql -f 2>/dev/null'])
     const dataDir = runner.config.globalPath('mysql/data')
-    const cmd = `docker run --rm -v ${dataDir}:/var/lib/mysql -l dev.orbstack.domains=mysql.dev.local --name dev-mysql -p 127.0.0.1:3306:3306 -e MYSQL_ALLOW_EMPTY_PASSWORD='yes' -d mysql:8.3.0 --max-allowed-packet=512M`
+    const cmd = `docker run -v ${dataDir}:/var/lib/mysql -l dev.orbstack.domains=mysql.dev.local --name dev-mysql -p 127.0.0.1:3306:3306 -e MYSQL_ALLOW_EMPTY_PASSWORD='yes' --restart unless-stopped -d mysql:8.3.0 --max-allowed-packet=512M`
     return runner.exec(cmd)
   }
 

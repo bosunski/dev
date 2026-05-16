@@ -11,6 +11,7 @@ import { ComposerPlugin } from './plugins/composer/composer-plugin.js'
 import { ValetPlugin } from './plugins/valet/valet-plugin.js'
 import { SpcPlugin } from './plugins/spc/spc-plugin.js'
 import { CaddyPlugin } from './plugins/caddy/caddy-plugin.js'
+import { DopplerPlugin } from './plugins/doppler/doppler-plugin.js'
 import type { PluginInterface } from './types/plugin.js'
 
 const DEFAULT_PLUGINS: Array<new () => PluginInterface> = [
@@ -20,6 +21,7 @@ const DEFAULT_PLUGINS: Array<new () => PluginInterface> = [
   ComposerPlugin,
   SpcPlugin,
   CaddyPlugin,
+  DopplerPlugin,
 ]
 
 let _dev: Dev | null = null
