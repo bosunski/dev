@@ -29,7 +29,8 @@ export default class Refresh extends Command {
     this.log('🔄 Refreshing environment...')
 
     for (const step of steps) {
-      if (!(await dev.runner.execute(step))) {
+      const force = step instanceof ShadowEnvStep
+      if (!(await dev.runner.execute(step, force))) {
         const name = step.name() || step.id()
         throw new UserException(`Failed to run step '${name}'`)
       }
