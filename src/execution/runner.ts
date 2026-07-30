@@ -9,6 +9,7 @@ import { UserException } from '../exceptions.js'
 export type Shell = { name: string; bin: string; profile: string }
 
 const STEP_COLORS = [2, 3, 4, 5, 6, 42, 130, 103, 129, 108]
+const SHELL_CONTROL_TOKENS = new Set(['&&', '||', ';', '|'])
 let colorIndex = 0
 
 export class Runner {
@@ -17,6 +18,7 @@ export class Runner {
   private _shell: Shell | null = null
   private stepColor: number = STEP_COLORS[colorIndex++ % STEP_COLORS.length]!
   private stepPrefix: string = ''
+  private checkingDone = false
 
   constructor(
     public readonly config: Config,
@@ -43,6 +45,7 @@ export class Runner {
     r._shell = this._shell
     r.stepColor = this.stepColor
     r.stepPrefix = this.stepPrefix
+    r.checkingDone = this.checkingDone
     return r
   }
 
@@ -67,7 +70,7 @@ export class Runner {
   lastFailedStep: Step | null = null
 
   private async executeStep(step: Step, force = false): Promise<boolean> {
-    if (!force && (await step.done(this))) return true
+    if (!force && (await this.checkDone(step))) return true
 
     const name = step.name()
     if (name) {
@@ -86,8 +89,17 @@ export class Runner {
     return ok
   }
 
+  private async checkDone(step: Step): Promise<boolean> {
+    this.checkingDone = true
+    try {
+      return await step.done(this)
+    } finally {
+      this.checkingDone = false
+    }
+  }
+
   async exec(command: string | string[], path?: string, env: Record<string, string> = {}): Promise<boolean> {
-    const proc = await this.spawnRaw(command, path, env, true)
+    const proc = await this.spawnRaw(command, path, env, this.checkingDone)
     const code = await proc.exited
     return code === 0
   }
@@ -109,13 +121,13 @@ export class Runner {
       const proc = Bun.spawn(finalCmd, {
         cwd: path ?? this.config.cwd(),
         env: fullEnv,
-        stdin: 'inherit',
+        stdin: 'ignore',
         stdout: 'pipe',
         stderr: 'pipe',
       })
 
-      void this.bufferStream(proc.stdout)
-      void this.bufferStream(proc.stderr)
+      void this.drainStream(proc.stdout)
+      void this.drainStream(proc.stderr)
 
       return proc
     }
@@ -129,24 +141,14 @@ export class Runner {
     })
   }
 
-  private async bufferStream(stream: ReadableStream<Uint8Array> | null): Promise<void> {
+  private async drainStream(stream: ReadableStream<Uint8Array> | null): Promise<void> {
     if (!stream) return
-    const decoder = new TextDecoder()
     const reader = stream.getReader()
-    const stdio = this.io as { appendStepBuffer?: (line: string) => void }
-    let buf = ''
     try {
       while (true) {
-        const { done, value } = await reader.read()
+        const { done } = await reader.read()
         if (done) break
-        buf += decoder.decode(value, { stream: true })
-        const lines = buf.split('\n')
-        buf = lines.pop() ?? ''
-        for (const line of lines) {
-          if (line.trim()) stdio.appendStepBuffer?.(line)
-        }
       }
-      if (buf.trim()) stdio.appendStepBuffer?.(buf)
     } catch { /* process ended */ }
   }
 
@@ -169,11 +171,28 @@ export class Runner {
 
     this.checkShadowEnv()
 
+    if (Array.isArray(command) && !this.requiresShell(command)) {
+      return [this.shadowenvBin(), 'exec', '--', ...command]
+    }
+
     const shell = process.env['SHELL'] ?? '/bin/sh'
     const opts = this.config.isDebug() ? '-ecv' : '-ec'
-    const cmd = Array.isArray(command) ? command.join(' ') : command
+    const cmd = Array.isArray(command) ? this.shellJoin(command) : command
 
     return [this.shadowenvBin(), 'exec', '--', shell, opts, cmd]
+  }
+
+  private requiresShell(command: string[]): boolean {
+    return command.some(arg => SHELL_CONTROL_TOKENS.has(arg))
+  }
+
+  private shellJoin(command: string[]): string {
+    return command.map(arg => SHELL_CONTROL_TOKENS.has(arg) ? arg : this.shellEscape(arg)).join(' ')
+  }
+
+  private shellEscape(arg: string): string {
+    if (arg === '') return "''"
+    return `'${arg.replaceAll("'", "'\\''")}'`
   }
 
   private _shadowEnvChecked: boolean | null = null

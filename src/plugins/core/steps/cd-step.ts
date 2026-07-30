@@ -1,5 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
+import type { Dirent } from 'node:fs'
+import { join, relative } from 'node:path'
+import * as clack from '@clack/prompts'
 import type { Runner } from '../../../execution/runner.js'
 import { BaseStep } from '../../../step/base-step.js'
 import { Config } from '../../../config/config.js'
@@ -29,8 +31,13 @@ export class CdStep extends BaseStep {
         return false
       }
 
-      const match = this.findProject(sourceDir, this.search)
-      if (match) return this.cd(runner, match)
+      const matches = this.findProjects(sourceDir, this.search)
+      if (matches.length === 1) return this.cd(runner, matches[0]!)
+      if (matches.length > 1) {
+        const match = await this.selectProject(sourceDir, matches)
+        if (!match) return false
+        return this.cd(runner, match)
+      }
 
       runner.getIO().error(`Unable to find a project matching ${this.search}.`)
       return false
@@ -46,14 +53,15 @@ export class CdStep extends BaseStep {
     return this.cd(runner, path)
   }
 
-  private findProject(sourceDir: string, search: string): string | null {
+  private findProjects(sourceDir: string, search: string): string[] {
     const needle = search.toLowerCase()
-    const topEntries = readdirSync(sourceDir, { withFileTypes: true })
+    const topEntries = this.sortedDirectories(sourceDir)
+    const matches: string[] = []
 
     // First pass: direct match at depth-1 (e.g. ~/src/github.com/okra)
     for (const entry of topEntries) {
       if (entry.isDirectory() && entry.name.toLowerCase().includes(needle)) {
-        return join(sourceDir, entry.name)
+        matches.push(join(sourceDir, entry.name))
       }
     }
 
@@ -62,10 +70,10 @@ export class CdStep extends BaseStep {
       if (!org.isDirectory()) continue
       const orgDir = join(sourceDir, org.name)
       try {
-        const repoEntries = readdirSync(orgDir, { withFileTypes: true })
+        const repoEntries = this.sortedDirectories(orgDir)
         for (const repo of repoEntries) {
           if (repo.isDirectory() && repo.name.toLowerCase().includes(needle)) {
-            return join(orgDir, repo.name)
+            matches.push(join(orgDir, repo.name))
           }
         }
       } catch {
@@ -73,7 +81,26 @@ export class CdStep extends BaseStep {
       }
     }
 
-    return null
+    return [...new Set(matches)]
+  }
+
+  private sortedDirectories(path: string): Dirent<string>[] {
+    return readdirSync(path, { withFileTypes: true })
+      .filter(entry => entry.isDirectory())
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  private async selectProject(sourceDir: string, matches: string[]): Promise<string | null> {
+    const selected = await clack.select({
+      message: `Multiple projects match "${this.search}". Which one do you want?`,
+      options: matches.map(path => ({
+        value: path,
+        label: relative(sourceDir, path),
+      })),
+    })
+
+    if (clack.isCancel(selected)) return null
+    return selected as string
   }
 
   private async cd(runner: Runner, path: string): Promise<boolean> {

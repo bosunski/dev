@@ -4,6 +4,7 @@ import type { Dev } from '../dev.js'
 import type { RawServe, RawServeProcess } from '../types/config.js'
 
 const COLORS = [2, 3, 4, 5, 6, 42, 130, 103, 129, 108]
+const SHOW_CURSOR = '\x1b[?25h'
 
 type ProcessEntry = {
   name: string
@@ -15,6 +16,26 @@ type ProcessEntry = {
 
 function colorPrefix(name: string, color: number): string {
   return `\x1b[38;5;${color}m${name.padEnd(20)}\x1b[0m | `
+}
+
+function writeOutputLine(line: string): void {
+  if (process.stdout.isTTY) {
+    process.stdout.write(`\r${line}\x1b[0K${SHOW_CURSOR}\r\n`)
+    return
+  }
+
+  process.stdout.write(`${line}\n`)
+}
+
+function sanitizeOutput(chunk: string): string {
+  return chunk
+    // Preserve SGR colors, but strip cursor movement, line/screen clearing,
+    // cursor visibility toggles, and other CSI terminal controls.
+    .replace(/\x1b\[(?![0-9;]*m)[?0-9;:]*[ -/]*[@-~]/g, '')
+    // Strip OSC sequences such as terminal title updates.
+    .replace(/\x1b\][^\x07]*(?:\x07|\x1b\\)/g, '')
+    // Strip single-character escape controls, including full terminal reset.
+    .replace(/\x1b(?!\[|\])[@-_]/g, '')
 }
 
 function isServeProcess(value: RawServe): value is RawServeProcess {
@@ -172,11 +193,12 @@ export class ServeManager {
 
   private async runAll(entries: ProcessEntry[]): Promise<boolean> {
     const showPrefix = entries.length > 1
+    if (process.stdout.isTTY) process.stdout.write(SHOW_CURSOR)
 
     const procs: Array<{ proc: Bun.Subprocess; entry: ProcessEntry }> = []
 
     for (const entry of entries) {
-      process.stdout.write(`${colorPrefix(entry.name, entry.color)}\x1b[1mRunning...\x1b[0m\n`)
+      writeOutputLine(`${colorPrefix(entry.name, entry.color)}\x1b[1mRunning...\x1b[0m`)
 
       const dotenvPath = join(entry.cwd, '.env')
       let dotenv: Record<string, string> = {}
@@ -212,6 +234,7 @@ export class ServeManager {
     const cleanup = async () => {
       if (this.interrupted) return
       this.interrupted = true
+      if (process.stdout.isTTY) process.stdout.write(SHOW_CURSOR)
       await this.shutdownAll(procs.map(p => p.proc))
       process.exit(0)
     }
@@ -223,7 +246,7 @@ export class ServeManager {
     // Wait for any process to exit or interrupt
     const exitPromises = procs.map(({ proc, entry }) =>
       proc.exited.then(code => {
-        process.stdout.write(`${colorPrefix(entry.name, entry.color)}\x1b[2mexited with code ${code}\x1b[0m\n`)
+        writeOutputLine(`${colorPrefix(entry.name, entry.color)}\x1b[2mexited with code ${code}\x1b[0m`)
         if (!this.interrupted) void cleanup()
       }),
     )
@@ -247,16 +270,17 @@ export class ServeManager {
         const { done, value } = await reader.read()
         if (done) break
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
+        buffer = sanitizeOutput(buffer + decoder.decode(value, { stream: true }))
+        const lines = buffer.split(/\r\n|\n|\r/)
         buffer = lines.pop() ?? ''
 
         for (const line of lines) {
-          process.stdout.write(prefix + line + '\n')
+          writeOutputLine(prefix + line)
         }
       }
 
-      if (buffer) process.stdout.write(prefix + buffer + '\n')
+      buffer = sanitizeOutput(buffer + decoder.decode())
+      if (buffer) writeOutputLine(prefix + buffer)
     } catch {
       // Process ended
     }

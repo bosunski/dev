@@ -8,13 +8,19 @@ import type { LocalValetConfig } from '../config/local-valet-config.js'
 import type { Dev } from '../../../dev.js'
 
 type RawPhpObject = {
-  version?: string
+  version?: string | number
   extensions?: RawExtensionsMap
 }
 
 type RawValetConfig = {
-  php?: string | RawPhpObject
+  php?: string | number | RawPhpObject
   sites?: RawSite[]
+}
+
+function normalizePhpVersion(version: unknown): string | null {
+  if (typeof version === 'string') return version.trim() || null
+  if (typeof version === 'number' && Number.isFinite(version)) return String(version)
+  return null
 }
 
 export class ValetStep implements Step {
@@ -25,15 +31,15 @@ export class ValetStep implements Step {
     this.subSteps = []
     let phpVersion: string | null = null
 
-    if (typeof config.php === 'string') {
-      // Plain string php version — link it
-      phpVersion = config.php
-      if (localConfig && dev) {
+    if (typeof config.php === 'string' || typeof config.php === 'number') {
+      // Plain php version — link it. YAML parses values like 8.3 as numbers.
+      phpVersion = normalizePhpVersion(config.php)
+      if (phpVersion && localConfig && dev) {
         this.subSteps.push(new LinkPhpStep(phpVersion, localConfig, dev))
       }
     } else if (config.php && typeof config.php === 'object') {
       const phpObj = config.php as RawPhpObject
-      phpVersion = phpObj.version ?? null
+      phpVersion = normalizePhpVersion(phpObj.version)
       if (phpVersion && localConfig && dev) {
         this.subSteps.push(new LinkPhpStep(phpVersion, localConfig, dev))
       }

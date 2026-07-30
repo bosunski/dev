@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs'
 import { UserException } from '../exceptions.js'
+import { shadowLispString } from './shadow-lisp.js'
 
 export class ShadowLispWriter {
   constructor(private readonly path: string) {
@@ -9,8 +10,9 @@ export class ShadowLispWriter {
   }
 
   envSet(key: string, value: string): void {
-    const line = `(env/set "${key}" "${value}")`
-    const regex = new RegExp(`\\(env/set "${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}" .*\\)`, 'gm')
+    const keyLiteral = shadowLispString(key)
+    const line = `(env/set ${keyLiteral} ${shadowLispString(value)})`
+    const regex = new RegExp(`\\(env/set ${escapeRegExp(keyLiteral)} .*\\)`, 'gm')
     const content = this.content()
 
     if (!regex.test(content)) {
@@ -18,17 +20,21 @@ export class ShadowLispWriter {
       return
     }
 
-    this.putContent(content.replace(regex, line))
+    this.putContent(content.replace(regex, () => line))
   }
 
   prependPath(path: string): void {
-    const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const regex = new RegExp(`\\(env/prepend-to-pathlist "PATH" "${escaped}"\\)`, 'gm')
+    const pathKeyLiteral = shadowLispString('PATH')
+    const pathLiteral = shadowLispString(path)
+    const regex = new RegExp(
+      `\\(env/prepend-to-pathlist ${escapeRegExp(pathKeyLiteral)} ${escapeRegExp(pathLiteral)}\\)`,
+      'gm',
+    )
     const content = this.content()
 
     if (regex.test(content)) return
 
-    this.append(`(env/prepend-to-pathlist "PATH" "${path}")`)
+    this.append(`(env/prepend-to-pathlist ${pathKeyLiteral} ${pathLiteral})`)
   }
 
   private append(line: string): void {
@@ -42,4 +48,8 @@ export class ShadowLispWriter {
   private content(): string {
     return readFileSync(this.path, 'utf8')
   }
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
