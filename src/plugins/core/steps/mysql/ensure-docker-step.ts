@@ -1,5 +1,11 @@
 import type { Runner } from '../../../../execution/runner.js'
 import { BaseStep } from '../../../../step/base-step.js'
+import { z } from 'zod'
+
+const dockerInfoSchema = z.object({
+  ID: z.string().min(1),
+  ClientInfo: z.object({ Context: z.string() }),
+})
 
 export class EnsureDockerStep extends BaseStep {
   private orbStackInstalled = false
@@ -65,9 +71,8 @@ export class EnsureDockerStep extends BaseStep {
     const proc = Bun.spawnSync(['docker', 'info', '--format=json'])
     if (proc.exitCode !== 0) return false
     try {
-      const info = JSON.parse(new TextDecoder().decode(proc.stdout)) as Record<string, unknown>
-      const clientInfo = info['ClientInfo'] as Record<string, unknown> | undefined
-      return Boolean(info['ID']) && clientInfo?.['Context'] === 'orbstack'
+      const result = dockerInfoSchema.safeParse(JSON.parse(new TextDecoder().decode(proc.stdout)))
+      return result.success && result.data.ClientInfo.Context === 'orbstack'
     } catch {
       return false
     }

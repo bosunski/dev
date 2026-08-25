@@ -1,17 +1,20 @@
 import type { Command } from '@oclif/core'
 import type { Step, StepResolver } from './step.js'
 import type { RawCommand } from './config.js'
+import type { RawServeProcess } from './config.js'
 
 export const COMMAND_PROVIDER = 'CommandProvider'
 export const CONFIG_PROVIDER = 'ConfigProvider'
 export const ENV_PROVIDER = 'EnvProvider'
 export const PATH_PROVIDER = 'PathProvider'
+export const SERVE_PROVIDER = 'ServeProvider'
 
 export type CapabilityKey =
   | typeof COMMAND_PROVIDER
   | typeof CONFIG_PROVIDER
   | typeof ENV_PROVIDER
   | typeof PATH_PROVIDER
+  | typeof SERVE_PROVIDER
 
 export interface Capability {}
 
@@ -32,4 +35,8 @@ export interface EnvProvider extends Capability {
 
 export interface PathProvider extends Capability {
   paths(): string[]
+}
+
+export interface ServeProvider extends Capability {
+  processes(): Record<string, RawServeProcess>
 }

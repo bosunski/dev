@@ -14,3 +14,14 @@ export { default as Inspire } from './inspire.js'
 export { default as SpcInstall } from './spc/install.js'
 export { default as ProjectDisable } from './project/disable.js'
 export { default as ProjectEnable } from './project/enable.js'
+export {
+  CaddyDoctor,
+  CaddyLogs,
+  CaddyReload,
+  CaddyRestart,
+  CaddyStart,
+  CaddyStatus,
+  CaddyStop,
+  CaddyTrust,
+  CaddyUnlink,
+} from './caddy.js'

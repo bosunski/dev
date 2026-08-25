@@ -18,22 +18,31 @@ export class CreateDatabaseStep extends BaseStep {
 
   async run(runner: Runner): Promise<boolean> {
     const dbs = Array.isArray(this.databases) ? this.databases : [this.databases]
-    const sql = dbs.map(db => `CREATE DATABASE IF NOT EXISTS ${db};`).join(' ')
-    const cmd = `docker exec -i dev-mysql mysql -u${CreateDatabaseStep.User} -e "${sql}"`
-
-    for (const delay of [1000, 2000, 3000]) {
-      const ok = await runner.exec(cmd)
-      if (ok) return true
-      await Bun.sleep(delay)
-    }
-    return false
+    const sql = dbs.map(db => `CREATE DATABASE IF NOT EXISTS \`${db}\`;`).join(' ')
+    if (!await this.waitUntilReady()) return false
+    return runner.exec([
+      'docker', 'exec', '-i', 'dev-mysql', 'mysql', `-u${CreateDatabaseStep.User}`, '-e', sql,
+    ])
   }
 
   async done(runner: Runner): Promise<boolean> {
     const dbs = Array.isArray(this.databases) ? this.databases : [this.databases]
-    const cmd = `docker exec dev-mysql mysql -u${CreateDatabaseStep.User} -e "SHOW DATABASES;"`
-    const proc = Bun.spawnSync(['sh', '-c', cmd])
+    const proc = Bun.spawnSync([
+      'docker', 'exec', 'dev-mysql', 'mysql', `-u${CreateDatabaseStep.User}`, '-e', 'SHOW DATABASES;',
+    ])
     const output = new TextDecoder().decode(proc.stdout)
-    return dbs.every(db => output.includes(db))
+    return proc.exitCode === 0 && dbs.every(db => output.split('\n').includes(db))
+  }
+
+  private async waitUntilReady(timeoutMs = 60_000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs
+    while (Date.now() < deadline) {
+      const result = Bun.spawnSync([
+        'docker', 'exec', 'dev-mysql', 'mysqladmin', 'ping', `-u${CreateDatabaseStep.User}`, '--silent',
+      ], { stdout: 'ignore', stderr: 'ignore' })
+      if (result.exitCode === 0) return true
+      await Bun.sleep(1000)
+    }
+    return false
   }
 }

@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Config } from '../../../config/config.js'
 import { UserException } from '../../../exceptions.js'
+import { z } from 'zod'
 
 export type LocalValetConfigData = {
   dir: string
@@ -11,6 +12,16 @@ export type LocalValetConfigData = {
   tld: string
   php: string
 }
+
+const localValetConfigSchema = z.object({
+  dir: z.string().optional(),
+  bin: z.string().optional(),
+  version: z.string().optional(),
+  path: z.string().optional(),
+  tld: z.string().optional(),
+  domain: z.string().optional(),
+  php: z.string().optional(),
+})
 
 export class LocalValetConfig {
   private config: LocalValetConfigData
@@ -47,12 +58,16 @@ export class LocalValetConfig {
     const configPath = join(valetDir, 'config.json')
     if (!existsSync(configPath)) return {}
     try {
-      const data = JSON.parse(readFileSync(configPath, 'utf8')) as Record<string, unknown>
-      if (data['domain']) {
-        data['tld'] = data['domain']
-        delete data['domain']
-      }
-      return data as Partial<LocalValetConfigData>
+      const data = localValetConfigSchema.parse(JSON.parse(readFileSync(configPath, 'utf8')))
+      const config: Partial<LocalValetConfigData> = {}
+      if (data.dir !== undefined) config.dir = data.dir
+      if (data.bin !== undefined) config.bin = data.bin
+      if (data.version !== undefined) config.version = data.version
+      if (data.path !== undefined) config.path = data.path
+      if (data.php !== undefined) config.php = data.php
+      if (data.domain !== undefined) config.tld = data.domain
+      else if (data.tld !== undefined) config.tld = data.tld
+      return config
     } catch {
       return {}
     }

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { Config } from './config/config.js'
 import type { Runner } from './execution/runner.js'
 import type { IOInterface } from './types/io.js'
@@ -67,13 +67,24 @@ export class Dev {
     return all.filter((p, i) => all.lastIndexOf(p) === i)
   }
 
+  effectivePath(base = process.env['PATH'] ?? ''): string {
+    return this.paths().reduce((path, entry) => `${entry}:${path}`, base)
+  }
+
   async updateEnvironment(): Promise<boolean> {
     if (!this.initShadowenvDir()) return false
     await this.primeEnvCache()
     if (this.createDefaultLispFile() && this.createGitIgnoreFile()) {
-      return this.runner.withoutShadowEnv().exec([this.config.brewPath('bin/shadowenv'), 'trust'])
+      return this.runner.withoutShadowEnv().exec([this.runner.shadowenvBin(), 'trust'])
     }
     return false
+  }
+
+  async environmentIsCurrent(): Promise<boolean> {
+    const file = this.config.cwd(this.shadowenvPath('000_default.lisp'))
+    if (!existsSync(file)) return false
+    await this.primeEnvCache()
+    return readFileSync(file, 'utf8') === this.defaultLispContent()
   }
 
   private initShadowenvDir(): boolean {

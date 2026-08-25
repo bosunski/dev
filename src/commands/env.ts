@@ -84,24 +84,18 @@ hookbook_add_hook __dev_hook`
 
   private bashHook(self: string): string {
     return `__dev_hook() {
-  local flags; flags=(--shellpid "$$")
-  eval "$("${self}" hook "\${flags[@]}")"
+  eval "$("${self}" hook)"
 }
 
-${HOOKBOOK}
-
 __dev_force_run=1
-hookbook_add_hook __dev_hook`
+if [[ ";\${PROMPT_COMMAND:-};" != *";__dev_hook;"* ]]; then
+  PROMPT_COMMAND="__dev_hook\${PROMPT_COMMAND:+; \${PROMPT_COMMAND}}"
+fi`
   }
 
   private fishHook(self: string): string {
     return `function __dev_hook --on-event fish_prompt --on-variable PWD
-  set -l flags --fish
-  if [ -n "$__dev_force_run" ];
-    set -a flags --force
-    set -eg __dev_force_run
-  end
-  "${self}" hook $flags | source 2>/dev/null
+  "${self}" hook | source 2>/dev/null
 end
 
 set -g __dev_force_run 1`

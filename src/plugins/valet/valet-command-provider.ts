@@ -2,12 +2,14 @@ import type { Command } from '@oclif/core'
 import type { CommandProvider } from '../../types/capability.js'
 import type { RawCommand } from '../../types/config.js'
 import type { Dev } from '../../dev.js'
+import { pluginDev } from '../../plugin/plugin-args.js'
+import { rawValetConfigSchema } from './valet-step-resolver.js'
 
 export class ValetCommandProvider implements CommandProvider {
   private readonly dev: Dev
 
   constructor(args: Record<string, unknown>) {
-    this.dev = args['dev'] as Dev
+    this.dev = pluginDev(args)
   }
 
   getCommands(): Command.Class[] {
@@ -16,7 +18,11 @@ export class ValetCommandProvider implements CommandProvider {
 
   getConfigCommands(): Record<string, RawCommand> {
     const rawSteps = this.dev.config.raw_().steps ?? this.dev.config.raw_().up ?? []
-    const hasValet = rawSteps.some(s => s && typeof s === 'object' && 'valet' in s)
+    const hasValet = rawSteps.some(step => {
+      if (!('valet' in step)) return false
+      rawValetConfigSchema.parse(step['valet'])
+      return true
+    })
     if (!hasValet) return {}
 
     return {

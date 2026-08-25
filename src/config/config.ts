@@ -4,14 +4,22 @@ import yaml from 'js-yaml'
 import { Env } from './env.js'
 import { UpConfig } from './up-config.js'
 import { ProjectDefinition } from './project-definition.js'
-import type { RawConfig, RawCommand, RawServe, RawServeProcess } from '../types/config.js'
+import type { RawConfig, RawCommand, RawRuntime, RawServe, RawServeProcess } from '../types/config.js'
 import { UserException } from '../exceptions.js'
+import { rawConfigSchema } from '../types/config.js'
+import { z } from 'zod'
 
 export type DevSettings = {
   locks: Record<string, string>
   disabled: string[]
   env: Record<string, string>
 }
+
+const devSettingsSchema = z.object({
+  locks: z.record(z.string(), z.string()).optional(),
+  disabled: z.array(z.string()).optional(),
+  env: z.record(z.string(), z.string()).optional(),
+})
 
 export class Config {
   static readonly DevDir = '.dev'
@@ -47,7 +55,7 @@ export class Config {
     this.readSettings()
     this._up = new UpConfig(raw.steps ?? raw.up ?? [])
     this._env = new Env(raw.env ?? {}, Object.fromEntries(
-      Object.entries(process.env).filter(([, v]) => v !== undefined) as [string, string][]
+      Object.entries(process.env).filter((entry): entry is [string, string] => entry[1] !== undefined)
     ))
     this._uname = process.platform === 'darwin' ? 'Darwin' : process.platform === 'linux' ? 'Linux' : 'Windows'
   }
@@ -57,8 +65,12 @@ export class Config {
     if (existsSync(jsonPath)) {
       try {
         const content = readFileSync(jsonPath, 'utf8')
-        const parsed = JSON.parse(content) as Partial<DevSettings>
-        this.settings = { ...this.settings, ...parsed }
+        const parsed = devSettingsSchema.parse(JSON.parse(content))
+        this.settings = {
+          locks: parsed.locks ?? this.settings.locks,
+          disabled: parsed.disabled ?? this.settings.disabled,
+          env: parsed.env ?? this.settings.env,
+        }
       } catch {
         throw new UserException(`Failed to parse ${jsonPath}. Please check the file for syntax errors.`)
       }
@@ -91,6 +103,10 @@ export class Config {
 
   sites(): Record<string, string> {
     return this.raw.sites ?? {}
+  }
+
+  runtimes(): Record<string, RawRuntime> {
+    return this.raw.runtimes ?? {}
   }
 
   commands(): Record<string, RawCommand> {
@@ -176,7 +192,7 @@ export class Config {
   private static loadYaml(fullPath: string): RawConfig {
     if (!existsSync(fullPath)) return {}
     try {
-      return (yaml.load(readFileSync(fullPath, 'utf8')) as RawConfig) ?? {}
+      return rawConfigSchema.parse(yaml.load(readFileSync(fullPath, 'utf8')) ?? {})
     } catch (e) {
       throw new UserException(`Failed to parse ${fullPath}: ${String(e)}`)
     }
@@ -196,6 +212,9 @@ export class Config {
 
     const sites = { ...base.sites, ...local.sites }
     if (Object.keys(sites).length > 0) merged.sites = sites
+
+    const runtimes = { ...base.runtimes, ...local.runtimes }
+    if (Object.keys(runtimes).length > 0) merged.runtimes = runtimes
 
     const mergedServe = Config.mergeServe(base.serve, local.serve)
     if (mergedServe !== undefined) merged.serve = mergedServe

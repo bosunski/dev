@@ -3,7 +3,7 @@ import type { Runner } from '../../../execution/runner.js'
 import type { LocalValetConfig } from '../config/local-valet-config.js'
 import { createHash } from 'node:crypto'
 
-export type RawSite = string | { host: string; proxy?: string; secure?: boolean }
+export type RawSite = string | { host: string; proxy?: string | undefined; secure?: boolean | undefined }
 
 export class SiteStep implements Step {
   readonly host: string

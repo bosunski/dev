@@ -170,6 +170,9 @@ export class Runner {
     }
 
     this.checkShadowEnv()
+    if (!this.usingShadowEnv) {
+      return typeof command === 'string' ? ['sh', '-c', command] : command
+    }
 
     if (Array.isArray(command) && !this.requiresShell(command)) {
       return [this.shadowenvBin(), 'exec', '--', ...command]
@@ -209,7 +212,7 @@ export class Runner {
       const result = Bun.spawnSync(
         [shell.bin, '-c', `(source ${shell.profile} && command -v __shadowenv_hook) >/dev/null 2>&1`],
       )
-      const hookInstalled = result.exitCode === 0
+      const hookInstalled = result.exitCode === 0 && existsSync(this.shadowenvBin())
       this._shadowEnvChecked = hookInstalled
       this.usingShadowEnv = hookInstalled
 
@@ -223,7 +226,7 @@ export class Runner {
   }
 
   shadowenvBin(): string {
-    return this.config.brewPath('bin/shadowenv')
+    return Bun.which('shadowenv') ?? this.config.globalBinPath('shadowenv')
   }
 
   hasCommand(command: string): boolean {

@@ -45,10 +45,13 @@ export class PrepareValetStep extends BaseStep {
 
     for (const bin of candidates) {
       if (!existsSync(bin)) continue
+      const inheritedEnv = Object.fromEntries(
+        Object.entries(process.env).filter((item): item is [string, string] => item[1] !== undefined),
+      )
       const result = Bun.spawnSync([bin, '--version'], {
         stdout: 'pipe',
         stderr: 'pipe',
-        env: process.env as Record<string, string>,
+        env: inheritedEnv,
       })
       if (result.exitCode !== 0) continue
       const lines = new TextDecoder().decode(result.stdout).trim().split('\n').filter(l => l.trim())

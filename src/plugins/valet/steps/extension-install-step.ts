@@ -6,8 +6,8 @@ import type { Config } from '../../../config/config.js'
 import { UserException } from '../../../exceptions.js'
 
 export type RawExtensionConfig = {
-  before?: string
-  options?: Record<string, string>
+  before?: string | undefined
+  options?: Record<string, string> | undefined
 }
 
 export type RawExtensionsMap = Record<string, RawExtensionConfig | null>
@@ -91,12 +91,15 @@ export class ExtensionInstallStep extends BaseStep {
 
   private extensionPath(): string {
     const phpBin = this.devConfig.path('bin/php')
+    const inheritedEnv = Object.fromEntries(
+      Object.entries(process.env).filter((item): item is [string, string] => item[1] !== undefined),
+    )
     const result = Bun.spawnSync(
       // ini_get('extension_dir') returns the runtime value set by php.ini (where pecl installs);
       // PHP_EXTENSION_DIR is the compiled-in default which may differ from the actual pecl ext_dir
       [phpBin, '-r', "echo ini_get('extension_dir');"],
       // PHP_INI_SCAN_DIR='' suppresses scan dirs but still loads main php.ini (so extension_dir is correct)
-      { stdout: 'pipe', stderr: 'pipe', env: { ...process.env as Record<string, string>, PHP_INI_SCAN_DIR: '' } },
+      { stdout: 'pipe', stderr: 'pipe', env: { ...inheritedEnv, PHP_INI_SCAN_DIR: '' } },
     )
     if (result.exitCode !== 0) throw new UserException('Failed to get PHP extension directory')
     const extDir = new TextDecoder().decode(result.stdout).trim()

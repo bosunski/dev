@@ -5,12 +5,15 @@ import { CaddyStepResolver } from './caddy-step-resolver.js'
 import { InstallCaddyStep } from './steps/install-caddy-step.js'
 import { PrepareCaddyStep } from './steps/prepare-caddy-step.js'
 import { PostUpStep } from './steps/post-up-step.js'
+import { BootstrapCaddyStep } from './steps/bootstrap-caddy-step.js'
+import { pluginDev } from '../../plugin/plugin-args.js'
+import { rawCaddyConfigSchema } from './caddy-step-resolver.js'
 
 export class CaddyConfigProvider implements ConfigProvider {
   private readonly dev: Dev
 
   constructor(args: Record<string, unknown>) {
-    this.dev = args['dev'] as Dev
+    this.dev = pluginDev(args)
   }
 
   steps(): Step[] {
@@ -19,14 +22,13 @@ export class CaddyConfigProvider implements ConfigProvider {
     let hasCaddy = false
 
     for (const rawStep of rawSteps) {
-      if (!rawStep || typeof rawStep !== 'object') continue
-      const c = (rawStep as Record<string, unknown>)['caddy'] as Record<string, unknown> | undefined
-      if (!c) continue
+      if (!('caddy' in rawStep)) continue
+      const c = rawCaddyConfigSchema.parse(rawStep['caddy'])
       hasCaddy = true
-      const rawSites = c['sites']
+      const rawSites = c.sites
       if (Array.isArray(rawSites)) {
         for (const site of rawSites) {
-          const host = typeof site === 'string' ? site : (site as Record<string, string>)['host']
+          const host = typeof site === 'string' ? site : site.host
           if (host) sites.push(host)
         }
       }
@@ -36,6 +38,7 @@ export class CaddyConfigProvider implements ConfigProvider {
 
     return [
       new InstallCaddyStep(),
+      new BootstrapCaddyStep(),
       new PrepareCaddyStep(),
       new PostUpStep(sites),
     ]
