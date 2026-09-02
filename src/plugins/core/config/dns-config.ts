@@ -31,8 +31,12 @@ export class DnsConfig {
     return `br-${network.id.slice(0, 12)}`
   }
 
-  configureCommands(interfaceName: string, elevation: ElevationTool = elevationTool()): string[][] {
-    if (process.platform !== 'linux') {
+  configureCommands(
+    interfaceName: string,
+    elevation: ElevationTool = elevationTool(),
+    platform = process.platform,
+  ): string[][] {
+    if (platform !== 'linux') {
       throw new UserException('The DNS step currently supports Linux with systemd-resolved only.')
     }
 

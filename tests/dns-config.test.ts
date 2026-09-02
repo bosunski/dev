@@ -39,10 +39,20 @@ describe('DnsConfig', () => {
       domains: ['ciroue.test', 'phpsandbox.test'],
       interface: 'okra0',
     })
-    expect(config.configureCommands('okra0', 'sudo')).toEqual([
+    expect(config.configureCommands('okra0', 'sudo', 'linux')).toEqual([
       ['sudo', 'resolvectl', 'dns', 'okra0', '172.29.0.53'],
       ['sudo', 'resolvectl', 'domain', 'okra0', '~ciroue.test', '~phpsandbox.test'],
       ['sudo', 'resolvectl', 'default-route', 'okra0', 'no'],
     ])
+  })
+
+  test('rejects systemd-resolved configuration on macOS', () => {
+    const config = new DnsConfig({
+      server: '172.29.0.53',
+      domains: ['ciroue.test'],
+      interface: 'okra0',
+    })
+    expect(() => config.configureCommands('okra0', 'sudo', 'darwin'))
+      .toThrow('The DNS step currently supports Linux with systemd-resolved only.')
   })
 })
