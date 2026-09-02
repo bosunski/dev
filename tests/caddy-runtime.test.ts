@@ -34,6 +34,11 @@ describe('CaddyRuntime', () => {
     ])
   })
 
+  test('identifies the current macOS boot session for ephemeral PF rules', () => {
+    const runtime = new CaddyRuntime('linux', '/usr/bin/caddy', 'sudo')
+    expect(runtime.darwinBootSession()).toBe('')
+  })
+
   test('supports an explicit privilege-free port configuration', () => {
     const runtime = new CaddyRuntime('linux', '/usr/bin/caddy', 'sudo', {
       DEV_CADDY_HTTP_PORT: '18080',

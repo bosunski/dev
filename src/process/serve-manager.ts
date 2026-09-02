@@ -157,7 +157,7 @@ export class ServeManager {
       name: displayName.toLowerCase(),
       command: serveConfig.run,
       cwd,
-      env: { ...projectEnv, ...dotenv, PATH: dev.effectivePath() },
+      env: { ...dotenv, ...projectEnv, PATH: dev.effectivePath() },
       color: COLORS[entries.length % COLORS.length]!,
     })
   }
@@ -186,9 +186,11 @@ export class ServeManager {
       if (eqIdx === -1) continue
       const key = trimmed.slice(0, eqIdx).trim()
       let val = trimmed.slice(eqIdx + 1).trim()
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1)
-      }
+      if (val.startsWith('"') && val.endsWith('"')) {
+        val = val.slice(1, -1).replace(/\\(n|r|"|\\)/g, (_match, escaped: string) =>
+          escaped === 'n' ? '\n' : escaped === 'r' ? '\r' : escaped
+        )
+      } else if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1)
       env[key] = val
     }
     return env

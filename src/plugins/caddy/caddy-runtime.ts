@@ -57,6 +57,12 @@ export class CaddyRuntime {
     ]
   }
 
+  darwinBootSession(): string {
+    if (this.platform !== 'darwin') return ''
+    const result = Bun.spawnSync(['sysctl', '-n', 'kern.boottime'], { stdout: 'pipe', stderr: 'ignore' })
+    return result.exitCode === 0 ? result.stdout.toString().trim() : ''
+  }
+
   userServiceFile(home = process.env['HOME'] ?? ''): string {
     return this.platform === 'darwin'
       ? join(home, 'Library/LaunchAgents/com.bosunski.dev.caddy.plist')

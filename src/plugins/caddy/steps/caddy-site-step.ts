@@ -129,7 +129,10 @@ export class CaddySiteStep extends BaseStep {
       return `${addr} {\n${directives.join('\n')}\n}\n`
     }
 
-    directives.push(`\troot * ${this.quote(runner.config.cwd())}`, '\tfile_server')
+    const root = this.root
+      ? (isAbsolute(this.root) ? this.root : resolve(runner.config.cwd(), this.root))
+      : runner.config.cwd()
+    directives.push(`\troot * ${this.quote(root)}`, '\tfile_server')
     return `${addr} {\n${directives.join('\n')}\n}\n`
   }
 

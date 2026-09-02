@@ -148,4 +148,11 @@ describe('CaddySiteStep', () => {
     expect(config).toContain('?Cross-Origin-Resource-Policy "cross-origin"')
     expect(config).toContain('\t\tfile_server')
   })
+
+  test('serves a static site from its configured project-relative root', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'dev-caddy-site-'))
+    const step = new CaddySiteStep({ host: 'docs.example.test', root: 'dist' }, dir)
+    expect(await step.run(runnerFor('/project'))).toBeTrue()
+    expect(configAt(dir)).toContain('root * "/project/dist"')
+  })
 })

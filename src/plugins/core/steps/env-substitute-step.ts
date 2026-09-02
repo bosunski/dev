@@ -105,7 +105,13 @@ export class EnvSubstituteStep extends BaseStep {
   }
 
   private assignment(key: string, value: string): string {
-    return `${key}='${value.replaceAll("'", "\\'")}'`
+    if (!value.includes("'")) return `${key}='${value}'`
+    const escaped = value
+      .replaceAll('\\', '\\\\')
+      .replaceAll('"', '\\"')
+      .replaceAll('\r', '\\r')
+      .replaceAll('\n', '\\n')
+    return `${key}="${escaped}"`
   }
 
   private assignmentPattern(key: string): RegExp {

@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import type { Runner } from '../../../execution/runner.js'
 import { BaseStep } from '../../../step/base-step.js'
 import { CaddyRuntime } from '../caddy-runtime.js'
@@ -9,7 +9,11 @@ export class BootstrapCaddyStep extends BaseStep {
 
   async done(runner: Runner): Promise<boolean> {
     const runtime = new CaddyRuntime()
-    if (runtime.platform === 'darwin') return existsSync(runner.config.globalPath('caddy/.pf-configured'))
+    if (runtime.platform === 'darwin') {
+      const marker = runner.config.globalPath('caddy/.pf-configured')
+      const session = runtime.darwinBootSession()
+      return !!session && existsSync(marker) && readFileSync(marker, 'utf8').trim() === session
+    }
     if (!runtime.usesPrivilegedPorts()) return true
     if (runtime.platform === 'linux') return runtime.hasLowPortAccess() && !runtime.systemServiceActive()
     return false
@@ -35,7 +39,9 @@ export class BootstrapCaddyStep extends BaseStep {
       for (const command of runtime.darwinBootstrapCommands(rulesFile)) {
         if (!await runner.exec(command)) return false
       }
-      writeFileSync(runner.config.globalPath('caddy/.pf-configured'), 'configured\n')
+      const session = runtime.darwinBootSession()
+      if (!session) return false
+      writeFileSync(runner.config.globalPath('caddy/.pf-configured'), `${session}\n`)
       return true
     }
     return false

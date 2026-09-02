@@ -18,3 +18,15 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - run: bun run typecheck
+
+  test-macos:
+    name: Test and build (macOS ARM64)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun test
+      - run: bun run typecheck
+      - name: Build Darwin ARM64 binary
+        run: bun run manifest && bun build src/main.ts --compile --target=bun-darwin-arm64 --outfile dist/dev-darwin-arm64
