@@ -21,11 +21,11 @@ jobs:
             platform: linux
             target: bun-linux-x64
             binary: dev-linux-x64
-          - name: macOS ARM64
-            os: macos-latest
+          - name: macOS Intel
+            os: macos-15-intel
             platform: darwin
-            target: bun-darwin-arm64
-            binary: dev-darwin-arm64
+            target: bun-darwin-x64
+            binary: dev-darwin-x64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4

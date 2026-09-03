@@ -10,6 +10,7 @@ export HOME="$SUITE_ROOT/home"
 mkdir -p "$HOME"
 export PATH="$HOME/.dev/bin:/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
 export SHELL=/bin/bash
+export DEV_ELEVATION_TOOL=sudo
 touch "$HOME/.bashrc"
 cleanup_suite() {
   if [[ "${SMOKE_KEEP_TMP:-0}" == 1 ]]; then
