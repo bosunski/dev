@@ -37,7 +37,9 @@ jobs:
         run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.binary }}
       - name: Normalize Linux integration runner
         if: matrix.platform == 'linux'
-        run: sudo apt-get purge -y redis-server redis-tools
+        run: |
+          sudo apt-get purge -y redis-server redis-tools
+          sudo systemctl stop apache2 nginx || true
       - name: Start Docker on macOS
         if: matrix.platform == 'darwin'
         run: |

@@ -7,6 +7,7 @@ PROJECT_ROOT="${3:?}"
 SMOKE_PASSED=0
 cleanup() {
   if [[ "$SMOKE_PASSED" != 1 && "$PLATFORM" == linux ]]; then
+    sudo ss -ltnp '( sport = :80 or sport = :443 )' >&2 || true
     sudo nginx -t >&2 || true
     sudo systemctl status nginx --no-pager >&2 || true
     sudo journalctl -u nginx --no-pager -n 80 >&2 || true

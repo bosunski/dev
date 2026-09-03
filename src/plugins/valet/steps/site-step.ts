@@ -59,6 +59,11 @@ export class SiteStep implements Step {
       }
     }
 
+    if (runner.config.isLinux() && !await runner.exec(['systemctl', 'is-active', '--quiet', 'nginx'])) {
+      runner.getIO().error('Valet configured the site, but nginx is not running.')
+      return false
+    }
+
     return true
   }
 }
