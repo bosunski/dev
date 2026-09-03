@@ -4,8 +4,8 @@ set -euo pipefail
 DEV_BINARY="${1:?Path to the compiled DEV binary is required}"
 PLATFORM="${2:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
 SMOKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SUITE_ROOT="$(mktemp -d)"
 export SMOKE_HOST_HOME="$HOME"
+SUITE_ROOT="$(mktemp -d "$SMOKE_HOST_HOME/dev-smoke.XXXXXX")"
 BASE_PATH="/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
 export SHELL=/bin/bash
 export DEV_ELEVATION_TOOL=sudo
