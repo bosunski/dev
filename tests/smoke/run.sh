@@ -6,12 +6,9 @@ PLATFORM="${2:-$(uname -s | tr '[:upper:]' '[:lower:]')}"
 SMOKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SUITE_ROOT="$(mktemp -d)"
 export SMOKE_HOST_HOME="$HOME"
-export HOME="$SUITE_ROOT/home"
-mkdir -p "$HOME"
-export PATH="$HOME/.dev/bin:/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
+BASE_PATH="/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
 export SHELL=/bin/bash
 export DEV_ELEVATION_TOOL=sudo
-touch "$HOME/.bashrc"
 cleanup_suite() {
   if [[ "${SMOKE_KEEP_TMP:-0}" == 1 ]]; then
     echo "Smoke workspace retained at $SUITE_ROOT" >&2
@@ -29,6 +26,10 @@ esac
 for fixture in "$SMOKE_DIR"/projects/*; do
   [[ -d "$fixture" && -f "$fixture/dev.yml" && -f "$fixture/smoke.sh" ]] || continue
   name="$(basename "$fixture")"
+  export HOME="$SUITE_ROOT/home-$name"
+  export PATH="$HOME/.dev/bin:$BASE_PATH"
+  mkdir -p "$HOME"
+  touch "$HOME/.bashrc"
   worktree="$(mktemp -d "$SUITE_ROOT/project.XXXXXX")/$name"
   mkdir -p "$worktree"
   cp -R "$fixture/." "$worktree/"
