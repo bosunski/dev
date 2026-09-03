@@ -3,6 +3,7 @@ set -euo pipefail
 
 DEV_BINARY="${1:?Path to the compiled DEV binary is required}"
 PLATFORM="${2:?Platform is required}"
+REAL_HOME="$HOME"
 SMOKE_ROOT="$(mktemp -d)"
 SMOKE_HOME="$SMOKE_ROOT/home"
 PROJECT_ROOT="$SMOKE_ROOT/project"
@@ -18,6 +19,7 @@ export DEV_CADDY_SKIP_TRUST=1
 cleanup() {
   if [[ -n "${SERVE_PID:-}" ]]; then kill "$SERVE_PID" >/dev/null 2>&1 || true; fi
   (cd "$PROJECT_ROOT" && "$DEV_BINARY" caddy stop >/dev/null 2>&1) || true
+  if [[ -n "${SYSTEMD_SERVICE_LINK:-}" ]]; then rm -f "$SYSTEMD_SERVICE_LINK"; fi
   if [[ "${SMOKE_PASSED:-0}" != '1' && -f "$SERVE_LOG" ]]; then
     echo '--- dev serve output ---' >&2
     sed -n '1,240p' "$SERVE_LOG" >&2
@@ -35,6 +37,11 @@ if [[ "$PLATFORM" == 'darwin' ]]; then
 else
   export SHELL=/bin/bash
   printf '\n' > "$SMOKE_HOME/.bashrc"
+  # systemd uses the account database rather than the overridden HOME when it
+  # discovers user units. Link its real unit directory to the isolated service.
+  SYSTEMD_SERVICE_LINK="$REAL_HOME/.config/systemd/user/dev-caddy.service"
+  mkdir -p "$(dirname "$SYSTEMD_SERVICE_LINK")"
+  ln -s "$SMOKE_HOME/.config/systemd/user/dev-caddy.service" "$SYSTEMD_SERVICE_LINK"
 fi
 
 printf '%s\n' '<?php echo "dev-runtime-smoke";' > "$PUBLIC_ROOT/index.php"
@@ -54,7 +61,7 @@ steps:
 EOF
 
 (cd "$PROJECT_ROOT" && "$DEV_BINARY" up --self)
-(cd "$PROJECT_ROOT" && "$DEV_BINARY" serve >"$SERVE_LOG" 2>&1) &
+(cd "$PROJECT_ROOT" && exec "$DEV_BINARY" serve >"$SERVE_LOG" 2>&1) &
 SERVE_PID=$!
 
 response="$(curl --fail --silent --show-error --insecure --noproxy '*' --retry 20 --retry-all-errors \
