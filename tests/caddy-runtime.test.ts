@@ -17,7 +17,8 @@ describe('CaddyRuntime', () => {
       .toBe('/home/user/.local/share/caddy/pki/authorities/local/root.crt')
     expect(runtime.linuxUserStartCommands()).toEqual([
       ['systemctl', '--user', 'daemon-reload'],
-      ['systemctl', '--user', 'enable', '--now', 'dev-caddy.service'],
+      ['systemctl', '--user', 'enable', 'dev-caddy.service'],
+      ['systemctl', '--user', 'restart', 'dev-caddy.service'],
     ])
   })
 

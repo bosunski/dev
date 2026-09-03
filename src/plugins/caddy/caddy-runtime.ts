@@ -97,7 +97,8 @@ export class CaddyRuntime {
   linuxUserStartCommands(): string[][] {
     return [
       ['systemctl', '--user', 'daemon-reload'],
-      ['systemctl', '--user', 'enable', '--now', 'dev-caddy.service'],
+      ['systemctl', '--user', 'enable', 'dev-caddy.service'],
+      ['systemctl', '--user', 'restart', 'dev-caddy.service'],
     ]
   }
 
