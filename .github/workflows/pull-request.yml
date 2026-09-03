@@ -35,6 +35,9 @@ jobs:
       - run: bun run typecheck
       - name: Build native binary
         run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.binary }}
+      - name: Normalize Linux integration runner
+        if: matrix.platform == 'linux'
+        run: sudo apt-get purge -y redis-server redis-tools
       - name: Start Docker on macOS
         if: matrix.platform == 'darwin'
         run: |
