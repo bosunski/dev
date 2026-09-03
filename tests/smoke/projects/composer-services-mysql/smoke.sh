@@ -8,6 +8,9 @@ trap cleanup EXIT
 
 cleanup() {
   docker rm -f dev-mysql >/dev/null 2>&1 || true
+  if [[ -d "$HOME/.dev/mysql/data" ]]; then
+    sudo chown -R "$(id -u):$(id -g)" "$HOME/.dev/mysql/data"
+  fi
   if [[ "$PLATFORM" == darwin ]]; then
     brew services stop redis >/dev/null 2>&1 || true
   else

@@ -8,4 +8,6 @@ runtimes:
 
 commands:
   verify-spc:
-    run: '"$PHP_BIN" -r '\''exit(extension_loaded("mbstring") ? 0 : 1);'\'' && touch spc.ok'
+    run: |
+      "$PHP_BIN" -r 'exit(extension_loaded("mbstring") ? 0 : 1);'
+      touch spc.ok
