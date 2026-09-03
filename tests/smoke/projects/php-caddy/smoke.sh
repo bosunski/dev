@@ -11,6 +11,7 @@ export DEV_CADDY_HTTPS_PORT=18443
 export DEV_CADDY_ADMIN_PORT=12019
 export DEV_CADDY_SKIP_TRUST=1
 export DEV_CADDY_DISABLE_PORT_REDIRECT=1
+export DEV_ELEVATION_TOOL=sudo
 
 cleanup() {
   if [[ -n "${SERVE_PID:-}" ]]; then kill "$SERVE_PID" >/dev/null 2>&1 || true; fi
