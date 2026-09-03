@@ -5,6 +5,12 @@ DEV_BINARY="${1:?}"
 PLATFORM="${2:?}"
 PROJECT_ROOT="${3:?}"
 SMOKE_PASSED=0
+
+# Valet Linux's server.php resolves ~/.valet from its file owner's passwd entry,
+# so a process-only synthetic HOME cannot represent a working user installation.
+export HOME="${SMOKE_HOST_HOME:-$HOME}"
+export PATH="$HOME/.dev/bin:/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
 cleanup() {
   if [[ "$SMOKE_PASSED" != 1 && "$PLATFORM" == linux ]]; then
     sudo ss -ltnp '( sport = :80 or sport = :443 )' >&2 || true
@@ -17,6 +23,7 @@ cleanup() {
   "$valet_bin" unlink linked-smoke >/dev/null 2>&1 || true
   "$valet_bin" unproxy proxy-smoke >/dev/null 2>&1 || true
   "$valet_bin" stop >/dev/null 2>&1 || true
+  rm -f "$HOME/.dev/valet/sites/linked-smoke.md5" "$HOME/.dev/valet/sites/proxy-smoke.md5"
   rm -rf "$(dirname "$PROJECT_ROOT")"
 }
 trap cleanup EXIT
