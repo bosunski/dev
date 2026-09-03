@@ -7,6 +7,10 @@ PROJECT_ROOT="${3:?}"
 trap cleanup EXIT
 
 cleanup() {
+  if ! docker exec dev-mysql mysqladmin ping -uroot --silent >/dev/null 2>&1; then
+    docker ps -a --filter name=dev-mysql >&2 || true
+    docker logs --tail 100 dev-mysql >&2 || true
+  fi
   docker rm -f dev-mysql >/dev/null 2>&1 || true
   if [[ -d "$HOME/.dev/mysql" ]]; then
     sudo chown -R "$(id -u):$(id -g)" "$HOME/.dev/mysql"
