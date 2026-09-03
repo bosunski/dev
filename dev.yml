@@ -1,76 +1,39 @@
 name: bosunski/dev
 
 env:
-  PSB_DIR: "${HOME}/.dev/`echo $PWD | md5sum`"
+  BUN_INSTALL: "${HOME}/.bun"
+  PATH: "${HOME}/.bun/bin:${PATH}"
 
 steps:
-  - mysql:
-      databases:
-        - dev_testing
-  - brew:
-      # Required by SPC for building PHP from source
-      - autoconf
-
-  - composer:
-      packages:
-        - phpstan/phpstan
-  - spc:
-      combine:
-        input: builds/dev.phar
-        output: builds/dev
-      php:
-        version: 8.4
-        preset: common
-        extensions:
-          - swoole
-          - ffi
-        sources: {}
-  # - valet:
-  #     php: 8.5
-  #     sites:
-  #       - proxy: http://localhost:8000
-  #         host: psb
-  #       - dev
   - script:
-      desc: Install composer dependencies
-      run: composer install
+      desc: Install Bun
+      met?: test -x "$HOME/.bun/bin/bun"
+      run: curl -fsSL https://bun.com/install | bash
 
   - script:
-      desc: Create output.txt
-      run: echo "Hello World $(date)" > output.txt
+      desc: Install Bun dependencies
+      met?: test -d node_modules
+      run: bun install
 
 commands:
+  test:
+    desc: Run DEV tests
+    run: bun test
   build:
     desc: Build DEV binary
-    signature: "{name?} {subcommand?} {--service}"
-    run: |
-      php dev app:build --build-version=development dev.phar && \
-      php dev spc:combine && chmod +x builds/dev && \
-      rm builds/dev.phar
-  install:
-    desc: Install Dev binary
-    run: |
-      php dev build && \
-      install builds/dev $HOME/.dev/bin/dev
-  php:
-    desc: PHP INI_DIR
-    run: echo $PHP_DIR
-  style:
-    desc: Fix PHP code style
-    run: ./vendor/bin/pint
-  check:
-    desc: PHPStan Analyse
-    run: ./vendor/bin/phpstan analyse --memory-limit=2G
-  test:
-    desc: Run PHP tests
-    run: php vendor/bin/pest
-  coverage:
-    desc: Run PHP tests
-    run: php -d zend_extension=$PWD/dist/xdebug.so vendor/bin/pest --coverage
+    run: bun run build
 
-serve:
-  write: while true; do echo "Hello, DEV! The time is $(date)" >> output.txt; sleep 1; done
-  tail: tail -f output.txt
+  install:
+    desc: Build and install DEV locally
+    run: bun run install:local
+
+  typecheck:
+    desc: Check TypeScript types
+    run: bun run typecheck
+
+  dev:
+    desc: Run DEV from source
+    run: bun run dev
 
 sites:
-  github: https://github.com/phpsandbox/dev
+  github: https://github.com/bosunski/dev

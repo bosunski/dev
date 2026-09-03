@@ -2,6 +2,7 @@ import { Command, Args, Flags } from '@oclif/core'
 import * as clack from '@clack/prompts'
 import { getDevContext } from '../context.js'
 import { UserException } from '../exceptions.js'
+import { commandWorkingDirectory } from '../config/command.js'
 
 export default class Run extends Command {
   static id = 'run'
@@ -50,7 +51,7 @@ export default class Run extends Command {
       throw new UserException(`Command ${name} not found. Are you sure you have it configured?`)
     }
 
-    const proc = await dev.runner.spawn(command.run, dev.config.cwd())
+    const proc = await dev.runner.spawn(command.run, commandWorkingDirectory(dev.config, command))
     const code = await proc.exited
     if (code !== 0) this.exit(code)
   }

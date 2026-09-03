@@ -1,23 +1,15 @@
 import type { Dev } from '../../../dev.js'
 import type { StepResolver, Step } from '../../../types/step.js'
-import type { RawMySqlConfig } from '../config/mysql-config.js'
-import { MySqlConfig } from '../config/mysql-config.js'
+import { mysqlConfigSchema, MySqlConfig } from '../config/mysql-config.js'
 import { UserException } from '../../../exceptions.js'
 
 export class MySqlResolver implements StepResolver {
   constructor(private readonly dev: Dev) {}
 
   resolve(args: unknown): Step {
-    if (!args || typeof args !== 'object') {
-      throw new Error('MySQL configuration should be an object!')
-    }
-
-    const raw = args as Record<string, unknown>
-    if (!raw['databases']) {
-      throw new UserException('MySQL configuration should have a databases key!')
-    }
-
-    const config = new MySqlConfig(raw as unknown as RawMySqlConfig, this.dev)
+    const result = mysqlConfigSchema.safeParse(args)
+    if (!result.success) throw new UserException(`Invalid MySQL configuration: ${result.error.message}`)
+    const config = new MySqlConfig(result.data, this.dev)
     // MySqlConfig returns multiple steps — wrap in a composite step
     return new MySqlCompositeStep(config)
   }

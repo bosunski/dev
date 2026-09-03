@@ -2,6 +2,9 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Runner } from '../../../execution/runner.js'
 import { BaseStep } from '../../../step/base-step.js'
+import { z } from 'zod'
+
+const caddyMetadataSchema = z.record(z.string(), z.unknown())
 
 export class PrepareCaddyStep extends BaseStep {
   name(): string { return 'Prepare Caddy' }
@@ -13,39 +16,23 @@ export class PrepareCaddyStep extends BaseStep {
 
   async run(runner: Runner): Promise<boolean> {
     const caddyDir = runner.config.globalPath('caddy')
-    const sitesDir = runner.config.globalPath('caddy/sites')
+    const projectsDir = runner.config.globalPath('caddy/projects')
+    const logsDir = runner.config.globalPath('caddy/logs')
     const caddyfile = join(caddyDir, 'Caddyfile')
 
-    if (!existsSync(sitesDir)) {
-      mkdirSync(sitesDir, { recursive: true })
+    if (!existsSync(projectsDir)) {
+      mkdirSync(projectsDir, { recursive: true })
     }
-
-    const importLine = `import ${sitesDir}/*`
-    const existingContent = existsSync(caddyfile) ? readFileSync(caddyfile, 'utf8') : ''
-    if (existingContent.trim() !== importLine) {
-      writeFileSync(caddyfile, importLine + '\n')
-    }
+    if (!existsSync(logsDir)) mkdirSync(logsDir, { recursive: true })
 
     const configFile = join(caddyDir, 'config.json')
     const configData = existsSync(configFile)
-      ? (JSON.parse(readFileSync(configFile, 'utf8')) as Record<string, unknown>)
+      ? caddyMetadataSchema.parse(JSON.parse(readFileSync(configFile, 'utf8')))
       : {}
-    configData['sitesDir'] = sitesDir
+    delete configData['sitesDir']
+    configData['projectsDir'] = projectsDir
     configData['caddyfile'] = caddyfile
     writeFileSync(configFile, JSON.stringify(configData, null, 2))
-
-    const caddyBin = runner.config.brewPath('bin/caddy')
-    if (existsSync(caddyBin)) {
-      const running = Bun.spawnSync(['sh', '-c', 'curl -sf http://localhost:2019/config/ > /dev/null 2>&1']).exitCode === 0
-      if (!running) {
-        if (!await runner.exec(`${caddyBin} start --config ${caddyfile}`)) return false
-        await new Promise(resolve => setTimeout(resolve, 1000))
-      } else {
-        if (!await runner.exec([caddyBin, 'reload', '--config', caddyfile])) return false
-      }
-      // trust after caddy is running so it can reach the admin API
-      await runner.exec(`${caddyBin} trust`)
-    }
 
     return true
   }

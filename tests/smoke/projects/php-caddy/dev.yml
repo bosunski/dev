@@ -1,0 +1,46 @@
+name: php-caddy-smoke
+
+env:
+  SMOKE_CONFIGURED: from-dev-yml
+  SMOKE_APOSTROPHE: O'Reilly
+
+runtimes:
+  php:
+    provider: native
+
+commands:
+  fixture-check:
+    desc: Verify commands receive project environment and honor cwd
+    cwd: nested
+    run: test "$SMOKE_CONFIGURED" = "from-dev-yml" && test "$PWD" = "$DEV_PROJECT_ROOT/nested"
+
+serve:
+  backend:
+    run: '"$PHP_BIN" -S 127.0.0.1:19090 -t backend backend/index.php'
+
+steps:
+  - packages:
+      install: [unzip]
+
+  - caddy:
+      sites:
+        - host: smoke.test
+          root: public
+          runtime: php
+
+        - host: static.smoke.test
+          root: static
+          secure: false
+
+        - host: api.smoke.test
+          proxy: http://127.0.0.1:19090
+          request_headers:
+            X-Smoke: from-caddy
+          response_headers:
+            X-Smoke-Response: present
+          routes:
+            - path: /api/*
+              strip_prefix: /api
+              proxy: http://127.0.0.1:19090
+              request_headers:
+                X-Smoke: from-route

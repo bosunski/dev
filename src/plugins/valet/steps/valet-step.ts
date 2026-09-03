@@ -7,14 +7,14 @@ import { ExtensionInstallStep, type RawExtensionsMap } from './extension-install
 import type { LocalValetConfig } from '../config/local-valet-config.js'
 import type { Dev } from '../../../dev.js'
 
-type RawPhpObject = {
-  version?: string | number
-  extensions?: RawExtensionsMap
+export type RawPhpObject = {
+  version?: string | number | undefined
+  extensions?: RawExtensionsMap | undefined
 }
 
-type RawValetConfig = {
-  php?: string | number | RawPhpObject
-  sites?: RawSite[]
+export type RawValetConfig = {
+  php?: string | number | RawPhpObject | undefined
+  sites?: RawSite[] | undefined
 }
 
 function normalizePhpVersion(version: unknown): string | null {
@@ -38,7 +38,7 @@ export class ValetStep implements Step {
         this.subSteps.push(new LinkPhpStep(phpVersion, localConfig, dev))
       }
     } else if (config.php && typeof config.php === 'object') {
-      const phpObj = config.php as RawPhpObject
+      const phpObj = config.php
       phpVersion = normalizePhpVersion(phpObj.version)
       if (phpVersion && localConfig && dev) {
         this.subSteps.push(new LinkPhpStep(phpVersion, localConfig, dev))

@@ -1,0 +1,29 @@
+name: core-workflows-smoke
+
+env:
+  CORE_VALUE: configured
+
+commands:
+  verify-command:
+    desc: Verify command arrays and working directories
+    cwd: nested
+    run: [sh, -c, 'test "$CORE_VALUE" = configured && touch command.ok']
+
+serve:
+  always:
+    run: 'printf "%s" "$CORE_VALUE" > always.out; trap "exit 0" TERM; while :; do sleep 1; done'
+  workers:
+    one:
+      cwd: nested
+      env: test
+      run: 'printf "%s:%s" "$CORE_VALUE" "$DOTENV_ONLY" > worker-one.out; trap "exit 0" TERM; while :; do sleep 1; done'
+    two:
+      env: false
+      run: 'printf "%s" "${DOTENV_ONLY-unset}" > worker-two.out; trap "exit 0" TERM; while :; do sleep 1; done'
+
+steps:
+  - script:
+      desc: Run an idempotent custom setup script
+      run: touch script.ok
+      met?: test -f script.ok
+  - command: verify-command

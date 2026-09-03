@@ -22,7 +22,7 @@ export class PackagesStep extends BaseStep {
   }
 
   async run(runner: Runner): Promise<boolean> {
-    return runner.exec(`composer global require ${this.formatPackages()}`)
+    return runner.exec(`composer global require --no-interaction ${this.formatPackages()}`)
   }
 
   async done(_runner: Runner): Promise<boolean> { return false }

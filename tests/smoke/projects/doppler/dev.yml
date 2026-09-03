@@ -1,0 +1,11 @@
+name: doppler-smoke
+
+steps:
+  - doppler:
+      project: smoke-project
+      config: ci
+
+  - doppler:
+      project: smoke-project
+      config: setup-ci
+      setup: true

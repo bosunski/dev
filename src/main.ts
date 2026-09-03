@@ -115,7 +115,8 @@ async function runConfigCommand(name: string, args: string[]): Promise<void> {
     }
   }
 
-  const proc = await dev.runner.spawn(cmdRun, dev.config.cwd())
+  const { commandWorkingDirectory } = await import('./config/command.js')
+  const proc = await dev.runner.spawn(cmdRun, commandWorkingDirectory(dev.config, command))
   const code = await proc.exited
   process.exit(code)
 }

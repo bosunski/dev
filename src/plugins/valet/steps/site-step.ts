@@ -3,7 +3,7 @@ import type { Runner } from '../../../execution/runner.js'
 import type { LocalValetConfig } from '../config/local-valet-config.js'
 import { createHash } from 'node:crypto'
 
-export type RawSite = string | { host: string; proxy?: string; secure?: boolean }
+export type RawSite = string | { host: string; proxy?: string | undefined; secure?: boolean | undefined }
 
 export class SiteStep implements Step {
   readonly host: string
@@ -57,6 +57,11 @@ export class SiteStep implements Step {
         const phpFormula = this.phpVersion === '8.3' ? 'php' : `php@${this.phpVersion}`
         if (!await runner.exec([valet, 'isolate', '--site', this.host, phpFormula])) return false
       }
+    }
+
+    if (runner.config.isLinux() && !await runner.exec(['systemctl', 'is-active', '--quiet', 'nginx'])) {
+      runner.getIO().error('Valet configured the site, but nginx is not running.')
+      return false
     }
 
     return true

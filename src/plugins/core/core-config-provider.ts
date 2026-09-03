@@ -8,6 +8,9 @@ import { PromptEnvStep } from './steps/prompt-env-step.js'
 import { ScriptResolver } from './resolvers/script-resolver.js'
 import { CommandResolver } from './resolvers/command-resolver.js'
 import { MySqlResolver } from './resolvers/mysql-resolver.js'
+import { PackagesResolver } from './resolvers/packages-resolver.js'
+import { ServiceResolver } from './resolvers/service-resolver.js'
+import { DnsResolver } from './resolvers/dns-resolver.js'
 
 export class CoreConfigProvider implements ConfigProvider {
   private readonly dev: Dev
@@ -17,12 +20,12 @@ export class CoreConfigProvider implements ConfigProvider {
   }
 
   steps(): Step[] {
-    return [
-      new PromptEnvStep(this.dev.config),
-      new EnsureShadowEnvStep(),
-      new ShadowEnvStep(this.dev),
-      new EnvSubstituteStep(this.dev.config),
-    ]
+    const steps: Step[] = [new PromptEnvStep(this.dev.config)]
+
+    steps.push(new EnsureShadowEnvStep(), new ShadowEnvStep(this.dev))
+
+    steps.push(new EnvSubstituteStep(this.dev.config))
+    return steps
   }
 
   validate(): boolean {
@@ -36,6 +39,9 @@ export class CoreConfigProvider implements ConfigProvider {
       custom: scriptResolver,
       command: new CommandResolver(this.dev.config.commands()),
       mysql: new MySqlResolver(this.dev),
+      packages: new PackagesResolver(),
+      service: new ServiceResolver(),
+      dns: new DnsResolver(),
     }
   }
 }

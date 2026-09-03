@@ -1,8 +1,18 @@
-import { existsSync, appendFileSync } from 'node:fs'
+import { existsSync, appendFileSync, chmodSync, mkdirSync, renameSync, rmSync } from 'node:fs'
 import type { Runner } from '../../../../execution/runner.js'
 import { BaseStep } from '../../../../step/base-step.js'
 import { UserException } from '../../../../exceptions.js'
-import { BrewStep } from '../brew-step.js'
+
+const SHADOWENV_VERSION = '3.5.1'
+
+export function shadowenvAsset(platform = process.platform, arch = process.arch): string {
+  const targetPlatform = platform === 'darwin' ? 'apple-darwin' : platform === 'linux' ? 'unknown-linux-gnu' : null
+  const targetArch = arch === 'arm64' ? 'aarch64' : arch === 'x64' ? 'x86_64' : null
+  if (!targetPlatform || !targetArch) {
+    throw new UserException(`Shadowenv does not provide a binary for ${platform}/${arch}.`)
+  }
+  return `shadowenv-${targetArch}-${targetPlatform}`
+}
 
 export class EnsureShadowEnvStep extends BaseStep {
   private installed = false
@@ -14,8 +24,31 @@ export class EnsureShadowEnvStep extends BaseStep {
 
   async run(runner: Runner): Promise<boolean> {
     if (!this.installed) {
-      const installed = await runner.withoutShadowEnv().execute(new BrewStep(['shadowenv']))
-      if (!installed) return false
+      const target = runner.config.globalBinPath('shadowenv')
+      const temporary = `${target}.download`
+      const asset = shadowenvAsset()
+      const url = `https://github.com/Shopify/shadowenv/releases/download/${SHADOWENV_VERSION}/${asset}`
+      mkdirSync(runner.config.globalBinPath(), { recursive: true })
+      rmSync(temporary, { force: true })
+      const downloaded = await runner.withoutShadowEnv().exec([
+        'curl',
+        '--fail',
+        '--location',
+        '--silent',
+        '--show-error',
+        '--connect-timeout', '15',
+        '--max-time', '120',
+        '--retry', '3',
+        '--output', temporary,
+        url,
+      ])
+      if (!downloaded) {
+        rmSync(temporary, { force: true })
+        return false
+      }
+      chmodSync(temporary, 0o755)
+      renameSync(temporary, target)
+      this.installed = true
     }
 
     if (this.hookInstalled) return true
@@ -29,7 +62,7 @@ export class EnsureShadowEnvStep extends BaseStep {
       throw new UserException(`Unable to find the profile file: ${shell.profile}. Please setup Shadowenv manually.`)
     }
 
-    const evalLine = this.evalConfig(shell.name)
+    const evalLine = this.evalConfig(shell.name, runner.shadowenvBin())
     try {
       appendFileSync(shell.profile, evalLine)
     } catch {
@@ -39,8 +72,9 @@ export class EnsureShadowEnvStep extends BaseStep {
     return this.done(runner)
   }
 
-  private evalConfig(shell: string): string {
-    return `\n# Shadow Env\neval "$(shadowenv init ${shell})"\n`
+  private evalConfig(shell: string, binary: string): string {
+    if (shell === 'fish') return `\n# Shadow Env\n${binary} init fish | source\n`
+    return `\n# Shadow Env\neval "$(${binary} init ${shell})"\n`
   }
 
   async done(runner: Runner): Promise<boolean> {

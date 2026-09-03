@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'resolvectl %s\n' "$*" >> "$SMOKE_STATE_DIR/calls.log"

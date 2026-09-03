@@ -1,7 +1,9 @@
-import { existsSync, mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Dev } from '../dev.js'
 import type { RawServe, RawServeProcess } from '../types/config.js'
+import type { ServeProvider } from '../types/capability.js'
+import { SERVE_PROVIDER } from '../types/capability.js'
 
 const COLORS = [2, 3, 4, 5, 6, 42, 130, 103, 129, 108]
 const SHOW_CURSOR = '\x1b[?25h'
@@ -109,10 +111,14 @@ export class ServeManager {
     }
 
     const serve = dev.config.getServe()
-    if (!serve || (typeof serve === 'object' && Object.keys(serve).length === 0)) return
+    const provided = dev.getPluginManager()
+      .getPluginCapabilities<ServeProvider>(SERVE_PROVIDER, { dev })
+      .reduce<Record<string, RawServe>>((all, provider) => ({ ...all, ...provider.processes() }), {})
+    if ((!serve || (typeof serve === 'object' && Object.keys(serve).length === 0))
+      && Object.keys(provided).length === 0) return
 
     const serves: Record<string, RawServe> =
-      typeof serve === 'string' ? { serve: serve } : serve
+      typeof serve === 'string' ? { ...provided, serve: serve } : { ...provided, ...serve }
 
     const projectName = dev.config.getName() || dev.config.projectName()
     const multiProject = !!parentName
@@ -122,26 +128,27 @@ export class ServeManager {
         // Flat serves always run — they are the shared layer
         const serveConfig = typeof rawServe === 'string' ? { run: rawServe } : rawServe
         const displayName = multiProject ? `${projectName}:${name}` : name
-        this.pushEntry(entries, dev, displayName, serveConfig)
+        await this.pushEntry(entries, dev, displayName, serveConfig)
       } else {
         // rawServe is a RawServeGroup — include all groups or only the requested ones
         if (groups && !groups.includes(name)) continue
         for (const [subName, subServe] of Object.entries(rawServe)) {
           const serveConfig = typeof subServe === 'string' ? { run: subServe } : subServe
           const displayName = multiProject ? `${projectName}:${name}:${subName}` : `${name}:${subName}`
-          this.pushEntry(entries, dev, displayName, serveConfig)
+          await this.pushEntry(entries, dev, displayName, serveConfig)
         }
       }
     }
   }
 
-  private pushEntry(
+  private async pushEntry(
     entries: ProcessEntry[],
     dev: Dev,
     displayName: string,
-    serveConfig: { run: string; env?: string | false; cwd?: string },
-  ): void {
-    const env = this.resolveDotenv(dev, serveConfig.env)
+    serveConfig: Exclude<RawServeProcess, string>,
+  ): Promise<void> {
+    const projectEnv = Object.fromEntries(await dev.resolveEnvs())
+    const dotenv = this.resolveDotenv(dev, serveConfig.env)
     const cwd = serveConfig.cwd
       ? join(dev.config.cwd(), serveConfig.cwd)
       : dev.config.cwd()
@@ -150,7 +157,7 @@ export class ServeManager {
       name: displayName.toLowerCase(),
       command: serveConfig.run,
       cwd,
-      env,
+      env: { ...dotenv, ...projectEnv, PATH: dev.effectivePath() },
       color: COLORS[entries.length % COLORS.length]!,
     })
   }
@@ -164,11 +171,7 @@ export class ServeManager {
     if (!existsSync(path)) return {}
 
     try {
-      const content = Bun.file(path).text()
-      const env: Record<string, string> = {}
-      // Simple .env parser
-      const text = Bun.readableStreamToText(Bun.file(path).stream()) as unknown as string
-      return env
+      return this.parseDotenv(readFileSync(path, 'utf8'))
     } catch {
       return {}
     }
@@ -183,9 +186,11 @@ export class ServeManager {
       if (eqIdx === -1) continue
       const key = trimmed.slice(0, eqIdx).trim()
       let val = trimmed.slice(eqIdx + 1).trim()
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-        val = val.slice(1, -1)
-      }
+      if (val.startsWith('"') && val.endsWith('"')) {
+        val = val.slice(1, -1).replace(/\\(n|r|"|\\)/g, (_match, escaped: string) =>
+          escaped === 'n' ? '\n' : escaped === 'r' ? '\r' : escaped
+        )
+      } else if (val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1)
       env[key] = val
     }
     return env
@@ -200,21 +205,17 @@ export class ServeManager {
     for (const entry of entries) {
       writeOutputLine(`${colorPrefix(entry.name, entry.color)}\x1b[1mRunning...\x1b[0m`)
 
-      const dotenvPath = join(entry.cwd, '.env')
-      let dotenv: Record<string, string> = {}
-      if (existsSync(dotenvPath)) {
-        const content = await Bun.file(dotenvPath).text()
-        dotenv = this.parseDotenv(content)
-      }
-
+      const inheritedEnv = Object.fromEntries(
+        Object.entries(process.env).filter((item): item is [string, string] => item[1] !== undefined),
+      )
       const proc = Bun.spawn(['sh', '-c', entry.command], {
         cwd: entry.cwd,
+        detached: process.platform !== 'win32',
         env: {
+          ...inheritedEnv,
+          ...entry.env,
           FORCE_COLOR: '1',
           TERM: 'xterm-256color',
-          ...dotenv,
-          ...entry.env,
-          ...process.env as Record<string, string>,
         },
         stdout: 'pipe',
         stderr: 'pipe',
@@ -230,31 +231,36 @@ export class ServeManager {
 
     this.processes = procs.map(p => p.proc)
 
-    // Set up signal handlers
-    const cleanup = async () => {
-      if (this.interrupted) return
-      this.interrupted = true
-      if (process.stdout.isTTY) process.stdout.write(SHOW_CURSOR)
-      await this.shutdownAll(procs.map(p => p.proc))
-      process.exit(0)
+    const exitPromises = procs.map(({ proc, entry }) => proc.exited.then(code => {
+        writeOutputLine(`${colorPrefix(entry.name, entry.color)}\x1b[2mexited with code ${code}\x1b[0m`)
+        return code
+      }))
+
+    let resolveSignal!: (code: number) => void
+    let signalReceived = false
+    const signalExit = new Promise<number>(resolve => { resolveSignal = resolve })
+    const onSignal = () => {
+      signalReceived = true
+      resolveSignal(0)
     }
 
-    process.on('SIGINT', () => void cleanup())
-    process.on('SIGTERM', () => void cleanup())
-    process.on('SIGHUP', () => void cleanup())
+    process.once('SIGINT', onSignal)
+    process.once('SIGTERM', onSignal)
+    process.once('SIGHUP', onSignal)
 
-    // Wait for any process to exit or interrupt
-    const exitPromises = procs.map(({ proc, entry }) =>
-      proc.exited.then(code => {
-        writeOutputLine(`${colorPrefix(entry.name, entry.color)}\x1b[2mexited with code ${code}\x1b[0m`)
-        if (!this.interrupted) void cleanup()
-      }),
-    )
-
-    await Promise.race(exitPromises)
+    const firstCode = await Promise.race([...exitPromises, signalExit])
+    this.interrupted = true
+    if (process.stdout.isTTY) process.stdout.write(SHOW_CURSOR)
+    await this.shutdownAll(procs.map(p => p.proc))
     await Promise.all(exitPromises)
 
-    return true
+    process.off('SIGINT', onSignal)
+    process.off('SIGTERM', onSignal)
+    process.off('SIGHUP', onSignal)
+
+    if (signalReceived) process.exit(0)
+
+    return firstCode === 0
   }
 
   private async pipeOutput(stream: ReadableStream<Uint8Array> | null, name: string, color: number): Promise<void> {
@@ -289,7 +295,7 @@ export class ServeManager {
   private async shutdownAll(procs: Bun.Subprocess[]): Promise<void> {
     // Send SIGTERM to all
     for (const proc of procs) {
-      try { proc.kill(15) } catch {}
+      this.signalProcess(proc, 15)
     }
 
     // Give 5 seconds for graceful shutdown
@@ -299,7 +305,19 @@ export class ServeManager {
 
     // Force kill any still running
     for (const proc of procs) {
-      try { proc.kill(9) } catch {}
+      this.signalProcess(proc, 9)
+    }
+  }
+
+  private signalProcess(proc: Bun.Subprocess, signal: number): void {
+    try {
+      if (process.platform !== 'win32' && proc.pid) {
+        process.kill(-proc.pid, signal)
+      } else {
+        proc.kill(signal)
+      }
+    } catch {
+      // The process or process group has already exited.
     }
   }
 

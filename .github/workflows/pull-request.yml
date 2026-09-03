@@ -10,11 +10,107 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  typecheck:
-    name: Typecheck
-    runs-on: ubuntu-latest
+  validate:
+    name: Test and build (${{ matrix.name }})
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            os: ubuntu-latest
+            platform: linux
+            target: bun-linux-x64
+            binary: dev-linux-x64
+          - name: macOS Intel
+            os: macos-15-intel
+            platform: darwin
+            target: bun-darwin-x64
+            binary: dev-darwin-x64
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
       - run: bun install
+      - run: bun test
       - run: bun run typecheck
+      - name: Build native binary
+        run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.binary }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary }}
+          path: dist/${{ matrix.binary }}
+          if-no-files-found: error
+
+  smoke:
+    name: Smoke (${{ matrix.system.name }} / ${{ matrix.project }})
+    needs: validate
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        system:
+          - name: Linux x64
+            os: ubuntu-latest
+            platform: linux
+            binary: dev-linux-x64
+          - name: macOS Intel
+            os: macos-15-intel
+            platform: darwin
+            binary: dev-darwin-x64
+        project:
+          - composer-services-mysql
+          - core-workflows
+          - dns
+          - doppler
+          - php-caddy
+          - spc
+          - valet
+    runs-on: ${{ matrix.system.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.system.binary }}
+          path: dist
+      - run: chmod +x "dist/${{ matrix.system.binary }}"
+      - name: Normalize Linux integration runner
+        if: matrix.system.platform == 'linux'
+        run: |
+          sudo apt-get purge -y redis-server redis-tools
+          sudo systemctl stop apache2 nginx || true
+      - name: Start Docker on macOS
+        if: matrix.system.platform == 'darwin' && matrix.project == 'composer-services-mysql'
+        timeout-minutes: 10
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_ENV_HINTS: 1
+        run: |
+          brew install docker colima
+          started=0
+          for attempt in 1 2 3; do
+            if colima start --cpu 2 --memory 4 --disk 20 </dev/null && docker info >/dev/null; then
+              started=1
+              break
+            fi
+            echo "::warning::Colima startup attempt $attempt failed; resetting before retry"
+            colima delete --force >/dev/null 2>&1 || true
+          done
+          if [[ "$started" != 1 ]]; then
+            echo "::error::Colima did not start after 3 attempts"
+            exit 1
+          fi
+          echo "DOCKER_HOST=unix://$HOME/.colima/default/docker.sock" >> "$GITHUB_ENV"
+      - name: Prepare macOS Intel SPC build tool
+        if: matrix.system.platform == 'darwin' && matrix.project == 'spc'
+        timeout-minutes: 10
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_ENV_HINTS: 1
+        run: brew install --build-from-source re2c </dev/null
+      - name: Run smoke scenarios
+        timeout-minutes: 10
+        env:
+          SMOKE_SCENARIO_TIMEOUT_SECONDS: 600
+          SMOKE_KEEP_TMP: 1
+        run: bash tests/smoke/run.sh "$PWD/dist/${{ matrix.system.binary }}" ${{ matrix.system.platform }} ${{ matrix.project }}

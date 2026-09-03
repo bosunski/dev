@@ -1,0 +1,13 @@
+name: spc-smoke
+
+runtimes:
+  php:
+    version: "8.3"
+    provider: spc
+    extensions: [mbstring]
+
+commands:
+  verify-spc:
+    run: |
+      "$PHP_BIN" -r 'exit(extension_loaded("mbstring") ? 0 : 1);'
+      touch spc.ok

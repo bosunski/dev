@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-}" in
+  me) printf '{"name":"smoke"}\n' ;;
+  configs)
+    [[ -f "$SMOKE_STATE_DIR/setup" ]] && printf '[{"name":"ci"},{"name":"setup-ci"}]\n' || printf '[{"name":"ci"}]\n'
+    ;;
+  setup) touch "$SMOKE_STATE_DIR/setup" ;;
+  secrets) printf 'DOPPLER_SECRET=from-doppler\n' ;;
+esac

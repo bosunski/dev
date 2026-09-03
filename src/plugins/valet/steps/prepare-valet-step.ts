@@ -1,10 +1,10 @@
 import { existsSync, mkdirSync } from 'node:fs'
-import { join } from 'node:path'
 import type { Runner } from '../../../execution/runner.js'
 import { BaseStep } from '../../../step/base-step.js'
 import type { ValetPlugin } from '../valet-plugin.js'
 import type { Dev } from '../../../dev.js'
 import { UserException } from '../../../exceptions.js'
+import { valetBinCandidates } from '../valet-bin.js'
 
 export class PrepareValetStep extends BaseStep {
   constructor(private readonly plugin: ValetPlugin, private readonly dev: Dev) { super() }
@@ -37,18 +37,15 @@ export class PrepareValetStep extends BaseStep {
   }
 
   private findValetBin(): { bin: string; version: string } | null {
-    const home = process.env['HOME'] ?? ''
-    const candidates = [
-      join(home, '.composer/vendor/bin/valet'),
-      join(home, '.config/composer/vendor/bin/valet'),
-    ]
-
-    for (const bin of candidates) {
+    for (const bin of valetBinCandidates()) {
       if (!existsSync(bin)) continue
+      const inheritedEnv = Object.fromEntries(
+        Object.entries(process.env).filter((item): item is [string, string] => item[1] !== undefined),
+      )
       const result = Bun.spawnSync([bin, '--version'], {
         stdout: 'pipe',
         stderr: 'pipe',
-        env: process.env as Record<string, string>,
+        env: inheritedEnv,
       })
       if (result.exitCode !== 0) continue
       const lines = new TextDecoder().decode(result.stdout).trim().split('\n').filter(l => l.trim())

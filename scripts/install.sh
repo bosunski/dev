@@ -213,7 +213,7 @@ bash)
     commands=(
         "export $install_env=$quoted_install_dir"
         "export PATH=$bin_env:\$PATH"
-        "eval \$($bin_env/dev env bash)"
+        "eval \"\$($bin_env/dev env bash)\""
     )
 
     bash_configs=(

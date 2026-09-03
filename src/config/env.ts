@@ -26,7 +26,10 @@ export class Env {
     for (const [key, rawValue] of Object.entries(this._raw)) {
       const value = Value.from(rawValue)
 
-      if (value.shouldPrompt() && key in prompted) {
+      const supplied = this.substitutions[key]
+      if (value.shouldPrompt() && key in this.substitutions) {
+        this.env.set(key, supplied ?? '')
+      } else if (value.shouldPrompt() && key in prompted) {
         const resolved = prompted[key]!
         this.env.set(key, resolved)
         this.prompted[key] = resolved

@@ -18,22 +18,35 @@ export class CreateDatabaseStep extends BaseStep {
 
   async run(runner: Runner): Promise<boolean> {
     const dbs = Array.isArray(this.databases) ? this.databases : [this.databases]
-    const sql = dbs.map(db => `CREATE DATABASE IF NOT EXISTS ${db};`).join(' ')
-    const cmd = `docker exec -i dev-mysql mysql -u${CreateDatabaseStep.User} -e "${sql}"`
-
-    for (const delay of [1000, 2000, 3000]) {
-      const ok = await runner.exec(cmd)
-      if (ok) return true
-      await Bun.sleep(delay)
-    }
-    return false
+    const sql = dbs.map(db => `CREATE DATABASE IF NOT EXISTS \`${db}\`;`).join(' ')
+    if (!await this.waitUntilReady(runner)) return false
+    if (!await runner.exec([
+      'docker', 'exec', '-i', 'dev-mysql', 'mysql', `-u${CreateDatabaseStep.User}`, '-e', sql,
+    ])) return false
+    return this.waitUntilReady(runner)
   }
 
   async done(runner: Runner): Promise<boolean> {
     const dbs = Array.isArray(this.databases) ? this.databases : [this.databases]
-    const cmd = `docker exec dev-mysql mysql -u${CreateDatabaseStep.User} -e "SHOW DATABASES;"`
-    const proc = Bun.spawnSync(['sh', '-c', cmd])
+    const proc = Bun.spawnSync([
+      'docker', 'exec', 'dev-mysql', 'mysql', `-u${CreateDatabaseStep.User}`, '-e', 'SHOW DATABASES;',
+    ])
     const output = new TextDecoder().decode(proc.stdout)
-    return dbs.every(db => output.includes(db))
+    return proc.exitCode === 0 && dbs.every(db => output.split('\n').includes(db))
+  }
+
+  private async waitUntilReady(runner: Runner, timeoutMs = 180_000): Promise<boolean> {
+    const deadline = Date.now() + timeoutMs
+    let consecutiveSuccesses = 0
+    while (Date.now() < deadline) {
+      const result = Bun.spawnSync([
+        'docker', 'exec', 'dev-mysql', 'mysqladmin', 'ping', `-u${CreateDatabaseStep.User}`, '--silent',
+      ], { stdout: 'ignore', stderr: 'ignore' })
+      consecutiveSuccesses = result.exitCode === 0 ? consecutiveSuccesses + 1 : 0
+      if (consecutiveSuccesses >= 3) return true
+      await Bun.sleep(1000)
+    }
+    await runner.exec(['docker', 'logs', '--tail', '100', 'dev-mysql'])
+    return false
   }
 }

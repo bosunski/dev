@@ -1,0 +1,11 @@
+name: valet-smoke
+
+steps:
+  - composer: {}
+
+  - valet:
+      sites:
+        - linked-smoke
+        - host: proxy-smoke
+          proxy: http://127.0.0.1:19090
+          secure: false

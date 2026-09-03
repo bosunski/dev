@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import type { Runner } from '../../../execution/runner.js'
 import { BaseStep } from '../../../step/base-step.js'
 import type { SpcConfig } from '../config/spc-config.js'
@@ -10,7 +10,9 @@ export class SpcDownloadStep extends BaseStep {
 
   async run(runner: Runner): Promise<boolean> {
     const cmd = [this.config.bin(), 'download', ...this.config.extensions]
-    return runner.exec(cmd, runner.config.globalPath(`spc/${this.config.phpVersion}`))
+    const cwd = runner.config.globalPath(`spc/${this.config.phpVersion}`)
+    mkdirSync(cwd, { recursive: true })
+    return runner.exec(cmd, cwd)
   }
 
   async done(_runner: Runner): Promise<boolean> {
