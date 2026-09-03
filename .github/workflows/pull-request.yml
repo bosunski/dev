@@ -12,7 +12,7 @@ concurrency:
 jobs:
   validate:
     name: Test, build, and smoke (${{ matrix.name }})
-    timeout-minutes: 50
+    timeout-minutes: 5
     strategy:
       fail-fast: false
       matrix:
@@ -43,7 +43,7 @@ jobs:
           sudo systemctl stop apache2 nginx || true
       - name: Start Docker on macOS
         if: matrix.platform == 'darwin'
-        timeout-minutes: 10
+        timeout-minutes: 5
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_ENV_HINTS: 1
