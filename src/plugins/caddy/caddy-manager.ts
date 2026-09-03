@@ -171,6 +171,7 @@ export class CaddyManager {
 
   private bootstrapReady(): boolean {
     if (this.runtime.platform === 'darwin') {
+      if (!this.runtime.usesPortRedirect()) return true
       const marker = this.config.globalPath('caddy/.pf-configured')
       const session = this.runtime.darwinBootSession()
       return !!session && existsSync(marker) && readFileSync(marker, 'utf8').trim() === session

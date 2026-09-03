@@ -21,13 +21,11 @@ jobs:
             platform: linux
             target: bun-linux-x64
             binary: dev-linux-x64
-            install: sudo apt-get update && sudo apt-get install -y caddy php-cli php-fpm
           - name: macOS ARM64
             os: macos-latest
             platform: darwin
             target: bun-darwin-arm64
             binary: dev-darwin-arm64
-            install: brew install caddy php
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +35,5 @@ jobs:
       - run: bun run typecheck
       - name: Build native binary
         run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.binary }}
-      - name: Install smoke-test runtimes
-        run: ${{ matrix.install }}
       - name: Run smoke scenarios
         run: bash tests/smoke/run.sh "$PWD/dist/${{ matrix.binary }}" ${{ matrix.platform }}

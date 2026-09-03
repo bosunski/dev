@@ -62,4 +62,12 @@ describe('CaddyRuntime', () => {
     expect(runtime.shouldTrust()).toBeFalse()
     expect(new CaddyRuntime('darwin', '/opt/homebrew/bin/caddy', 'sudo').shouldTrust()).toBeTrue()
   })
+
+  test('allows hosted macOS environments to use high ports without PF redirects', () => {
+    const runtime = new CaddyRuntime('darwin', '/opt/homebrew/bin/caddy', 'sudo', {
+      DEV_CADDY_DISABLE_PORT_REDIRECT: '1',
+    })
+    expect(runtime.usesPortRedirect()).toBeFalse()
+    expect(new CaddyRuntime('darwin', '/opt/homebrew/bin/caddy', 'sudo').usesPortRedirect()).toBeTrue()
+  })
 })

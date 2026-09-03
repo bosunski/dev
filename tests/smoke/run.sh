@@ -10,9 +10,14 @@ case "$PLATFORM" in
   *) echo "Unsupported smoke-test platform: $PLATFORM" >&2; exit 2 ;;
 esac
 
-for scenario in "$SMOKE_DIR"/scenarios/*.sh; do
-  name="$(basename "$scenario" .sh)"
-  echo "::group::Smoke scenario: $name ($PLATFORM)"
-  bash "$scenario" "$DEV_BINARY" "$PLATFORM"
+for fixture in "$SMOKE_DIR"/projects/*; do
+  [[ -d "$fixture" && -f "$fixture/dev.yml" && -f "$fixture/smoke.sh" ]] || continue
+  name="$(basename "$fixture")"
+  worktree="$(mktemp -d)/$name"
+  mkdir -p "$worktree"
+  cp -R "$fixture/." "$worktree/"
+  rm "$worktree/smoke.sh"
+  echo "::group::Smoke project: $name ($PLATFORM)"
+  bash "$fixture/smoke.sh" "$DEV_BINARY" "$PLATFORM" "$worktree"
   echo "::endgroup::"
 done

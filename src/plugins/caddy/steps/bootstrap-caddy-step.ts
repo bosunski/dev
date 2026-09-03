@@ -10,6 +10,7 @@ export class BootstrapCaddyStep extends BaseStep {
   async done(runner: Runner): Promise<boolean> {
     const runtime = new CaddyRuntime()
     if (runtime.platform === 'darwin') {
+      if (!runtime.usesPortRedirect()) return true
       const marker = runner.config.globalPath('caddy/.pf-configured')
       const session = runtime.darwinBootSession()
       return !!session && existsSync(marker) && readFileSync(marker, 'utf8').trim() === session
@@ -21,6 +22,7 @@ export class BootstrapCaddyStep extends BaseStep {
 
   async run(runner: Runner): Promise<boolean> {
     const runtime = new CaddyRuntime()
+    if (runtime.platform === 'darwin' && !runtime.usesPortRedirect()) return true
     if (runtime.platform !== 'darwin' && !runtime.usesPrivilegedPorts()) return true
     if (runtime.platform === 'linux') {
       for (const command of runtime.linuxBootstrapCommands()) {

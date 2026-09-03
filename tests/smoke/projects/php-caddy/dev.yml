@@ -1,0 +1,12 @@
+name: php-caddy-smoke
+
+runtimes:
+  php:
+    provider: native
+
+steps:
+  - caddy:
+      sites:
+        - host: smoke.test
+          root: public
+          runtime: php
