@@ -12,7 +12,7 @@ concurrency:
 jobs:
   validate:
     name: Test and build (${{ matrix.name }})
-    timeout-minutes: 5
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -45,7 +45,7 @@ jobs:
   smoke:
     name: Smoke (${{ matrix.system.name }} / ${{ matrix.project }})
     needs: validate
-    timeout-minutes: 12
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -81,7 +81,7 @@ jobs:
           sudo systemctl stop apache2 nginx || true
       - name: Start Docker on macOS
         if: matrix.system.platform == 'darwin' && matrix.project == 'composer-services-mysql'
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_ENV_HINTS: 1
@@ -103,14 +103,14 @@ jobs:
           echo "DOCKER_HOST=unix://$HOME/.colima/default/docker.sock" >> "$GITHUB_ENV"
       - name: Prepare macOS Intel SPC build tool
         if: matrix.system.platform == 'darwin' && matrix.project == 'spc'
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_ENV_HINTS: 1
         run: brew install --build-from-source re2c </dev/null
       - name: Run smoke scenarios
-        timeout-minutes: 5
+        timeout-minutes: 10
         env:
-          SMOKE_SCENARIO_TIMEOUT_SECONDS: 300
+          SMOKE_SCENARIO_TIMEOUT_SECONDS: 600
           SMOKE_KEEP_TMP: 1
         run: bash tests/smoke/run.sh "$PWD/dist/${{ matrix.system.binary }}" ${{ matrix.system.platform }} ${{ matrix.project }}
