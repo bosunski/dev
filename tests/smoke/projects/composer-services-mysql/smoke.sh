@@ -16,7 +16,7 @@ cleanup() {
   rm -rf "$(dirname "$PROJECT_ROOT")"
 }
 
-(cd "$PROJECT_ROOT" && "$DEV_BINARY" up --self)
+(cd "$PROJECT_ROOT" && "$DEV_BINARY" up --self --force)
 composer global show psr/log --format=json | grep -Fq 'psr/log'
 [[ "$(redis-cli ping)" == PONG ]]
 docker exec dev-mysql mysql -uroot -N -e 'SHOW DATABASES;' | grep -Fxq smoke_app

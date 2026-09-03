@@ -43,4 +43,12 @@ describe('PackageManager', () => {
     expect(manager.installCommand(['go', 'caddy']))
       .toEqual(['sudo', 'pacman', '-S', '--needed', '--noconfirm', 'go', 'caddy'])
   })
+
+  test('requires Apt packages to have installed status', () => {
+    const manager = new PackageManager('apt', 'sudo')
+    expect(manager.checkCommand('redis-server')).toEqual([
+      'dpkg-query', '-W', '-f=${db:Status-Status}', 'redis-server',
+      '|', 'grep', '-Fxq', 'installed',
+    ])
+  })
 })

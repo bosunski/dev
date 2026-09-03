@@ -99,7 +99,10 @@ export class PackageManager {
 
   checkCommand(packageName: string): string[] {
     switch (this.name) {
-      case 'apt': return ['dpkg-query', '-W', '-f=${Status}', packageName]
+      case 'apt': return [
+        'dpkg-query', '-W', '-f=${db:Status-Status}', packageName,
+        '|', 'grep', '-Fxq', 'installed',
+      ]
       case 'brew': return ['brew', 'list', '--versions', packageName]
       case 'pacman': return ['pacman', '-Q', packageName]
     }
