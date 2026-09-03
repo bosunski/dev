@@ -1,0 +1,7 @@
+name: dns-smoke
+
+steps:
+  - dns:
+      server: 127.0.0.53
+      interface: smoke0
+      domains: [app.smoke.test, api.smoke.test]

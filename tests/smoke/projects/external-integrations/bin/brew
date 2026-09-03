@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'brew %s\n' "$*" >> "$SMOKE_STATE_DIR/calls.log"
+service="${!#}"
+if [[ "${1:-}" == services && "${2:-}" == info ]]; then
+  [[ -f "$SMOKE_STATE_DIR/service-$service" ]]
+elif [[ "${1:-}" == services && "${2:-}" == start ]]; then
+  touch "$SMOKE_STATE_DIR/service-$service"
+fi

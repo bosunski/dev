@@ -1,0 +1,28 @@
+name: external-integrations-smoke
+
+steps:
+  - composer:
+      auth:
+        - host: packages.smoke.test
+          username: smoke-user
+          password: smoke-password
+      packages:
+        - smoke/tool: "^1.0"
+
+  - doppler:
+      project: smoke-project
+      config: ci
+
+  - doppler:
+      project: smoke-project
+      config: setup-ci
+      setup: true
+
+  - service: redis
+
+  - service:
+      name: custom
+      unit: smoke-worker
+
+  - mysql:
+      databases: [smoke_app, smoke_test]

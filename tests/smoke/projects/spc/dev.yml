@@ -1,0 +1,10 @@
+name: spc-smoke
+
+steps:
+  - spc:
+      php:
+        version: "8.3"
+        preset: minimal
+      combine:
+        input: app.php
+        output: app-bin

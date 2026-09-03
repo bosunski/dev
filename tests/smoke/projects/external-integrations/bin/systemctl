@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'systemctl %s\n' "$*" >> "$SMOKE_STATE_DIR/calls.log"
+service="${!#}"
+if [[ "${1:-}" == is-active ]]; then
+  [[ -f "$SMOKE_STATE_DIR/service-$service" ]]
+elif [[ "$*" == *"enable --now"* ]]; then
+  touch "$SMOKE_STATE_DIR/service-$service"
+fi

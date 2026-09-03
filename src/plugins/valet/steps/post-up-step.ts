@@ -3,10 +3,12 @@ import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import type { Runner } from '../../../execution/runner.js'
 import { BaseStep } from '../../../step/base-step.js'
+import type { DeferredStep } from '../../../types/step.js'
 import type { ValetPlugin } from '../valet-plugin.js'
 import type { Dev } from '../../../dev.js'
 
-export class PostUpStep extends BaseStep {
+export class PostUpStep extends BaseStep implements DeferredStep {
+  readonly deferred = true as const
   constructor(
     private readonly sites: string[],
     private readonly plugin: ValetPlugin,

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'doppler %s\n' "$*" >> "$SMOKE_STATE_DIR/calls.log"
+case "${1:-}" in
+  me) printf '{"name":"smoke"}\n' ;;
+  configs)
+    if [[ -f "$SMOKE_STATE_DIR/doppler-setup" ]]; then
+      printf '[{"name":"ci"},{"name":"setup-ci"}]\n'
+    else
+      printf '[{"name":"ci"}]\n'
+    fi
+    ;;
+  setup) touch "$SMOKE_STATE_DIR/doppler-setup" ;;
+  secrets) printf 'DOPPLER_SECRET=from-doppler\nDOPPLER_SECOND=two\n' ;;
+esac

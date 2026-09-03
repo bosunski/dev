@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'composer %s\n' "$*" >> "$SMOKE_STATE_DIR/calls.log"
+if [[ "$*" == "global config http-basic.packages.smoke.test" ]]; then
+  [[ -f "$SMOKE_STATE_DIR/composer-auth" ]]
+  exit
+fi
+if [[ "$*" == global\ config\ http-basic.packages.smoke.test* ]]; then
+  touch "$SMOKE_STATE_DIR/composer-auth"
+fi
+if [[ "$*" == global\ require* ]]; then
+  touch "$SMOKE_STATE_DIR/composer-package"
+fi

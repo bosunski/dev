@@ -28,7 +28,7 @@ export class ValetCommandProvider implements CommandProvider {
     return {
       'valet:restart': {
         desc: 'Restart Valet services',
-        run: ['$VALET_BIN', 'restart'],
+        run: '"$VALET_BIN" restart',
       },
     }
   }
