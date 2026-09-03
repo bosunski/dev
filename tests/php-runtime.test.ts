@@ -15,12 +15,22 @@ describe('PhpRuntime', () => {
     expect(PhpRuntime.satisfies('9.0.0', '^8.2')).toBeFalse()
   })
 
-  test('uses a project-scoped Unix socket endpoint', () => {
+  test('uses a short, stable, project-isolated Unix socket endpoint', () => {
     const root = mkdtempSync(join(tmpdir(), 'dev-php-runtime-'))
     writeFileSync(join(root, 'dev.yml'), 'runtimes:\n  php:\n    version: "8.5"\n')
     const config = Config.read(root)
-    expect(PhpRuntime.endpoint(config, 'php'))
-      .toBe(`unix/${root}/.dev/runtimes/php/php-fpm.sock`)
+    const endpoint = PhpRuntime.endpoint(config, 'php')
+    expect(endpoint).toStartWith('unix//tmp/dev-php-')
+    expect(endpoint.length).toBeLessThan(104)
+    expect(PhpRuntime.endpoint(config, 'php')).toBe(endpoint)
+
+    const otherRoot = mkdtempSync(join(tmpdir(), 'dev-php-runtime-'))
+    writeFileSync(join(otherRoot, 'dev.yml'), 'runtimes:\n  php:\n    version: "8.5"\n')
+    expect(PhpRuntime.endpoint(Config.read(otherRoot), 'php')).not.toBe(endpoint)
+  })
+
+  test('uses the versioned PHP-FPM executable installed by Apt', () => {
+    expect(PhpRuntime.aptFpmBinary('8.3.6')).toBe('/usr/sbin/php-fpm8.3')
   })
 
   test('resolves an SPC runtime into an extension-specific cache', () => {

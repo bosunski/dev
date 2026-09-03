@@ -49,7 +49,18 @@ export class PhpRuntime {
 
   static endpoint(config: Config, name: string): string {
     this.definition(config, name)
-    return `unix/${config.devPath(`runtimes/${name}/php-fpm.sock`)}`
+    return `unix/${this.socketPath(config, name)}`
+  }
+
+  static socketPath(config: Config, name: string): string {
+    const uid = process.getuid?.() ?? 0
+    const fingerprint = createHash('sha256').update(`${config.cwd()}\0${name}`).digest('hex').slice(0, 16)
+    return `/tmp/dev-php-${uid}-${fingerprint}.sock`
+  }
+
+  static aptFpmBinary(version: string): string {
+    const versionLine = version.match(/^\d+\.\d+/)?.[0]
+    return versionLine ? `/usr/sbin/php-fpm${versionLine}` : '/usr/sbin/php-fpm'
   }
 
   static primary(config: Config): [string, RawRuntime] | null {
@@ -86,7 +97,7 @@ export class PhpRuntime {
       provider: 'native', name, requirement, version: candidate.version,
       phpBinary: join(root, 'bin/php'), fpmBinary: join(root, 'bin/php-fpm'),
       sourcePhpBinary: candidate.phpBinary, sourceFpmBinary: candidate.fpmBinary,
-      socketPath: config.devPath(`runtimes/${name}/php-fpm.sock`), root, binDir: join(root, 'bin'),
+      socketPath: this.socketPath(config, name), root, binDir: join(root, 'bin'),
       fpmConfig: config.devPath(`runtimes/${name}/php-fpm.conf`), extensions,
       iniDir: config.devPath(`runtimes/${name}/php.d`), iniFile: config.devPath(`runtimes/${name}/php.d/extensions.ini`),
       packages: [...new Set([candidate.cliPackage, candidate.fpmPackage, ...this.extensionPackages(manager, candidate.extensionPrefix, versionLine, extensions)])],
@@ -102,7 +113,7 @@ export class PhpRuntime {
     const binDir = join(root, 'buildroot/bin')
     return {
       provider: 'spc', name, requirement, version, phpBinary: join(binDir, 'php'), fpmBinary: join(binDir, 'php-fpm'),
-      socketPath: config.devPath(`runtimes/${name}/php-fpm.sock`), root, binDir,
+      socketPath: this.socketPath(config, name), root, binDir,
       fpmConfig: config.devPath(`runtimes/${name}/php-fpm.conf`), extensions,
       iniDir: config.devPath(`runtimes/${name}/php.d`), iniFile: config.devPath(`runtimes/${name}/php.d/extensions.ini`),
       spcBinary: config.globalPath('bin/spc'),
@@ -119,8 +130,8 @@ export class PhpRuntime {
     ].filter((candidate): candidate is NativeCandidate => candidate !== null)
     const exactLine = requirement.match(/^(?:\^)?(\d+\.\d+)$/)?.[1]
     if (manager === 'apt') {
-      const names = exactLine ? [[`php${exactLine}-cli`, `php${exactLine}-fpm`, `/usr/bin/php${exactLine}`, `/usr/sbin/php-fpm${exactLine}`]] : [['php-cli', 'php-fpm', '/usr/bin/php', '/usr/sbin/php-fpm']]
-      return names.map(([cli, fpm, phpBin, fpmBin]) => this.aptCandidate(cli!, fpm!, phpBin!, fpmBin!)).filter((candidate): candidate is NativeCandidate => candidate !== null)
+      const names = exactLine ? [[`php${exactLine}-cli`, `php${exactLine}-fpm`, `/usr/bin/php${exactLine}`]] : [['php-cli', 'php-fpm', '/usr/bin/php']]
+      return names.map(([cli, fpm, phpBin]) => this.aptCandidate(cli!, fpm!, phpBin!)).filter((candidate): candidate is NativeCandidate => candidate !== null)
     }
     const formula = exactLine ? `php@${exactLine}` : 'php'
     const info = Bun.spawnSync(['brew', 'info', '--json=v2', formula], { stdout: 'pipe', stderr: 'pipe' })
@@ -152,10 +163,13 @@ export class PhpRuntime {
     return version ? { version, cliPackage, fpmPackage, phpBinary, fpmBinary, extensionPrefix: cliPackage } : null
   }
 
-  private static aptCandidate(cliPackage: string, fpmPackage: string, phpBinary: string, fpmBinary: string): NativeCandidate | null {
+  private static aptCandidate(cliPackage: string, fpmPackage: string, phpBinary: string): NativeCandidate | null {
     const result = Bun.spawnSync(['apt-cache', 'policy', cliPackage], { stdout: 'pipe', stderr: 'pipe' })
     const version = result.exitCode === 0 ? result.stdout.toString().match(/Candidate:\s*(?:\d+:)?([^\s~+-]+)/)?.[1] : undefined
-    return version && version !== '(none)' ? { version, cliPackage, fpmPackage, phpBinary, fpmBinary, extensionPrefix: `php${version.match(/^\d+\.\d+/)?.[0] ?? ''}` } : null
+    return version && version !== '(none)' ? {
+      version, cliPackage, fpmPackage, phpBinary, fpmBinary: this.aptFpmBinary(version),
+      extensionPrefix: `php${version.match(/^\d+\.\d+/)?.[0] ?? ''}`,
+    } : null
   }
 
   private static extensionPackages(manager: PackageManagerName, prefix: string, version: string, extensions: string[]): string[] {
