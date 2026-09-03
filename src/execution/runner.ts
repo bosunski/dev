@@ -206,7 +206,11 @@ export class Runner {
     }
 
     const shell = this.shell(null)
-    if (!shell) return [false, false]
+    if (!shell) {
+      this._shadowEnvChecked = false
+      this.usingShadowEnv = false
+      return [false, false]
+    }
 
     try {
       const result = Bun.spawnSync(
@@ -221,6 +225,8 @@ export class Runner {
       const binCheck = Bun.spawnSync(['sh', '-c', 'command -v shadowenv'])
       return [false, binCheck.exitCode === 0]
     } catch {
+      this._shadowEnvChecked = false
+      this.usingShadowEnv = false
       return [false, false]
     }
   }
