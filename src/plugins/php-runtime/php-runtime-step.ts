@@ -107,7 +107,14 @@ export class PhpRuntimeStep extends BaseStep {
     const missing = packages.filter(packageName =>
       Bun.spawnSync(manager.checkCommand(packageName), { stdout: 'ignore', stderr: 'ignore' }).exitCode !== 0
     )
-    return missing.length === 0 || runner.exec(manager.installCommand(missing))
+    if (missing.length === 0 || await runner.exec(manager.installCommand(missing))) return true
+    if (manager.name !== 'brew' || !missing.includes('re2c')) return false
+
+    const stillMissing = missing.filter(packageName => packageName !== 're2c').filter(packageName =>
+      Bun.spawnSync(manager.checkCommand(packageName), { stdout: 'ignore', stderr: 'ignore' }).exitCode !== 0
+    )
+    if (stillMissing.length > 0 && !await runner.exec(manager.installCommand(stillMissing))) return false
+    return runner.exec(['brew', 'install', '--build-from-source', 're2c'])
   }
 
   private async installSpc(runner: Runner, runtime: SpcPhpRuntime): Promise<boolean> {
