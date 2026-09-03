@@ -63,6 +63,13 @@ jobs:
             exit 1
           fi
           echo "DOCKER_HOST=unix://$HOME/.colima/default/docker.sock" >> "$GITHUB_ENV"
+      - name: Prepare macOS Intel SPC build tool
+        if: matrix.platform == 'darwin'
+        timeout-minutes: 5
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_ENV_HINTS: 1
+        run: brew install --build-from-source re2c </dev/null
       - name: Run smoke scenarios
         env:
           SMOKE_SCENARIO_TIMEOUT_SECONDS: 300
