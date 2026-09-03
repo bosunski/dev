@@ -14,6 +14,9 @@ describe('ServiceManager', () => {
     const manager = new ServiceManager('brew', 'sudo')
     expect(manager.resolve('redis')).toBe('redis')
     expect(manager.startCommand('redis')).toEqual(['brew', 'services', 'start', 'redis'])
+    expect(manager.checkCommand('redis')).toEqual([
+      'brew', 'services', 'list', '|', 'grep', '-Eq', '^redis[[:space:]]+started',
+    ])
   })
 
   test('allows an explicit native unit override', () => {

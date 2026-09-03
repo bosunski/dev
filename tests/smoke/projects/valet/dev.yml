@@ -1,14 +1,11 @@
 name: valet-smoke
 
-commands:
-  verify-valet-env:
-    run: 'test -x "$VALET_BIN" && test "$SITE_PATH" = "$SMOKE_VALET_DIR/Nginx" && touch valet-env.ok'
-
 steps:
+  - composer: {}
+
   - valet:
       sites:
         - linked-smoke
         - host: proxy-smoke
           proxy: http://127.0.0.1:19090
           secure: false
-  - command: verify-valet-env

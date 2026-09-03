@@ -35,5 +35,10 @@ jobs:
       - run: bun run typecheck
       - name: Build native binary
         run: bun run manifest && bun build src/main.ts --compile --target=${{ matrix.target }} --outfile dist/${{ matrix.binary }}
+      - name: Start Docker on macOS
+        if: matrix.platform == 'darwin'
+        run: |
+          brew install docker colima
+          colima start --cpu 2 --memory 4 --disk 20
       - name: Run smoke scenarios
         run: bash tests/smoke/run.sh "$PWD/dist/${{ matrix.binary }}" ${{ matrix.platform }}

@@ -42,7 +42,9 @@ export class ServiceManager {
   }
 
   checkCommand(service: string): string[] {
-    if (this.packageManager === 'brew') return ['brew', 'services', 'info', service]
+    if (this.packageManager === 'brew') {
+      return ['brew', 'services', 'list', '|', 'grep', '-Eq', `^${service}[[:space:]]+started`]
+    }
     return ['systemctl', 'is-active', '--quiet', service]
   }
 }
