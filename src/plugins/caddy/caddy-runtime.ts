@@ -48,10 +48,11 @@ export class CaddyRuntime {
   }
 
   linuxBootstrapCommands(): string[][] {
-    return [
-      [this.elevation, 'systemctl', 'disable', '--now', 'caddy'],
-      [this.elevation, 'setcap', 'cap_net_bind_service=+ep', this.binary],
-    ]
+    const commands = [[this.elevation, 'systemctl', 'disable', '--now', 'caddy']]
+    if (this.usesPrivilegedPorts()) {
+      commands.push([this.elevation, 'setcap', 'cap_net_bind_service=+ep', this.binary])
+    }
+    return commands
   }
 
   darwinBootstrapCommands(rulesFile: string): string[][] {

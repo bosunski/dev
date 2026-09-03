@@ -54,6 +54,9 @@ describe('CaddyRuntime', () => {
     ])
     expect(runtime.usesPrivilegedPorts()).toBeFalse()
     expect(runtime.hasLowPortAccess()).toBeTrue()
+    expect(runtime.linuxBootstrapCommands()).toEqual([
+      ['sudo', 'systemctl', 'disable', '--now', 'caddy'],
+    ])
   })
 
   test('allows trust installation to be disabled for headless environments', () => {

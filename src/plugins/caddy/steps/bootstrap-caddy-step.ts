@@ -15,22 +15,24 @@ export class BootstrapCaddyStep extends BaseStep {
       const session = runtime.darwinBootSession()
       return !!session && existsSync(marker) && readFileSync(marker, 'utf8').trim() === session
     }
+    if (runtime.platform === 'linux') {
+      return (!runtime.usesPrivilegedPorts() || runtime.hasLowPortAccess()) && !runtime.systemServiceActive()
+    }
     if (!runtime.usesPrivilegedPorts()) return true
-    if (runtime.platform === 'linux') return runtime.hasLowPortAccess() && !runtime.systemServiceActive()
     return false
   }
 
   async run(runner: Runner): Promise<boolean> {
     const runtime = new CaddyRuntime()
     if (runtime.platform === 'darwin' && !runtime.usesPortRedirect()) return true
-    if (runtime.platform !== 'darwin' && !runtime.usesPrivilegedPorts()) return true
     if (runtime.platform === 'linux') {
       for (const command of runtime.linuxBootstrapCommands()) {
         const disablingService = command.includes('systemctl')
         if (!await runner.exec(command) && !disablingService) return false
       }
-      return runtime.hasLowPortAccess() && !runtime.systemServiceActive()
+      return (!runtime.usesPrivilegedPorts() || runtime.hasLowPortAccess()) && !runtime.systemServiceActive()
     }
+    if (runtime.platform !== 'darwin' && !runtime.usesPrivilegedPorts()) return true
 
     if (runtime.platform === 'darwin') {
       const rulesFile = runner.config.globalPath('caddy/pf.conf')
