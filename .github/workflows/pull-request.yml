@@ -47,4 +47,5 @@ jobs:
           colima start --cpu 2 --memory 4 --disk 20
           echo "DOCKER_HOST=unix://$HOME/.colima/default/docker.sock" >> "$GITHUB_ENV"
       - name: Run smoke scenarios
+        timeout-minutes: 5
         run: bash tests/smoke/run.sh "$PWD/dist/${{ matrix.binary }}" ${{ matrix.platform }}

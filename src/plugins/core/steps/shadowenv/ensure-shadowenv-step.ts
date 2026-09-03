@@ -1,4 +1,4 @@
-import { existsSync, appendFileSync, chmodSync, mkdirSync, renameSync } from 'node:fs'
+import { existsSync, appendFileSync, chmodSync, mkdirSync, renameSync, rmSync } from 'node:fs'
 import type { Runner } from '../../../../execution/runner.js'
 import { BaseStep } from '../../../../step/base-step.js'
 import { UserException } from '../../../../exceptions.js'
@@ -28,10 +28,24 @@ export class EnsureShadowEnvStep extends BaseStep {
       const temporary = `${target}.download`
       const asset = shadowenvAsset()
       const url = `https://github.com/Shopify/shadowenv/releases/download/${SHADOWENV_VERSION}/${asset}`
-      const response = await fetch(url)
-      if (!response.ok) return false
       mkdirSync(runner.config.globalBinPath(), { recursive: true })
-      await Bun.write(temporary, response)
+      rmSync(temporary, { force: true })
+      const downloaded = await runner.withoutShadowEnv().exec([
+        'curl',
+        '--fail',
+        '--location',
+        '--silent',
+        '--show-error',
+        '--connect-timeout', '15',
+        '--max-time', '120',
+        '--retry', '3',
+        '--output', temporary,
+        url,
+      ])
+      if (!downloaded) {
+        rmSync(temporary, { force: true })
+        return false
+      }
       chmodSync(temporary, 0o755)
       renameSync(temporary, target)
       this.installed = true

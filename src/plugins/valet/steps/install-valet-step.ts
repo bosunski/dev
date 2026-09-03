@@ -20,7 +20,7 @@ export class InstallValetStep extends BaseStep {
     const pkg = runner.config.isDarwin() ? 'laravel/valet' : 'cpriego/valet-linux'
 
     // composer global update ensures dependencies work with the current PHP version
-    if (!await runner.exec(`composer global require ${pkg} && composer global update && ${this.valetBinary} install`)) return false
+    if (!await runner.exec(`composer global require --no-interaction ${pkg} && composer global update --no-interaction && ${this.valetBinary} install`)) return false
 
     if (runner.config.isLinux()) return true
     return runner.exec(`${this.valetBinary} trust`)
