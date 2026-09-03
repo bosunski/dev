@@ -20,7 +20,10 @@ cleanup() {
 }
 
 (cd "$PROJECT_ROOT" && "$DEV_BINARY" up --self --force)
-composer global show psr/log --format=json | grep -Fq 'psr/log'
+[[ -d "$HOME/.composer/vendor/psr/log" \
+  || -d "$HOME/.config/composer/vendor/psr/log" \
+  || -d "$SMOKE_HOST_HOME/.composer/vendor/psr/log" \
+  || -d "$SMOKE_HOST_HOME/.config/composer/vendor/psr/log" ]]
 [[ "$(redis-cli ping)" == PONG ]]
 docker exec dev-mysql mysql -uroot -N -e 'SHOW DATABASES;' | grep -Fxq smoke_app
 docker exec dev-mysql mysql -uroot -N -e 'SHOW DATABASES;' | grep -Fxq smoke_test

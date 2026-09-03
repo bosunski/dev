@@ -7,6 +7,8 @@ import { InstallValetStep } from './steps/install-valet-step.js'
 import { PrepareValetStep } from './steps/prepare-valet-step.js'
 import { PostUpStep } from './steps/post-up-step.js'
 import { valetProviderArgs } from './valet-provider-args.js'
+import { PackageManager } from '../core/config/package-manager.js'
+import { PackagesStep } from '../core/steps/packages-step.js'
 
 export class ValetConfigProvider implements ConfigProvider {
   private readonly dev: Dev
@@ -36,7 +38,12 @@ export class ValetConfigProvider implements ConfigProvider {
       }
     }
 
+    const prerequisites: Step[] = this.dev.config.isLinux()
+      ? [new PackagesStep(PackageManager.detect(), ['xsel'])]
+      : []
+
     return [
+      ...prerequisites,
       new InstallValetStep(),
       new PrepareValetStep(this.plugin, this.dev),
       new PostUpStep(sites, this.plugin, this.dev),
