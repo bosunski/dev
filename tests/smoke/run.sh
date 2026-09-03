@@ -17,6 +17,8 @@ export HOMEBREW_NO_ENV_HINTS=1
 export SSH_ASKPASS=/bin/false
 export SUDO_ASKPASS=/bin/false
 SMOKE_SCENARIO_TIMEOUT_SECONDS="${SMOKE_SCENARIO_TIMEOUT_SECONDS:-300}"
+ACTIVE_SCENARIO_PID=''
+ACTIVE_WATCHDOG_PID=''
 cleanup_suite() {
   if [[ "${SMOKE_KEEP_TMP:-0}" == 1 ]]; then
     echo "Smoke workspace retained at $SUITE_ROOT" >&2
@@ -37,6 +39,23 @@ terminate_tree() {
   kill "-$signal" "$parent" 2>/dev/null || true
 }
 
+cancel_active() {
+  local exit_code="$1"
+  trap - INT TERM
+  if [[ -n "$ACTIVE_WATCHDOG_PID" ]]; then
+    terminate_tree TERM "$ACTIVE_WATCHDOG_PID"
+  fi
+  if [[ -n "$ACTIVE_SCENARIO_PID" ]]; then
+    terminate_tree TERM "$ACTIVE_SCENARIO_PID"
+    sleep 1
+    terminate_tree KILL "$ACTIVE_SCENARIO_PID"
+  fi
+  exit "$exit_code"
+}
+
+trap 'cancel_active 130' INT
+trap 'cancel_active 143' TERM
+
 run_scenario() {
   local fixture="$1"
   local name="$2"
@@ -46,6 +65,7 @@ run_scenario() {
 
   bash "$fixture/smoke.sh" "$DEV_BINARY" "$PLATFORM" "$worktree" </dev/null &
   scenario_pid=$!
+  ACTIVE_SCENARIO_PID="$scenario_pid"
   (
     sleep "$SMOKE_SCENARIO_TIMEOUT_SECONDS"
     if kill -0 "$scenario_pid" 2>/dev/null; then
@@ -56,14 +76,17 @@ run_scenario() {
     fi
   ) &
   watchdog_pid=$!
+  ACTIVE_WATCHDOG_PID="$watchdog_pid"
 
   if wait "$scenario_pid"; then
     status=0
   else
     status=$?
   fi
-  kill "$watchdog_pid" 2>/dev/null || true
+  terminate_tree TERM "$watchdog_pid"
   wait "$watchdog_pid" 2>/dev/null || true
+  ACTIVE_SCENARIO_PID=''
+  ACTIVE_WATCHDOG_PID=''
 
   if [[ -f "$marker" ]]; then
     echo "::error::Smoke project '$name' exceeded ${SMOKE_SCENARIO_TIMEOUT_SECONDS} seconds" >&2
