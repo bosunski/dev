@@ -54,4 +54,12 @@ describe('CaddyRuntime', () => {
     expect(runtime.usesPrivilegedPorts()).toBeFalse()
     expect(runtime.hasLowPortAccess()).toBeTrue()
   })
+
+  test('allows trust installation to be disabled for headless environments', () => {
+    const runtime = new CaddyRuntime('darwin', '/opt/homebrew/bin/caddy', 'sudo', {
+      DEV_CADDY_SKIP_TRUST: '1',
+    })
+    expect(runtime.shouldTrust()).toBeFalse()
+    expect(new CaddyRuntime('darwin', '/opt/homebrew/bin/caddy', 'sudo').shouldTrust()).toBeTrue()
+  })
 })

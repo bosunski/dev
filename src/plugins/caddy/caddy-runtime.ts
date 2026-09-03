@@ -13,6 +13,7 @@ export class CaddyRuntime {
   httpsPort(): number { return this.port('DEV_CADDY_HTTPS_PORT', this.platform === 'darwin' ? 8443 : 443) }
   adminPort(): number { return this.port('DEV_CADDY_ADMIN_PORT', 2019) }
   usesPrivilegedPorts(): boolean { return this.httpPort() < 1024 || this.httpsPort() < 1024 }
+  shouldTrust(): boolean { return this.env['DEV_CADDY_SKIP_TRUST'] !== '1' }
 
   reloadCommand(config: string): string[] {
     return [this.binary, 'reload', '--config', config, '--address', `127.0.0.1:${this.adminPort()}`, '--force']

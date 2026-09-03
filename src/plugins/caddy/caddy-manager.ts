@@ -35,7 +35,7 @@ export class CaddyManager {
     const hashFile = this.config.globalPath('caddy/.deployed-hash')
     return existsSync(hashFile)
       && readFileSync(hashFile, 'utf8').trim() === this.hash(content)
-      && this.caIsCurrent()
+      && (!this.runtime.shouldTrust() || this.caIsCurrent())
       && this.isRunning()
   }
 
@@ -143,6 +143,7 @@ export class CaddyManager {
   }
 
   private async ensureTrusted(runner: Runner, force = false): Promise<boolean> {
+    if (!force && !this.runtime.shouldTrust()) return true
     if (!force && this.caIsCurrent()) return true
     if (!await runner.exec(this.runtime.trustCommand())) return false
     const source = this.runtime.caCertificateSource()
