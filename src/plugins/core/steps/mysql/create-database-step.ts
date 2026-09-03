@@ -20,9 +20,10 @@ export class CreateDatabaseStep extends BaseStep {
     const dbs = Array.isArray(this.databases) ? this.databases : [this.databases]
     const sql = dbs.map(db => `CREATE DATABASE IF NOT EXISTS \`${db}\`;`).join(' ')
     if (!await this.waitUntilReady()) return false
-    return runner.exec([
+    if (!await runner.exec([
       'docker', 'exec', '-i', 'dev-mysql', 'mysql', `-u${CreateDatabaseStep.User}`, '-e', sql,
-    ])
+    ])) return false
+    return this.waitUntilReady()
   }
 
   async done(runner: Runner): Promise<boolean> {
@@ -36,11 +37,13 @@ export class CreateDatabaseStep extends BaseStep {
 
   private async waitUntilReady(timeoutMs = 60_000): Promise<boolean> {
     const deadline = Date.now() + timeoutMs
+    let consecutiveSuccesses = 0
     while (Date.now() < deadline) {
       const result = Bun.spawnSync([
         'docker', 'exec', 'dev-mysql', 'mysqladmin', 'ping', `-u${CreateDatabaseStep.User}`, '--silent',
       ], { stdout: 'ignore', stderr: 'ignore' })
-      if (result.exitCode === 0) return true
+      consecutiveSuccesses = result.exitCode === 0 ? consecutiveSuccesses + 1 : 0
+      if (consecutiveSuccesses >= 3) return true
       await Bun.sleep(1000)
     }
     return false
