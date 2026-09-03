@@ -30,3 +30,7 @@ jobs:
       - run: bun run typecheck
       - name: Build Darwin ARM64 binary
         run: bun run manifest && bun build src/main.ts --compile --target=bun-darwin-arm64 --outfile dist/dev-darwin-arm64
+      - name: Install smoke-test runtimes
+        run: brew install caddy php
+      - name: Smoke test Caddy and PHP-FPM
+        run: bash tests/smoke/macos-runtime.sh "$PWD/dist/dev-darwin-arm64"
