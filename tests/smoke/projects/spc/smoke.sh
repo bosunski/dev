@@ -8,8 +8,7 @@ export SMOKE_STATE_DIR="$PROJECT_ROOT/.smoke-state"
 mkdir -p "$SMOKE_STATE_DIR" "$HOME/.dev/bin"
 cp "$PROJECT_ROOT/bin/spc" "$HOME/.dev/bin/spc"
 chmod +x "$HOME/.dev/bin/spc"
-hash="$(printf 'pcntl,posix,mbstring,tokenizer,phar' | md5sum 2>/dev/null | cut -d' ' -f1 || true)"
-if [[ -z "$hash" ]]; then hash="$(printf 'pcntl,posix,mbstring,tokenizer,phar' | md5 -q)"; fi
+hash="$(printf 'pcntl,posix,mbstring,tokenizer,phar' | openssl md5 | awk '{print $NF}')"
 export SPC_BUILD_ROOT="$HOME/.dev/spc/8.3/$hash"
 trap 'rm -rf "$(dirname "$PROJECT_ROOT")"' EXIT
 
