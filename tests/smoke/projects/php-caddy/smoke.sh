@@ -6,6 +6,10 @@ PLATFORM="${2:?Platform is required}"
 PROJECT_ROOT="${3:?Copied project path is required}"
 SERVE_LOG="$PROJECT_ROOT/serve.log"
 
+# User service managers resolve units from the login home, not a process-local HOME.
+export HOME="${SMOKE_HOST_HOME:-$HOME}"
+export PATH="$HOME/.dev/bin:/opt/homebrew/bin:/home/linuxbrew/.linuxbrew/bin:/usr/local/bin:/usr/bin:/bin"
+
 export DEV_CADDY_HTTP_PORT=18080
 export DEV_CADDY_HTTPS_PORT=18443
 export DEV_CADDY_ADMIN_PORT=12019
