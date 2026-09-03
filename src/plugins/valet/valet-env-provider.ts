@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { realpathSync } from 'node:fs'
+import { existsSync, realpathSync } from 'node:fs'
 import type { EnvProvider } from '../../types/capability.js'
 import type { Dev } from '../../dev.js'
 import type { ValetPlugin } from './valet-plugin.js'
@@ -29,25 +29,26 @@ export class ValetEnvProvider implements EnvProvider {
     const linkPath = env.get('php')
     const bin = env.get('bin')
     const valetPath = env.get('path')
-    const iniScanDir = this.dev.config.devPath('php.d')
     const sitesPath = join(env.get('dir'), 'Nginx')
-
-    // Resolve symlink so PHP_DIR points to the real Cellar installation,
-    // not the .dev/bin symlink directory (needed for include paths etc.)
-    let realPhpBin = linkPath
-    try { realPhpBin = realpathSync(linkPath) } catch { /* not a symlink or missing */ }
-    const phpDir = realPhpBin.replace('/bin/php', '')
-
-    return {
-      PHP_BIN: linkPath,
-      PHP_DIR: phpDir,
+    const result: Record<string, string> = {
       HERD_OR_VALET: bin,
       VALET_BIN: bin,
       VALET_PATH: valetPath,
       SITE_PATH: sitesPath,
       VALET_OR_HERD_SITE_PATH: sitesPath,
-      PHP_INI_SCAN_DIR: iniScanDir,
       LOCAL_DEV_CA_CERT_PATH: join(valetPath, 'CA', 'LaravelValetCASelfSigned.pem'),
     }
+
+    // Do not hide PHP's system extension directory while Valet is still being installed.
+    if (!existsSync(linkPath)) return result
+
+    // Resolve symlink so PHP_DIR points to the real Cellar installation,
+    // not the .dev/bin symlink directory (needed for include paths etc.)
+    let realPhpBin = linkPath
+    try { realPhpBin = realpathSync(linkPath) } catch { /* not a symlink */ }
+    result['PHP_BIN'] = linkPath
+    result['PHP_DIR'] = realPhpBin.replace('/bin/php', '')
+    result['PHP_INI_SCAN_DIR'] = this.dev.config.devPath('php.d')
+    return result
   }
 }
